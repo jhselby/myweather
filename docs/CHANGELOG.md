@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.32 • October 7, 2026 (sr sea-breeze override follows its own refit verdict)</strong></summary>
+
+- **The sr sea-breeze override now applies only when its latest refit says PROMOTE.** Since v0.7.30 the table refits daily in the cloud, and the current fit is HOLD: no hour has the 15 clear-sky training rows it needs, so there are 0 hourly cells, and the pooled test is −0.66% (n=202). The processor ignored the verdict and applied the overall +87 W/m² at every clear sea_breeze hour. Now it is off on any verdict other than PROMOTE (the same gate as the 08-05 flip). Would-have-fired leads are logged as skips, and the override re-arms on its own when a refit says PROMOTE. `ENABLED` stays the master switch.
+- New stamp `sr_sea_breeze_correction.verdict`; the applicability descriptor names the verdict when it is the reason the override is off.
+- Checked the other 9 cloud-refit tables for the same gap: the Lc table honors per-cell SHIP, the chp gate `gate_apply`, the regime walker `cleared_for_wire*`; the selector, L3/L4_NBM, Lsr and learned tables carry no verdict.
+- Debug page: the "decide" row is removed and a post-ship watch added.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.31 • October 7, 2026 (debug page sweep — refitter day)</strong></summary>
 
 - **Recent activity rotated.** Added 10-07 (today: v0.7.27–v0.7.30). Demoted 10-06 → 1 day ago, 10-05 → 2 days ago. Trimmed 10-04 to `display:none`.

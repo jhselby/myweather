@@ -84,33 +84,41 @@ def validate_table(data):
 
 
 def _load_curated():
-    """Load bias table + gate config. Returns (bias_by_hour, overall_bias, cc_lo).
+    """Load bias table + gate config. Returns (bias_by_hour, overall_bias, cc_lo, verdict).
 
     Overcast half (cc_hi) retired 2026-07-28 v0.6.383b — only cc_lo matters now.
     Legacy `hi` field in older JSONs is ignored on load.
     """
     d = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
     if d is None:
-        return {}, 0.0, 25.0
+        return {}, 0.0, 25.0, None
     hb_str = d.get("hourly_bias_wm2") or {}
     bias_by_hour = {int(k): float(v) for k, v in hb_str.items()}
     overall = float(d.get("overall_bias_wm2") or 0.0)
     gate = d.get("cc_gate") or {}
     cc_lo = float(gate.get("lo", 25.0))
-    return bias_by_hour, overall, cc_lo
+    return bias_by_hour, overall, cc_lo, d.get("verdict")
 
 
-_BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO = _load_curated()
+_BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _VERDICT = _load_curated()
 _LOADED_FROM = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
 
 
 def _maybe_reload():
     """Pick up a refit table published to GCS without a deploy."""
-    global _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _LOADED_FROM
+    global _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _VERDICT, _LOADED_FROM
     data = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
     if data is not _LOADED_FROM:
-        _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO = _load_curated()
+        _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _VERDICT = _load_curated()
         _LOADED_FROM = data
+
+
+def _active():
+    """Apply only when the master switch is on AND the latest refit's own
+    held-out test says PROMOTE (the 08-05 flip gate). Any other verdict
+    (HOLD, MARGINAL, missing) leaves the override off; gated leads are
+    logged as would-have-fired skips, so it re-arms itself on a PROMOTE fit."""
+    return ENABLED and _VERDICT == "PROMOTE"
 
 
 def _cc_gated(cc):
@@ -120,12 +128,13 @@ def _cc_gated(cc):
 
 
 def _record_firing(regime, fired, skipped):
-    """When ENABLED=False, gated leads count as skips (would-have-fired).
-    When ENABLED=True, they count as fires."""
+    """When inactive (ENABLED False or refit verdict not PROMOTE), gated
+    leads count as skips (would-have-fired). When active, they count as fires."""
     try:
         from . import gate_firing_log
-        fires = fired if ENABLED else 0
-        skips = skipped if ENABLED else (fired + skipped)
+        active = _active()
+        fires = fired if active else 0
+        skips = skipped if active else (fired + skipped)
         gate_firing_log.record_firing(
             operator="Lsb", regime=regime,
             by_field={"sr": {"fires": fires, "skips": skips}},
@@ -160,7 +169,7 @@ def describe_applicability():
     """Applicability descriptor for Lsb (sr sea_breeze cc-gated override).
     Returns a list of layer dicts matching applicability_map_schema.json.
     """
-    if ENABLED:
+    if _active():
         fires_when = (
             "ENABLED AND regime_synoptic == sea_breeze AND "
             f"cc < {_CC_LO} AND "
@@ -172,11 +181,15 @@ def describe_applicability():
         )
     else:
         fires_when = (
-            f"OFF — would fire when ENABLED, sea_breeze regime, "
+            f"OFF — would fire when ENABLED and refit verdict PROMOTE, sea_breeze regime, "
             f"cc < {_CC_LO}, sun up. (Narrowed 07-28 v0.6.383b — overcast "
             f"half retired.)"
         )
-        current_state = "ENABLED False; no override applied."
+        current_state = (
+            "ENABLED False; no override applied." if not ENABLED else
+            f"ENABLED True but latest refit verdict {_VERDICT}; no override applied "
+            f"until a refit says PROMOTE."
+        )
     return [
         {
             "layer_id": "Lsb",
@@ -186,7 +199,7 @@ def describe_applicability():
                 {
                     "field": "sr",
                     "fires_when": fires_when,
-                    "gated_by": "ENABLED",
+                    "gated_by": "ENABLED + refit verdict",
                     "current_state": current_state,
                 }
             ],
@@ -195,13 +208,15 @@ def describe_applicability():
 
 
 def stamp_sr_sea_breeze_correction(weather_data):
-    """Stamp per-lead override candidates + apply when ENABLED.
+    """Stamp per-lead override candidates + apply when active (ENABLED and
+    the latest refit verdict is PROMOTE).
 
     Runs after stamp_solar_correction. Reads current per-lead sea_breeze
     classification via forecast-side state (regime is per-lead, matching
     the training-data axis in Stage 2).
     """
     _maybe_reload()
+    active = _active()
     hourly = weather_data.get("hourly") or {}
     times = hourly.get("times") or hourly.get("time") or []
     direct_arr = hourly.get("direct_radiation") or []
@@ -220,7 +235,8 @@ def stamp_sr_sea_breeze_correction(weather_data):
 
     if not times or not direct_arr or not sw_arr or not cc_arr:
         weather_data["sr_sea_breeze_correction"] = {
-            "applied": ENABLED,
+            "applied": active,
+            "verdict": _VERDICT,
             "regime_now": regime_now,
             "n_leads_gated": 0,
             "note": "insufficient data (missing times / direct / shortwave / cc arrays)",
@@ -258,7 +274,8 @@ def stamp_sr_sea_breeze_correction(weather_data):
             skipped_middle_cc += 1
 
     weather_data["sr_sea_breeze_correction"] = {
-        "applied": ENABLED,
+        "applied": active,
+        "verdict": _VERDICT,
         "regime_now": regime_now,
         "cc_gate": {"lo": _CC_LO, "rule": "apply iff cc < lo"},
         "n_leads_gated": fired,
@@ -269,13 +286,15 @@ def stamp_sr_sea_breeze_correction(weather_data):
             "only (cc < lo). Gated OFF; fresh 7-day gate 07-28 → 08-04 on "
             "narrowed shape (overcast half retired 07-28 v0.6.383b)."
             if not ENABLED
+            else f"Refit verdict {_VERDICT}: override not applied (would-have-fired leads logged as skips)."
+            if not active
             else "sr sea_breeze clear-sky override applied to direct_radiation."
         ),
     }
 
     _record_firing(regime_now, fired=fired, skipped=skipped_middle_cc)
 
-    if ENABLED and fired:
+    if active and fired:
         # Preserve pre-override direct_radiation for pair log / debug diff.
         if "direct_radiation_pre_sb" not in hourly:
             hourly["direct_radiation_pre_sb"] = list(direct_arr)
