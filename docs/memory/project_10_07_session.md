@@ -62,3 +62,13 @@ Related: [[project_10_06_session]] · [[project_selector_recency_override_watch]
 - Off/shadow layers left bundled (c1, cc combine, clp, dp/h residual, blender, Lsr recent-bias gate, ws tables).
 - **Learned sr changed on first cloud fit:** 4 cells → `se_flow/12-23`, `sw_flow/0-5`. The previous 4 were fit on backstamp data frozen at 09-24 (appender bug); cloud fit sees data to 10-05. `nw_flow/12-23` dropped by the fit itself, so the 10-08 LIVE_DEMOTED recheck is moot. **New cell `sw_flow/0-5` needs a paired read (served vs error_l5_nbm) after a few sw_flow days.**
 - Collector 17:37Z tick: 9 tables ← GCS (chp gate loads lazily, not hit that tick), RSS +409 MiB, clean.
+- Schedule confirmed with Joe: stays 04:30 ET daily. Reference note: [[project_cloud_refitter]]. Rule: [[feedback_self_refit_tables_run_in_cloud]].
+
+## End of 10-07 — carry forward (supersedes the list above)
+1. **10-08 morning:** `runtime_tables/_status.json` shows the 04:30 ET run with all 10 published and `last_run_ok` True; collector log shows `← GCS` lines with the new stamps (chp gate once a tick reaches it).
+2. Backstamp appender caught up to the current date? HWM last seen 10-05T04:07 at offset 510,473,670. Then check whether the live/backstamped overlap (dup bug above) grew now that the appender runs past 09-24. The dedup fix is still Joe's call.
+3. Collector RSS on the first ticks (+409..+536 MiB).
+4. New learned cell `sr/sw_flow/0-5`: paired read (served vs `error_l5_nbm`) after a few sw_flow days. v0.7.27 effect: `nw_flow/24-47` rows stamp `band_pool`.
+5. `l1_selector_override_walkforward` daily read (day 2 on 10-08). The selector is now refit daily in the cloud, so the "daily refresh vs deploy-frozen" question is settled. The 7d override question is still open.
+6. Prune the backstamp file (append-only, grows forever).
+7. Carried: chp recheck ~10-08/09; 10-13 re-review of TEMPORARY nor_easter skips (wd v0.7.24, sr v0.7.11); cc Stage 0; applicability-map registration; `tests/test_layer_tuple_sanity.py` (2 failures); wg calm 24-47 audit gap.

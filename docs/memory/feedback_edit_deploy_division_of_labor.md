@@ -26,4 +26,6 @@ metadata:
 
 **How to apply:** On any ship, Claude does the edits inline. On a collector ship, stop after `make deploy-collector` and wait for the tick + Joe's verification signal before touching index.html / changelog / build / push. If Joe types "you do it" or similar, that's the default — not an exception.
 
+**Update 10-07:** Joe asked Claude to run deploys itself ("can't you do it all?"). Claude now runs `make deploy-collector` / `deploy-refitter` / publisher deploys, the tick verify, commit and plain `git push`. The order is unchanged: deploy → tick → verify → bump/commit/push.
+
 Related: [[feedback_deploy_sequence]], [[feedback_verify_completeness_claims]], CLAUDE.md rule 8.
