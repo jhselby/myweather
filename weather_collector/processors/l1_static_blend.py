@@ -155,16 +155,33 @@ def covered_cells(field):
 
 
 def describe_applicability():
-    return {
-        "enabled": ENABLED,
-        "n_applied_cells": sum(len(c) for c in APPLIED_CELLS.values()),
-        "fields": {
-            f: {
-                "omega": _OMEGA_BY_FIELD[f],
-                "n_cells": len(_COVERED_CELLS_BY_FIELD[f]),
-                "cells": sorted(list(_COVERED_CELLS_BY_FIELD[f])),
-                "applied_cells": sorted(list(APPLIED_CELLS.get(f, frozenset()))),
-            }
-            for f in _OMEGA_BY_FIELD
-        },
-    }
+    """Applicability descriptor for L1b (L1 static blender). Returns a list of
+    layer dicts matching applicability_map_schema.json; one per-field entry
+    per curated field."""
+    fields = []
+    for f in sorted(_OMEGA_BY_FIELD):
+        covered = sorted(_COVERED_CELLS_BY_FIELD.get(f, frozenset()))
+        applied = sorted(APPLIED_CELLS.get(f, frozenset())) if ENABLED else []
+        fmt = lambda cells: ", ".join(f"{r}/{b}" for r, b in cells) or "none"
+        fields.append({
+            "field": f,
+            "fires_when": (
+                f"ENABLED AND (regime, lead band) in APPLIED_CELLS[{f!r}]: serves "
+                f"ω·raw_l1 + (1−ω)·raw_nbm with ω={_OMEGA_BY_FIELD[f]}, bypassing L2/L3/L4"
+            ),
+            "gated_by": "ENABLED + APPLIED_CELLS",
+            "current_state": (
+                f"Applied on {len(applied)} of {len(covered)} curated cells ({fmt(applied)}); "
+                f"the rest stamp {f}_l1_blend_shadow only."
+                if ENABLED else
+                f"ENABLED False; all {len(covered)} curated cells stamp {f}_l1_blend_shadow only."
+            ),
+        })
+    return [
+        {
+            "layer_id": "L1b",
+            "name": "L1 static blender (HRRR/NBM raw blend)",
+            "category": "general-purpose",
+            "fields": fields,
+        }
+    ]

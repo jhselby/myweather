@@ -46,3 +46,8 @@ metadata:
 ## `tests/test_layer_tuple_sanity.py`: FIXED (test-only, both failures were stale test)
 - Tuple test: extractor capped layer names at 5 chars, so the error-log tuple (with `raw_nbm`, `l2_nbm`…) was never found. Now ≤7 chars, and the comparison ignores `nws` + `*_nbm` (not in the HRRR applied_layer walk).
 - Guard test: `l1r` exempted. It holds the selector's live output (forecast_snapshot writes corrected/live arrays), not a shadow array, so there is no ENABLED flag to guard.
+
+## Shipped: v0.7.34 — blender on the applicability map
+- `l1_static_blend.describe_applicability()` returned a dict (not the schema's list of layer entries) and was never imported. Rewritten to the schema (`layer_id` "L1b", one entry per curated field: ω, covered vs applied cells) and registered first in `collector.py`'s descriptor loop.
+- Collector deployed by Claude (11:27Z; `make deploy-collector` is allowed, `deploy-refitter` is not). The 11:27 tick started before the revision went active, so it ran old code. 11:37 tick clean (cold start +426 MiB), live map 21 layers with L1b: h applied 2/10 (nw_flow/24-47, sw_flow/24-47), dp 0/10.
+- Headless Chrome `--dump-dom` on localhost doesn't load the weather JSON, so it can't check the map visually. Renderer unchanged; Joe to eyeball Section D.

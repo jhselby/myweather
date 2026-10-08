@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.34 • October 8, 2026 (blender on the applicability map; stale layer-tuple test fixed)</strong></summary>
+
+- **The L1 static blender now appears on the debug page's applicability map** as `L1b`. It had a descriptor since v0.7.6, but the collector never called it, and it returned a different shape from every other layer. It now lists, per field, ω, the curated cells, and the cells that apply live (h: `nw_flow/24-47`, `sw_flow/24-47`; dp: none).
+- `tests/test_layer_tuple_sanity.py` passes again. The test, not the collector, was stale: it couldn't read layer names longer than 5 characters (the NBM columns), and it wanted an on/off guard on `l1r`, which holds the selector's live output and has no switch.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.33 • October 8, 2026 (sr learned selector: nw_flow/12-23 demoted)</strong></summary>
 
 - **The sr learned-selector cell `nw_flow/12-23` is pulled from runtime.** On its own live rows it served −44.2% worse than the band pool would have on the same rows (n=207; lost 10-03 and 10-06). The 10-07 cloud fit dropped it and the 10-08 04:30 fit re-added it, because the fitter's baseline is the classifier's own pick and can't see a live loss. Added to `LIVE_DEMOTED` beside `nw_flow/24-47` (v0.7.27), so the daily refit can't bring it back.
