@@ -32,7 +32,7 @@ metadata:
 - First read (14 run days 09-24..10-07, halves at 10-01): override **−1.3%** vs 30d-only (halves −0.2/−3.5; mostly cc +11.0 vs +2.9 and t +2.3 vs −0.5; helps h −0.5 vs −2.1); daily refresh **+0.6%** vs deploy-frozen; 14d-stale table **−1.8%** vs daily (sr −17.3%, dp −6.5%); best `daily_30d` +1.8% (halves +0.3/+3.9). **All FLAT** under the both-halves ≥1% rule. Frozen policies use partial 30d windows until 10-08 (log starts 08-25).
 - **Joe's requirement (10-07):** whatever change comes out of this must run automatically in the cloud — no runtime behavior may depend on the digest being run. A move to daily refit means a cloud-scheduled fit (the collector is already ~545 MiB RSS, so probably not inside the collector), with the bundled table as fallback. Decide only after the tool's verdict holds over ~7 daily reads.
 
-## Pair-log duplicate rows (found, NOT fixed)
+## Pair-log duplicate rows (found; FIXED same day in v0.7.28, see carry-forward)
 - Live `forecast_error_log.jsonl` (obs from 09-06) and `forecast_error_log_backstamped.jsonl` (obs 08-25..09-24) overlap: **184,475 exact duplicate rows** on (field, run_time, lead_h) (t sample: 11,409 identical, 0 differ). `_cache.pair_log_paths()` docstring claims the corpora are disjoint; false since the 09-24 backstamp append ([[project_backstamp_stale_09_24]]).
 - **18 analysis scripts** stream both files without dedup, including `l1_selector_fit.py` (writes the shipped selector table): 09-07..09-24 counts twice in its current 30d window. Proposed fix (one place): dedup in `_cache` (e.g. filter the cached backstamped copy to rows with obs_time before the live log's first obs_time). Ages out on its own around 10-24.
 
@@ -42,7 +42,7 @@ No SHIP-ELIGIBLE, no new kills. L4 walkforward now wants add h,sr (dp dropped; s
 ## Carry forward
 1. **10-08:** sr nw_flow/12-23 paired recheck (drop via `LIVE_DEMOTED` if still negative); v0.7.27 effect (band_pool on nw_flow/24-47).
 2. Read `l1_selector_override_walkforward` daily; no selector change until ~7 consistent reads; any change must be cloud-automatic.
-3. Pair-log dedup fix (above) — Joe to decide.
+3. ~~Pair-log dedup fix~~ — done in v0.7.28 (`3ccff999`).
 4. Carried from 10-06: chp recheck ~10-08/09; 10-13 TEMPORARY nor_easter re-reviews (wd v0.7.24 untested, sr v0.7.11); cc Stage 0 day 4+; applicability-map registration; `tests/test_layer_tuple_sanity.py`; wg calm 24-47 audit gap.
 
 Related: [[project_10_06_session]] · [[project_selector_recency_override_watch]] · [[feedback_tau_suspect_can_be_selector_artifact]]
@@ -66,7 +66,7 @@ Related: [[project_10_06_session]] · [[project_selector_recency_override_watch]
 
 ## End of 10-07 — carry forward (supersedes the list above)
 1. **10-08 morning:** `runtime_tables/_status.json` shows the 04:30 ET run with all 10 published and `last_run_ok` True; collector log shows `← GCS` lines with the new stamps (chp gate once a tick reaches it).
-2. Backstamp appender caught up to the current date? HWM last seen 10-05T04:07 at offset 510,473,670. Then check whether the live/backstamped overlap (dup bug above) grew now that the appender runs past 09-24. The dedup fix is still Joe's call.
+2. Backstamp appender caught up to the current date? HWM last seen 10-05T04:07 at offset 510,473,670. (The pair-log dup bug above is FIXED in v0.7.28 / `3ccff999`: `_cache.pair_log_paths()` drops backstamped rows at or after the live log's first obs_time, and all 18 fitters use it. So the appender extending the overlap does not double-count.)
 3. Collector RSS on the first ticks (+409..+536 MiB).
 4. New learned cell `sr/sw_flow/0-5`: paired read (served vs `error_l5_nbm`) after a few sw_flow days. v0.7.27 effect: `nw_flow/24-47` rows stamp `band_pool`.
 5. `l1_selector_override_walkforward` daily read (day 2 on 10-08). The selector is now refit daily in the cloud, so the "daily refresh vs deploy-frozen" question is settled. The 7d override question is still open.

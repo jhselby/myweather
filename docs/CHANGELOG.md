@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.31 • October 7, 2026 (debug page sweep — refitter day)</strong></summary>
+
+- **Recent activity rotated.** Added 10-07 (today: v0.7.27–v0.7.30). Demoted 10-06 → 1 day ago, 10-05 → 2 days ago. Trimmed 10-04 to `display:none`.
+- **What's running:** new line for the daily cloud refit (10 tables, 04:30 ET) and the rule that ship-decision tables stay in the repo. The Lc recent-bias gate blurb no longer says a deploy carries its tables, and now notes that `fields_cleared` has been `[]` since at least 09-13, so the gate suppresses nothing.
+- **Upcoming:** added the 10-08 refitter first-scheduled-run check, backstamp appender catch-up + prune, and the new learned sr cell `sw_flow/0-5` paired read. Rewrote the h/t τ-suspect row with the 10-07 finding (selector 7d recency override, not τ). The v0.7.24 row now shows `se_flow/24-47` confirmed and nor_easter untested. The chp row has the first cloud gate fit.
+- **Found in the sweep: the sr sea-breeze override is applying a HOLD fit.** The current `sr_sea_breeze_lsr_curated` fit (Mac digest and cloud agree) has 0 hourly cells and verdict HOLD (pooled test −0.66%). The processor ignores both keys, so it applies the overall +87 W/m² at every sea_breeze hour with cc < 25. Listed under Upcoming as a decision; no code change.
+- **Post-ship watches:** added v0.7.28–v0.7.30 cloud refitter (first-run numbers, rollback path). The v0.7.15 sr learned watch notes the new cell set.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.30 • October 7, 2026 (refitter: every self-refitting live table moves to the cloud; churning cell sets become ship decisions)</strong></summary>
 
 - **Seven more live tables refit daily in the cloud** and load through `runtime_tables` (GCS copy, else last good, else bundled), so none of them depends on the Mac digest or a deploy any more:
