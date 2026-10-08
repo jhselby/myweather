@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.33 • October 8, 2026 (sr learned selector: nw_flow/12-23 demoted)</strong></summary>
+
+- **The sr learned-selector cell `nw_flow/12-23` is pulled from runtime.** On its own live rows it served −44.2% worse than the band pool would have on the same rows (n=207; lost 10-03 and 10-06). The 10-07 cloud fit dropped it and the 10-08 04:30 fit re-added it, because the fitter's baseline is the classifier's own pick and can't see a live loss. Added to `LIVE_DEMOTED` beside `nw_flow/24-47` (v0.7.27), so the daily refit can't bring it back.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.32 • October 7, 2026 (sr sea-breeze override follows its own refit verdict)</strong></summary>
 
 - **The sr sea-breeze override now applies only when its latest refit says PROMOTE.** Since v0.7.30 the table refits daily in the cloud, and the current fit is HOLD: no hour has the 15 clear-sky training rows it needs, so there are 0 hourly cells, and the pooled test is −0.66% (n=202). The processor ignored the verdict and applied the overall +87 W/m² at every clear sea_breeze hour. Now it is off on any verdict other than PROMOTE (the same gate as the 08-05 flip). Would-have-fired leads are logged as skips, and the override re-arms on its own when a refit says PROMOTE. `ENABLED` stays the master switch.

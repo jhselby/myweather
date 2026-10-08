@@ -68,8 +68,12 @@ MIN_N_TEST = 150
 #   sr/nw_flow/24-47 — v0.7.27, 2026-10-07: 7d paired learned vs band_pool
 #     counterfactual (error_l5_nbm, same rows) 38.45 vs 31.65, −21.5%, n=193;
 #     lost 10-05 and 10-06 (95.7 vs 67.1, 92.2 vs 68.1). Second negative read.
+#   sr/nw_flow/12-23 — v0.7.33, 2026-10-08: same paired read, −44.2%, n=207
+#     (10-03 24.1 vs 21.3, 10-06 76.0 vs 48.3). Dropped by the 10-07 cloud fit,
+#     re-added by the 10-08 04:30 fit.
 LIVE_DEMOTED = {
     ("sr", "nw_flow", "24-47"),
+    ("sr", "nw_flow", "12-23"),
 }
 
 
