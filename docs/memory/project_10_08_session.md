@@ -63,3 +63,11 @@ metadata:
 - `forecast_snapshot` stamps `entry["regime_runtime"]` = the per-hour pre-swap regime the selector / learned / blender lookups used; `forecast_error_log` copies it to `state_fc.regime_runtime`. `regime_synoptic` unchanged. Other runtime lookups (chp, NBM gate telemetry) key on the current-tick regime `_wdp_state_curr`, not this.
 - Collector deployed 19:28Z; 19:37 tick clean, snapshot 48/48 hours carry it. Pair-log rows carry it from the first obs joined to a post-deploy snapshot (~20:07Z 10-08).
 - **Next (separate ships, one per fitter):** move the fitters for the selector by-regime walker, the learned classifier (v5 + curate) and the blender onto `regime_runtime`. History before 10-08 19:37 lacks the key; the rebuild in `analysis/regime_runtime_rebuild_check.py` can backfill it exactly (0.0% error on unrouted rows) if a fitter needs the window now.
+
+## End of 10-08 — carry forward to 10-09
+1. Refitter 04:30 ET: `_status.json` all 10 published; learned sr cells should stay `pre_frontal/24-47` + `se_flow/12-23` (LIVE_DEMOTED holds nw_flow/12-23, /24-47).
+2. Pair log: rows from ~20:07Z 10-08 carry `state_fc.regime_runtime`. Confirm, then plan the first fitter move (selector by-regime walker, learned v5+curate, blender — one ship each, before/after read).
+3. v0.7.33 effect: sr rows in runtime-regime `nw_flow/12-23` stamp `band_pool` (key by regime_runtime, not regime_synoptic).
+4. Daily reads: t fire should be rolling off (~10-10); chp nw_flow/6-11 + pre_frontal/6-11 should clear the 7/7 gate on their own; cc Stage 0 day 4 (edge fading, last 4d +0.7%); override walkforward day 3.
+5. Joe: glance at debug page Section D for the new L1b entry (headless render couldn't check).
+6. Carried: 10-13 nor_easter skip re-review (wd v0.7.24, sr v0.7.11) + L4 add dp,h; sea-breeze verify on first sea_breeze tick; ~10-11 ch router re-read; ~10-24 backstamp prune (60d); wg calm/24-47 audit gap; stale Stage 2b gate.
