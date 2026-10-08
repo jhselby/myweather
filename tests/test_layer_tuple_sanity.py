@@ -47,7 +47,7 @@ def _extract_tuple_after_marker(src, marker):
         except Exception:
             continue
         # Must be a tuple of layer strings.
-        if not all(isinstance(v, str) and 1 <= len(v) <= 5 for v in values):
+        if not all(isinstance(v, str) and 1 <= len(v) <= 7 for v in values):
             continue
         if "l1" not in values:
             continue
@@ -70,8 +70,11 @@ def test_layer_tuples_match():
     error_log = _extract_error_log_tuple()
     assert snapshot is not None, "could not locate _derive_applied_layer walk tuple"
     assert error_log is not None, "could not locate forecast_error_log emit tuple"
+    # nws and the *_nbm columns are emitted for scoring but are not part of
+    # the HRRR-side applied_layer walk (NBM attribution is selector_source).
+    hrrr_log = {k for k in error_log if k != "nws" and not k.endswith("_nbm")}
     missing_in_log = set(snapshot) - set(error_log)
-    missing_in_snap = set(error_log) - set(snapshot)
+    missing_in_snap = hrrr_log - set(snapshot)
     assert not missing_in_log, (
         f"layers stamped by applied_layer but NOT emitted as error_/forecast_ "
         f"columns: {missing_in_log}. Add to forecast_error_log.py per-layer tuple."
@@ -93,7 +96,9 @@ def test_specialist_enabled_guards_present():
     test alongside."""
     src = (PROCESSORS / "forecast_snapshot.py").read_text()
     walk = _extract_snapshot_walk() or ()
-    specialists = [k for k in walk if k not in ("l1", "l2", "l3", "l4", "l5", "l6")]
+    # l1r is the selector's live output, not a dormant specialist with a
+    # shadow array, so it has no module ENABLED flag to guard on.
+    specialists = [k for k in walk if k not in ("l1", "l2", "l3", "l4", "l5", "l6", "l1r")]
     for sp in specialists:
         marker = f'lk == "{sp}"'
         assert marker in src, (

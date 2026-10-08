@@ -35,3 +35,14 @@ metadata:
 - Added to `LIVE_DEMOTED` in `analysis/l1_learned_selector_curate.py`. Joe deployed the refitter (rev `00004-naq`); Claude ran it at 10:55Z: 10/10 published, learned cells now `sr/pre_frontal/24-47` + `sr/se_flow/12-23`.
 - Auto-mode classifier blocks `make deploy-refitter` from Claude; `make run-refitter` is allowed. Don't batch a run with a deploy: on 10-08 the run went through on the old code while the deploy was refused.
 - Effect verify (next sw/nw daytime): sr rows in nw_flow/12-23 stamp `selector_mechanism = band_pool`.
+
+## Backstamp prune: NOT needed until ~10-24
+- The backstamped file is the only long history (obs from 08-25; live log starts 09-06). 15 tools read it directly, 13 with no window (all history), including the cloud sr learned fitter `l1_selector_per_obs_classifier_stage1_v5`. `nbm_skip_add_audit` / `nbm_skip_earning_audit` need a 50d window from it.
+- 694 MB at 44 days (~16 MB/day). Proposed retention 60d (50d audits + margin), implemented in the publisher's appender. Joe agreed to defer; revisit ~10-24.
+
+## `pa` WATCH +598.7%: CLOSED, artifact
+- 10-08 anomaly_detector: pa CLEAN (baseline MAE 0.03 in, recent 0.00, −96.4%). The earlier +598.7% was a near-zero dry baseline vs the rainy 09-30..10-02 window. Percent change on a hundredths-of-an-inch base tracks rain/no-rain, not skill. No action.
+
+## `tests/test_layer_tuple_sanity.py`: FIXED (test-only, both failures were stale test)
+- Tuple test: extractor capped layer names at 5 chars, so the error-log tuple (with `raw_nbm`, `l2_nbm`…) was never found. Now ≤7 chars, and the comparison ignores `nws` + `*_nbm` (not in the HRRR applied_layer walk).
+- Guard test: `l1r` exempted. It holds the selector's live output (forecast_snapshot writes corrected/live arrays), not a shadow array, so there is no ENABLED flag to guard.
