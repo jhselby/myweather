@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.38a • October 9, 2026 (debug page: v0.7.36 live result)</strong></summary>
+
+- Refitter rev 00005-qez deployed by Joe and run 13:44Z, all 10 tables published. Live sr learned cells are `ne_flow/12-23` + `se_flow/12-23`; `pre_frontal/24-47` fell out of this fit (its A half held out at +9.6% vs +24.0% on the 07:37 data, failing the held-out ≥ ½ train-lift check). Page text updated to match.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.38 • October 9, 2026 (debug page sweep)</strong></summary>
 
 - **Recent activity:** 10-09 and 10-08 added; 10-06 and 10-05 trimmed.
