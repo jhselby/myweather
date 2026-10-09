@@ -96,6 +96,74 @@ def pair_log_paths():
     return [live, _backstamp_before_live(live, cached_path(PAIR_LOG_BACKSTAMP_URL))]
 
 
+# Pre-swap value = deepest applied HRRR-side layer (the selector classifies
+# from `entry[f]` after the HRRR cascade, before swapping NBM in).
+# `forecast_l1r` holds it when present.
+_RR_FIELDS = ("wd", "ws", "t", "cc")
+_RR_HRRR_KEYS = ("forecast_l1r", "forecast_l6", "forecast_l5", "forecast_l4",
+                 "forecast_l3", "forecast_l2", "forecast_l1")
+
+
+class RegimeRuntime:
+    """Per-row regime the runtime selector / learned classifier / blender
+    looked cells up by (v0.7.35 `state_fc.regime_runtime`).
+
+    `state_fc.regime_synoptic` is reclassified from the post-swap entry and
+    disagrees with the runtime label on ~20% of routed hours (10-08). Rows
+    written before 10-08 19:37 lack `regime_runtime`; for those, rebuild it
+    from the pre-swap HRRR-side wd/ws/t/cc of the same (run_time,
+    valid_time). Rebuild matched the stamped label on 130/130 routed t rows
+    (10-09) and the runtime label on every unrouted row (10-08).
+
+    Use: call observe(r) on every row of the pass (wd/ws/t/cc rows must be
+    seen), then get(r) per row. `counts` reports stamped / rebuilt /
+    fallback_synoptic so a fitter can print how its labels were sourced.
+    """
+
+    def __init__(self):
+        self._pre = {}
+        self.counts = {"stamped": 0, "rebuilt": 0, "fallback_synoptic": 0}
+        self._cls = None
+
+    def observe(self, r):
+        f = r.get("field")
+        if f not in _RR_FIELDS:
+            return
+        for k in _RR_HRRR_KEYS:
+            v = r.get(k)
+            if v is not None:
+                self._pre.setdefault((r.get("run_time"), r.get("valid_time")), {})[f] = v
+                return
+
+    def get(self, r):
+        sfc = r.get("state_fc") or {}
+        rt = sfc.get("regime_runtime")
+        if rt:
+            self.counts["stamped"] += 1
+            return rt
+        vt = r.get("valid_time") or ""
+        p = self._pre.get((r.get("run_time"), vt))
+        if p and len(p) == len(_RR_FIELDS) and len(vt) >= 13:
+            if self._cls is None:
+                import sys
+                root = str(Path(__file__).resolve().parent.parent)
+                if root not in sys.path:
+                    sys.path.insert(0, root)
+                from weather_collector.processors.regime_classifier import classify_synoptic_regime
+                self._cls = classify_synoptic_regime
+            try:
+                reg = self._cls(p["wd"], p["ws"], sfc.get("pressure_in"),
+                                sfc.get("pressure_trend_hpa_3h"), int(vt[11:13]),
+                                p["t"], cloud_cover=p["cc"])
+            except Exception:
+                reg = None
+            if reg:
+                self.counts["rebuilt"] += 1
+                return reg
+        self.counts["fallback_synoptic"] += 1
+        return sfc.get("regime_synoptic")
+
+
 def _first_obs_time(path):
     """obs_time of the first row. The live log is append-ordered and
     retention-pruned from the front, so its first row is its oldest."""

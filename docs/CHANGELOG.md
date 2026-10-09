@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.36 • October 9, 2026 (learned selector trains on the regime the runtime looks up)</strong></summary>
+
+- **The learned-selector fitters (v5 for sr, v2 for t) now bucket rows by `regime_runtime`**, the regime the runtime uses to look up a learned cell, instead of the pair log's post-swap `regime_synoptic`. New shared helper `analysis/_cache.RegimeRuntime`: stamped label when present (v0.7.35+), otherwise rebuilt from the same run's pre-swap HRRR wd/ws/t/cc. The rebuild matched the stamped label on 130/130 routed t rows. On today's backstamped log: 960 stamped, 394,840 rebuilt, 5,601 (1.4%) fall back to `regime_synoptic`.
+- Before/after on the same data: sr learned cells go from `pre_frontal/24-47` + `se_flow/12-23` to those two plus **`ne_flow/12-23`** (halves +6.0% / +17.9%, n=1,565). The demoted `nw_flow` cells stay demoted. t (v2) is HOLD both ways.
+- Takes effect at the next cloud refit after the refitter is redeployed. No collector change.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.35a • October 9, 2026 (debug page: applicability map in cascade order; blender tile moved to L1)</strong></summary>
 
 - **Applicability map now reads in cascade order:** L1b → L2 → L3 … specialists → L2_NBM → L3_NBM … → C1 last. The hand-curated L2 and L2_NBM blocks were static HTML above the generated list, so L2 showed before L1b and L2_NBM sat far from the rest of the NBM cascade.

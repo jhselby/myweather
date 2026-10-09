@@ -40,7 +40,7 @@ import os, sys, json, math
 from collections import defaultdict
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path
+from _cache import cached_path, RegimeRuntime
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
 FIELD = sys.argv[1] if len(sys.argv) > 1 else "t"
@@ -74,11 +74,17 @@ def lead_band(lead_h):
     return None
 
 
+# Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+# before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+RR = RegimeRuntime()
+
+
 def load_pair_log():
     with open(cached_path(PAIR_URL), "rb") as fh:
         for raw in fh:
             try: r = json.loads(raw)
             except Exception: continue
+            RR.observe(r)
             if r.get("field") != FIELD: continue
             yield r
 
@@ -107,7 +113,7 @@ def build_features(rows_raw, vt_spread):
         if None in (fc_l1, fc_nbm_raw, err_l4, err_l3_nbm): continue
         sfc = r.get("state_fc") or {}
         sob = r.get("state_obs") or {}
-        regime = sfc.get("regime_synoptic")
+        regime = RR.get(r)
         if not regime: continue
         # cc_disagree dropped 09-21: state_obs.cloud_cover is only available
         # AFTER valid_time (post-hoc). Live picker cannot use it. cc_inter_sigma
@@ -211,7 +217,7 @@ by_cell = defaultdict(list)
 for row in build_features(rows_raw, vt_spread):
     by_cell[(row["regime"], row["band"])].append(row)
 
-print(f"  {len(by_cell)} (regime, band) cells\n")
+print(f"  {len(by_cell)} (regime, band) cells; regime_runtime labels: {RR.counts}\n")
 
 print("=" * 132)
 print(f"l1_selector_per_obs_classifier_stage1_v2b — logistic on {len(FEATURE_NAMES)} features, field={FIELD}, L2={L2_LAMBDA}")

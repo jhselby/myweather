@@ -36,7 +36,7 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path
+from _cache import cached_path, RegimeRuntime
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
 
@@ -86,19 +86,27 @@ def hour_local(obs_time):
 
 
 def load_rows_by_field():
-    """Single pass over the pair-log. Bucket rows by field."""
+    """Single pass over the pair-log. Bucket rows by field. Each row gets
+    `_regime_runtime`, the regime the runtime looked its cell up by
+    (stamped since v0.7.35, rebuilt before; see _cache.RegimeRuntime)."""
     by_field = defaultdict(list)
     fc_by_vt_field = defaultdict(lambda: defaultdict(list))
+    rr = RegimeRuntime()
     with open(cached_path(PAIR_URL), "rb") as fh:
         for raw in fh:
             try: r = json.loads(raw)
             except Exception: continue
+            rr.observe(r)
             field = r.get("field")
             if field not in FIELDS: continue
             vt = r.get("valid_time"); fc = r.get("forecast")
             if vt is not None and fc is not None:
                 fc_by_vt_field[field][vt].append(float(fc))
             by_field[field].append(r)
+    for rows in by_field.values():
+        for r in rows:
+            r["_regime_runtime"] = rr.get(r)
+    print(f"  regime_runtime labels: {rr.counts}")
     vt_spread_by_field = {
         f: {vt: max(fcs) - min(fcs) for vt, fcs in vtm.items() if len(fcs) >= 2}
         for f, vtm in fc_by_vt_field.items()
@@ -146,7 +154,7 @@ def build_features(rows_raw, vt_spread, drop=None):
         if err_nbm is None: drop["no_error_nbm_either"] += 1; continue
         if err_served is None: drop["no_error_served"] += 1; continue
         sfc = r.get("state_fc") or {}
-        regime = sfc.get("regime_synoptic")
+        regime = r.get("_regime_runtime") or sfc.get("regime_synoptic")
         if not regime: drop["no_regime"] += 1; continue
         cc_sigma = float(r.get("cloud_inter_source_sigma") or 0.0)
         p_trend = float(sfc.get("pressure_trend_hpa_3h") or 0.0)
