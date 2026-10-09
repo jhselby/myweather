@@ -37,7 +37,7 @@ metadata:
 - L4 walkforward proposal is now add `sr` (2/7); dp,h dropped out 10-07.
 
 ## Carry-forward to 10-10 (in order)
-1. **v0.7.36 refitter deploy** — if Joe has run `make deploy-refitter`, run `make run-refitter` (allowed for Claude; deploy is not) and check `_status.json`: learned cells `sr/ne_flow/12-23`, `sr/pre_frontal/24-47`, `sr/se_flow/12-23`. Also check the 04:30 scheduled run.
+1. **v0.7.36 is LIVE** — Joe deployed refitter rev `00005-qez`; Claude ran it 13:44Z 10-09, 10/10 published. Learned cells `sr/ne_flow/12-23` + `sr/se_flow/12-23`. `pre_frontal/24-47` DROPPED (cloud log: A half held-out +9.63% vs B +20.92%, verdict one-window — fails held-out ≥ 0.5×train-lift; local 07:37 run had A +24.01%). Not yet separated: label change vs ~6h newer data. Check: refresh the backstamped cache, run HEAD~ (pre-v0.7.36) and current v5 on the same file, compare the cell. Also read the 04:30 10-10 fit's cell set. Cloud label counts: 1,224 stamped / 395,312 rebuilt / 5,624 fallback.
 2. **regime_runtime migration, next ship:** selector by-regime walker (`l1_selector_by_regime_walker`, a cloud table) onto `_cache.RegimeRuntime` with before/after; then blender fitter + `l1_static_blend_shadow_verify`; then wdp. One ship each. Then scope the learned-feature mismatch (fitter post-swap `state_fc` vs runtime raw `hourly`).
 3. Daily reads: t/production@12-23h should be gone (~10-10); cc Stage 0 (edge reversed, stalled); override walkforward day 4; wdp calm/12-23 all-rows lift; chp `pre_frontal/6-11` should hit 7/7 and gate off.
 4. Effect verifies waiting on weather: v0.7.33 (sr runtime `nw_flow/12-23` → `band_pool`), v0.7.36 `ne_flow/12-23` paired read after a few ne_flow days.
