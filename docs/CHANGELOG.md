@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.37 • October 9, 2026 (Stage 2b regime-Lc stability gate retired)</strong></summary>
+
+- **`walkforward_lc_regime_ship_stability` retired to `.skip.py`.** v0.6.592 (September 12) retired `walkforward_lc_regime` for reading FLAT for weeks, but missed this companion, which kept re-parsing the frozen September 12 output and printing "READY, 16 cells" every day. That line carried no information for four weeks. If regime-Lc comes back, un-park the walkforward for a fresh read.
+- Debug page: the "Stage 2b — decide" open item is removed.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.36 • October 9, 2026 (learned selector trains on the regime the runtime looks up)</strong></summary>
 
 - **The learned-selector fitters (v5 for sr, v2 for t) now bucket rows by `regime_runtime`**, the regime the runtime uses to look up a learned cell, instead of the pair log's post-swap `regime_synoptic`. New shared helper `analysis/_cache.RegimeRuntime`: stamped label when present (v0.7.35+), otherwise rebuilt from the same run's pre-swap HRRR wd/ws/t/cc. The rebuild matched the stamped label on 130/130 routed t rows. On today's backstamped log: 960 stamped, 394,840 rebuilt, 5,601 (1.4%) fall back to `regime_synoptic`.
