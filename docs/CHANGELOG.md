@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.38 • October 9, 2026 (debug page sweep)</strong></summary>
+
+- **Recent activity:** 10-09 and 10-08 added; 10-06 and 10-05 trimmed.
+- **What's running:** new L1 entry (selector, learned sr cells, blender, `regime_runtime`); chp and wdp entries rewritten for the cloud gate and the frozen one-cell wdp set; the frozen production-vs-raw percentages removed in favor of the live tables.
+- **Upcoming:** refitter and backstamp rows closed or moved to ~10-24; new rows for the v0.7.36 verify, the `regime_runtime` fitter migration, wdp `calm/12-23`, dp blender cells and the chp gate; L4 proposal now `sr`; the cc Stage 0 candidate marked stalled (edge reversed 10-09).
+- **Post-ship watches:** v0.7.33–v0.7.36 added; nine concluded or superseded watches (v0.7.7–v0.7.16, the sr nor_easter watch) archived.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.37 • October 9, 2026 (Stage 2b regime-Lc stability gate retired)</strong></summary>
 
 - **`walkforward_lc_regime_ship_stability` retired to `.skip.py`.** v0.6.592 (September 12) retired `walkforward_lc_regime` for reading FLAT for weeks, but missed this companion, which kept re-parsing the frozen September 12 output and printing "READY, 16 cells" every day. That line carried no information for four weeks. If regime-Lc comes back, un-park the walkforward for a fresh read.
