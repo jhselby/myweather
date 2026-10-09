@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.35a • October 9, 2026 (debug page: applicability map in cascade order; blender tile moved to L1)</strong></summary>
+
+- **Applicability map now reads in cascade order:** L1b → L2 → L3 … specialists → L2_NBM → L3_NBM … → C1 last. The hand-curated L2 and L2_NBM blocks were static HTML above the generated list, so L2 showed before L1b and L2_NBM sat far from the rest of the NBM cascade.
+- **The L1 blender status tile moved from the Applicability map to the L1 section,** after the selector. Its badge said "shadow only"; h has been applied in `APPLIED_CELLS` since v0.7.20.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.35 • October 8, 2026 (pair log records the regime the selector actually used)</strong></summary>
 
 - **New pair-log key `state_fc.regime_runtime`.** The selector, learned classifier and blender look cells up by a per-hour regime computed before the selector swaps NBM values into t/ws/wd/cc. The pair log's `regime_synoptic` is recomputed after the swap, so on hours where any of those four is routed to NBM it disagrees 20.4% of the time (n=8,921; 0.0% when none is routed, n=519). Fitters for those tables have been training and scoring about 1 in 5 routed rows in the wrong cell. This ship only records the new key; nothing served changes. Moving each fitter onto it is a separate ship.
