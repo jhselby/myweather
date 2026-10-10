@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.41 • October 10, 2026 (by-regime fitters: nor_easter + stagnant_high)</strong></summary>
+
+- `l1_selector_fit_by_regime` and `l1_selector_fit_3way` now fit `nor_easter` and `stagnant_high` as their own regimes. Both come out of the runtime classifier but were folded into `unknown`, which the selector never looks up, so neither could earn an override.
+- First fit flags `t/stagnant_high/0-5` (NBM), `sr/stagnant_high/24-47` (HRRR), and NWS on `dp/stagnant_high/24-47`, `ws/nor_easter/12-23`, `ws/nor_easter/24-47`, `pp/nor_easter/12-23`. They go live only after the walker's 3-day gate.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.40 • October 10, 2026 (selector by-regime overrides fit on regime_runtime)</strong></summary>
 
 - `l1_selector_fit_by_regime` and `l1_selector_fit_3way` (the refitter's by-regime walker inputs) now label rows with `_cache.RegimeRuntime`, the regime the runtime selector looks overrides up by, instead of `regime_synoptic`.

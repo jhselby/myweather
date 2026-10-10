@@ -49,7 +49,7 @@ from analysis._cache import pair_log_paths, RegimeRuntime
 NWS_FIELDS = ("t", "wd", "ws", "dp", "pp")
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
 REGIMES = ["nw_flow", "se_flow", "sw_flow", "pre_frontal", "sea_breeze",
-           "ne_flow", "calm", "frontal", "unknown"]
+           "ne_flow", "calm", "frontal", "nor_easter", "stagnant_high", "unknown"]
 WINDOW_DAYS = 30
 MIN_N       = 60
 MIN_LIFT_PCT = 3.0  # NWS advantage over best-of-HRRR-NBM

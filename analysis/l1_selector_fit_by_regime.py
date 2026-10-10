@@ -36,7 +36,7 @@ from analysis.l1_selector_fit import (
 OUT_PATH = Path(__file__).resolve().parent / "l1_selector_by_regime_report.json"
 
 REGIMES = ["nw_flow", "se_flow", "sw_flow", "pre_frontal", "sea_breeze",
-           "ne_flow", "calm", "frontal", "unknown"]
+           "ne_flow", "calm", "frontal", "nor_easter", "stagnant_high", "unknown"]
 WINDOW_DAYS = 30
 MIN_N_REGIME = 60          # per (field, regime, band) cell
 MIN_LIFT_PCT_REGIME = 3.0  # same threshold as pooled
