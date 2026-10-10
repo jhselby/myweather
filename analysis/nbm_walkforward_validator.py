@@ -65,7 +65,9 @@ COMPARE = [
 ]
 
 LIVE_WHITELIST = {
-    "l3_nbm": set(LIVE_L3),
+    # wd rides the circular sin/cos branch (l3_nbm_wd_components), not the
+    # scalar L3_NBM_FIELDS tuple — without it every run proposes "ADD wd".
+    "l3_nbm": set(LIVE_L3) | {"wd"},
     "l4_nbm": set(LIVE_L4),
     "l5_nbm": set(LIVE_L5),
     "l6_nbm": set(LIVE_L6),

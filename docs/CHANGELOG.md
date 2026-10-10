@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.39 • October 10, 2026 (NBM walkforward: wd counted as live on l3_nbm)</strong></summary>
+
+- `nbm_walkforward_validator` built the live l3_nbm set from the scalar `L3_NBM_FIELDS` only, so wd (live through the circular `l3_nbm_wd_components` branch) showed as a daily "ADD wd" proposal. wd now counts as live; the divergence line reads `DROP wg` only. Analysis tool only, nothing deployed.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.38a • October 9, 2026 (debug page: v0.7.36 live result)</strong></summary>
 
 - Refitter rev 00005-qez deployed by Joe and run 13:44Z, all 10 tables published. Live sr learned cells are `ne_flow/12-23` + `se_flow/12-23`; `pre_frontal/24-47` fell out of this fit (its A half held out at +9.6% vs +24.0% on the 07:37 data, failing the held-out ≥ ½ train-lift check). Page text updated to match.
