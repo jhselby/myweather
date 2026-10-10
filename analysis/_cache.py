@@ -116,7 +116,9 @@ class RegimeRuntime:
     (10-09) and the runtime label on every unrouted row (10-08).
 
     Use: call observe(r) on every row of the pass (wd/ws/t/cc rows must be
-    seen), then get(r) per row. `counts` reports stamped / rebuilt /
+    seen), then get(r) per row. The live log writes wd near the end of each
+    tick, so a streaming consumer of pair_log_paths() must prime(paths)
+    first; otherwise every field ahead of wd falls back to synoptic. `counts` reports stamped / rebuilt /
     fallback_synoptic so a fitter can print how its labels were sourced.
     """
 
@@ -134,6 +136,21 @@ class RegimeRuntime:
             if v is not None:
                 self._pre.setdefault((r.get("run_time"), r.get("valid_time")), {})[f] = v
                 return
+
+    def prime(self, paths):
+        """Observe-only pass over `paths` so get() is independent of row order."""
+        import json
+        import re
+        pat = re.compile(rb'"field":\s*"(?:wd|ws|t|cc)"')
+        for p in paths:
+            with open(p, "rb") as fh:
+                for raw in fh:
+                    if not pat.search(raw):
+                        continue
+                    try:
+                        self.observe(json.loads(raw))
+                    except Exception:
+                        continue
 
     def get(self, r):
         sfc = r.get("state_fc") or {}

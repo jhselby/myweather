@@ -14,7 +14,7 @@ stay 2-way (unchanged).
 Method (per NWS-covered field × regime × lead-band):
   1. Load pair log within WINDOW_DAYS. Per row we need:
        error_l1 (HRRR side), error_raw_nbm, error_nws
-       state_fc.regime_synoptic
+       regime_runtime (_cache.RegimeRuntime: stamped, else rebuilt)
   2. Compute MAE per source over the 30d window.
   3. Halves-stability: split chronologically at window midpoint. NWS is
      "3-way OPTIMAL" only if NWS beats min(HRRR, NBM) in BOTH halves.
@@ -44,7 +44,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import pair_log_paths
+from analysis._cache import pair_log_paths, RegimeRuntime
 
 NWS_FIELDS = ("t", "wd", "ws", "dp", "pp")
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
@@ -129,6 +129,10 @@ def fit():
     # (field, band) pooled — mirror of the by-regime fitter's pooled comparison
     pooled = defaultdict(_new_bucket)
 
+    # Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+    # before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime(pair_log_paths())
     n_in = n_use = 0
     for path in pair_log_paths():
         with open(path, "rb") as fh:
@@ -153,7 +157,7 @@ def fit():
                 e_n = r.get("error_raw_nbm")
                 e_w = r.get("error_nws")
                 if e_h is None or e_n is None or e_w is None: continue
-                sf = (r.get("state_fc") or {}).get("regime_synoptic") or "unknown"
+                sf = rr.get(r) or "unknown"
                 if sf not in REGIMES: sf = "unknown"
                 a_h = abs(float(e_h)); a_n = abs(float(e_n)); a_w = abs(float(e_w))
 
@@ -206,13 +210,14 @@ def fit():
         "min_n": MIN_N,
         "min_lift_pct": MIN_LIFT_PCT,
         "n_rows_used": n_use,
+        "regime_runtime_labels": rr.counts,
         "cells_cleared_for_wire_nws": [{"field": f, "regime": r, "band": b, **v} for f, r, b, v in nws_wire],
         "per_cell": per_cell,
         "pooled": pooled_view,
     }
     OUT_PATH.write_text(json.dumps(out, indent=2))
     print(f"wrote {OUT_PATH}")
-    print(f"rows used: {n_use:,} of {n_in:,}\n")
+    print(f"rows used: {n_use:,} of {n_in:,} · regime_runtime labels: {rr.counts}\n")
 
     # Stdout summary
     print(f"NWS-WIRE candidates (halves-stable, lift ≥ {MIN_LIFT_PCT}%):")

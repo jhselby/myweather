@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import pair_log_paths
+from analysis._cache import pair_log_paths, RegimeRuntime
 from analysis.l1_selector_fit import (
     FIELDS, BANDS, HRRR_LAYER_PRIORITY_BY_FIELD,
     _band_for, _hrrr_prod_error, _nbm_prod_error,
@@ -85,6 +85,10 @@ def fit():
     pooled = defaultdict(_new_bucket)   # key: (field, band)
     regime = defaultdict(_new_bucket)   # key: (field, regime, band)
 
+    # Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+    # before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime(pair_log_paths())
     n_in = n_kept = 0
     for path in pair_log_paths():
         with open(path) as fin:
@@ -106,8 +110,7 @@ def fit():
                 obs_time = row.get("obs_time", "")
                 if obs_time < window_start:
                     continue
-                state_fc = row.get("state_fc") or {}
-                reg = state_fc.get("regime_synoptic") or "unknown"
+                reg = rr.get(row) or "unknown"
                 if reg not in REGIMES:
                     reg = "unknown"
                 n_kept += 1
@@ -214,6 +217,7 @@ def fit():
         "pooled_min_lift_pct": POOLED_MIN_LIFT,
         "n_rows_scanned": n_in,
         "n_rows_kept":    n_kept,
+        "regime_runtime_labels": rr.counts,
         "n_masked_cells": len(masked_cells),
         "n_masked_cells_hrrr": len(masked_cells_hrrr),
         "masked_cells":   masked_cells,

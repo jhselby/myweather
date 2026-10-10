@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.40 • October 10, 2026 (selector by-regime overrides fit on regime_runtime)</strong></summary>
+
+- `l1_selector_fit_by_regime` and `l1_selector_fit_3way` (the refitter's by-regime walker inputs) now label rows with `_cache.RegimeRuntime`, the regime the runtime selector looks overrides up by, instead of `regime_synoptic`.
+- `RegimeRuntime.prime(paths)`: observe-only pre-pass. The live pair log writes wd near the end of each tick, so a single streaming pass fell back to synoptic on 64–87% of rows; primed, fallback is 0.3–1.2%.
+- Same-data before/after, cleared overrides 9 → 7: `dp/nw_flow/12-23` (nws), `dp/sw_flow/24-47` (hrrr), `t/calm/24-47` (hrrr), `ws/sw_flow/24-47` (nws) drop; `h/ne_flow/12-23` (nbm) and `h/sw_flow/0-5` (hrrr) added; `dp/sw_flow/12-23` hrrr → nws. Goes live with the refitter deploy.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.39 • October 10, 2026 (NBM walkforward: wd counted as live on l3_nbm)</strong></summary>
 
 - `nbm_walkforward_validator` built the live l3_nbm set from the scalar `L3_NBM_FIELDS` only, so wd (live through the circular `l3_nbm_wd_components` branch) showed as a daily "ADD wd" proposal. wd now counts as live; the divergence line reads `DROP wg` only. Analysis tool only, nothing deployed.
