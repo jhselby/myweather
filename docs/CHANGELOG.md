@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.45 • October 11, 2026 (ch router: drop ne_flow/12-23)</strong></summary>
+
+- Removed `ch/ne_flow/12-23` from `_IMS_SELECTOR_CELLS`; ch in that cell falls back to the pooled selector pick. 9 router cells remain.
+- Post-event re-read (obs 10-03..10-11, runtime regime labels, n=2,904): the cell lost to always-HRRR by 4.3% (n=204) and to the unchosen source by 20.8%. It also failed the 10-04 read. It picked NBM 83% of the time at ims < 4.5, where HRRR and NBM agree, so the pick carried no information.
+- All 10 cells: router +3.0% vs always-HRRR, +11.3% vs the unchosen source. `nw_flow/24-47` also loses (−18.3%, n=415) but on two weather days against one win; held for another week.
+- `scripts/ch_v075_live_verdict.py` scores the live cell set.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.44 • October 10, 2026 (learned selector: runtime features match training)</strong></summary>
 
 - Runtime `_build_learned_features` reads wd/ws/cl/sr from the snapshot entry (the source the fitters' `state_fc` uses) instead of the final hourly arrays (post-wdp, router, Lsr). For sr, last in the selector loop, entry wd/ws are already post-swap — an exact match to `state_fc`.

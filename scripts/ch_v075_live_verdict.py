@@ -28,7 +28,7 @@ from analysis._cache import cached_path, PAIR_LOG_URL
 from analysis._prod import prod_error
 
 CELLS = {
-    ("ne_flow", "0-5"), ("ne_flow", "12-23"), ("nw_flow", "24-47"),
+    ("ne_flow", "0-5"), ("nw_flow", "24-47"),
     ("pre_frontal", "0-5"), ("pre_frontal", "6-11"), ("pre_frontal", "12-23"),
     ("se_flow", "6-11"), ("se_flow", "12-23"), ("se_flow", "24-47"),
     ("sw_flow", "12-23"),
@@ -115,7 +115,7 @@ def verdict(m, halves):
 def ladder(rows, cells):
     """Where does the picked-source error turn into the user-visible error? Mean |error|
     at each layer, per pick side, plus which layer was actually applied."""
-    print("\nLAYER LADDER: mean |error| per layer (rows where that layer is present), 10 cells")
+    print("\nLAYER LADDER: mean |error| per layer (rows where that layer is present), live cells")
     for side, lyrs, flag in (("HRRR-picked", HRRR_LADDER, False), ("NBM-picked", NBM_LADDER, True)):
         sub = [r for r in rows if r["nbm_pick"] == flag and r["key"] in cells]
         if not sub:
@@ -180,7 +180,7 @@ def main():
     print("-" * len(hdr))
     if cell_rows:
         m = summarize(cell_rows)
-        print(f"{'ALL 10 CELLS':<22}{m['n']:>5}{100*m['nbm_frac']:>6.0f}{m['picked']:>8.2f}{m['other']:>8.2f}"
+        print(f"{'ALL LIVE CELLS':<22}{m['n']:>5}{100*m['nbm_frac']:>6.0f}{m['picked']:>8.2f}{m['other']:>8.2f}"
               f"{m['eh']:>8.2f}{m['en']:>8.2f}{m['es']:>8.2f}{m['e1']:>8.2f}{m['lift_other']:>+9.1f}%{m['lift_best']:>+8.1f}%{m['lift_l1']:>+8.1f}%")
     if off:
         keys = defaultdict(int)
