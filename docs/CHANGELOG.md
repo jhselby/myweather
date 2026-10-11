@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.43 • October 10, 2026 (wdp on regime_runtime: one regime label)</strong></summary>
+
+- New `state_stamp.runtime_regime_by_lead()` computes the per-lead runtime regime once per tick (after decay, before wdp) into `derived.regime_runtime_by_lead`. wdp, wdp_nbm, the selector and the blender all read it; it matched the snapshot's stamped `regime_runtime` on 48/48 leads of the 10-10 22:27 tick.
+- wdp previously keyed on `derived.state_fc_by_lead`: raw hourly arrays, no cloud cover, and `hourly["time"]` (the key is `times`), so it could never see `sea_breeze`.
+- `h_wd_persistence_gate_stage1/2` bucket by `RegimeRuntime`. Live cell `calm/12-23`: n 430 → 267, composed gate −18.0% → −22.7% vs L1, halves −45.3% / +33.6% (was −28.4% / +13.7%). Stage 2 still HOLD. The live wdp table is unchanged.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.42 • October 10, 2026 (blender tools on regime_runtime)</strong></summary>
 
 - `l1_blender_stage1`, `l1_blender_retro_score`, `l1_blender_shadow_verify` and `l1_static_blend_shadow_verify` now bucket rows by `_cache.RegimeRuntime` (primed), the regime the runtime blender looked its cell up by, instead of `regime_synoptic`.

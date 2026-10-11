@@ -153,3 +153,57 @@ def _classify_state_fc_by_lead(weather_data, pressure_trend_3h):
         except Exception:
             continue
     return out
+
+
+def _round_like_snapshot(field, val):
+    """forecast_snapshot._round_for for the classifier inputs. The selector's
+    regime is classified on the snapshot entry's rounded values; rounding the
+    same way keeps boundary cases on the same side."""
+    if val is None:
+        return None
+    try:
+        v = float(val)
+    except (TypeError, ValueError):
+        return None
+    if field == "pr":
+        return round(v, 3)
+    if field == "cc":
+        return round(max(0.0, min(100.0, v)))
+    if field == "wd":
+        return round(v)
+    return round(v, 1)
+
+
+def runtime_regime_by_lead(weather_data):
+    """Per-lead regime the selector, learned classifier, blender and wdp look
+    their cells up by (pair log: state_fc.regime_runtime). v0.7.43.
+
+    Classifies each lead on the L2 arrays forecast_snapshot records as
+    {f}_l2 — pre-wdp wind_direction, wind_speed/temperature/pressure/cloud
+    post-L2 — with the valid hour and the tick's 3h pressure trend. Must run
+    after decay_apply (writes the *_post_l2 arrays) and before
+    wd_persistence_gate (overwrites wind_direction). Writes
+    derived["regime_runtime_by_lead"] and returns it."""
+    from .ch_persistence_gate import _valid_hour_local
+    hourly = weather_data.get("hourly") or {}
+    derived = weather_data.setdefault("derived", {})
+    times = hourly.get("times") or []
+    src = {
+        "wd": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction")) or [],
+        "ws": hourly.get("wind_speed_post_l2") or [],
+        "pr": hourly.get("corrected_pressure_in_post_l2") or [],
+        "t": hourly.get("corrected_temperature_post_l2") or [],
+        "cc": hourly.get("cloud_cover_post_l2") or [],
+    }
+    pt = derived.get("pressure_trend_hpa_3h")
+    out = [None] * len(times)
+    for i in range(len(times)):
+        v = {f: _round_like_snapshot(f, a[i]) if i < len(a) else None for f, a in src.items()}
+        try:
+            out[i] = classify_synoptic_regime(v["wd"], v["ws"], v["pr"], pt,
+                                              _valid_hour_local(times, i), v["t"],
+                                              cloud_cover=v["cc"])
+        except Exception:
+            out[i] = None
+    derived["regime_runtime_by_lead"] = out
+    return out

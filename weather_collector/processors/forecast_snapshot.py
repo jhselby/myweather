@@ -328,7 +328,10 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     _chp_nbm_persist_val, _ = _chp_persistence_source({"hourly": hourly})
     _chp_nbm_table = _chp_load_table()
     _chp_nbm_cells = _chp_nbm_table.get("cells", {}) if _chp_nbm_table else {}
-    _wdp_state_fc_by_lead = (derived or {}).get("state_fc_by_lead") or []
+    _wdp_state_fc_by_lead = (derived or {}).get("regime_runtime_by_lead") or []
+    # v0.7.43 — the selector/blender lookups below use the same array when
+    # present (state_stamp.runtime_regime_by_lead, computed before wdp).
+    _runtime_regime_by_lead = (derived or {}).get("regime_runtime_by_lead") or []
     _wdp_persist_val = ((current or {}).get("wind_direction"))
     try:
         _wdp_persist_val = float(_wdp_persist_val) if _wdp_persist_val is not None else None
@@ -1050,15 +1053,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
         # None if hour extraction fails; selector's morning gate stays inert.
         _valid_hour_local_i = _chp_valid_hour_local(times, i)
-        try:
-            _fc_regime_i = _classify_synoptic_regime(
-                entry.get("wd"), entry.get("ws"),
-                entry.get("pr"), _pt_snap,
-                _valid_hour_local_i, entry.get("t"),
-                cloud_cover=entry.get("cc"),
-            )
-        except Exception:
-            _fc_regime_i = None
+        _fc_regime_i = (_runtime_regime_by_lead[i]
+                        if i < len(_runtime_regime_by_lead) else None)
+        if _fc_regime_i is None:
+            try:
+                _fc_regime_i = _classify_synoptic_regime(
+                    entry.get("wd"), entry.get("ws"),
+                    entry.get("pr"), _pt_snap,
+                    _valid_hour_local_i, entry.get("t"),
+                    cloud_cover=entry.get("cc"),
+                )
+            except Exception:
+                _fc_regime_i = None
         # v0.7.35 (2026-10-08) — record the per-hour regime the selector,
         # learned-classifier and blender lookups below actually used. The pair log's
         # state_fc.regime_synoptic is reclassified from the FINAL entry, after

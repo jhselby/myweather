@@ -131,10 +131,11 @@ def _persistence_source(weather_data):
 
 
 def _fc_regime_by_lead(weather_data):
-    """Return derived.state_fc_by_lead (per-lead regime array) populated
-    by state_stamp. Empty list if state_stamp hasn't run — gate no-ops.
-    Extracted 2026-08-10 v0.6.401c; previously computed inline here."""
-    return ((weather_data.get("derived") or {}).get("state_fc_by_lead") or [])
+    """Return derived.regime_runtime_by_lead (state_stamp.runtime_regime_by_lead),
+    the per-lead regime the selector and blender also look up by. Empty list if
+    it hasn't run — gate no-ops. v0.7.43: was derived.state_fc_by_lead, a
+    separate label (raw arrays, no cloud cover, never sea_breeze)."""
+    return ((weather_data.get("derived") or {}).get("regime_runtime_by_lead") or [])
 
 
 def describe_applicability():
@@ -251,7 +252,7 @@ def stamp_wd_persistence_gate(weather_data):
         "skips_by_band": skips_by_band,
         "per_lead_would_apply": per_lead_would_apply,
         "table_generated_at": table.get("generated_at"),
-        "state_fc_source": "derived.state_fc_by_lead",
+        "state_fc_source": "derived.regime_runtime_by_lead",
     }
 
     try:

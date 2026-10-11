@@ -36,7 +36,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path  # noqa: E402
+from _cache import cached_path, RegimeRuntime  # noqa: E402
 from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -81,6 +81,11 @@ def angular_diff(a, b):
 
 def compute():
     path = cached_path(URL)
+    # fc regime = the label runtime wdp looks its cell up by (v0.7.43:
+    # derived.regime_runtime_by_lead == pair-log state_fc.regime_runtime;
+    # rebuilt for older rows, see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime([path])
 
     # Pass 1: wd obs index (for persistence baseline) + obs_regime_index
     # (for state_curr construction). obs_regime_index keeps the smallest-lead
@@ -168,9 +173,8 @@ def compute():
                 n_no_persist += 1
                 continue
 
-            state_fc = r.get("state_fc") or {}
             state_obs = r.get("state_obs") or {}
-            fc_regime = state_fc.get("regime_synoptic") or "unknown"
+            fc_regime = rr.get(r) or "unknown"
             obs_regime = state_obs.get("regime_synoptic")
 
             state_curr = obs_regime_index.get(hour_floor(rt))
@@ -402,7 +406,7 @@ def emit(accum, joint):
             "fire_rate_pct": round(100.0 * (tt + tf) / total, 2) if total else None,
         },
         "gate": {
-            "fire_condition": "state_curr != state_fc.regime_synoptic (per lead)",
+            "fire_condition": "state_curr != regime_runtime (per lead)",
             "baseline": "L1 (raw HRRR forecast)",
             "intervention": "persistence-of-obs (flat carry of wd obs at hour_floor(run_time))",
             "fire_cells": [

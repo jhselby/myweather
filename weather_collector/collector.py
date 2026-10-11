@@ -701,6 +701,15 @@ def main():
     # Runs AFTER wind_blend (which produces L2 wind_direction) so wdp
     # overwrites the L2 blend where the gate fires; module preserves the
     # pre-gate array as hourly.wind_direction_pre_wd_gate.
+    # v0.7.43 — per-lead runtime regime (derived.regime_runtime_by_lead), the
+    # one label wdp, wdp_nbm, the selector and the blender all look up by.
+    # Must run here: after decay_apply's *_post_l2 arrays, before wdp
+    # overwrites wind_direction.
+    try:
+        from .processors.state_stamp import runtime_regime_by_lead
+        runtime_regime_by_lead(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  runtime regime by lead failed: {redact_secrets(e)}")
     try:
         from .processors.wd_persistence_gate import stamp_wd_persistence_gate
         stamp_wd_persistence_gate(weather_data)
