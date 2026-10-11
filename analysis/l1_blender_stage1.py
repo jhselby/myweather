@@ -32,7 +32,7 @@ from collections import defaultdict
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path
+from _cache import cached_path, RegimeRuntime
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
 FIELD = sys.argv[1] if len(sys.argv) > 1 else "dp"
@@ -95,6 +95,10 @@ def optimal_omega(h, n, y):
 
 
 def load_cells(field):
+    # Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+    # before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime([cached_path(PAIR_URL)])
     fc_by_vt = defaultdict(list)
     raw = []
     with open(cached_path(PAIR_URL)) as fh:
@@ -122,7 +126,7 @@ def load_cells(field):
             if fc_n is None: dropped_no_nbm += 1
             continue
         sfc = r.get("state_fc") or {}
-        regime = sfc.get("regime_synoptic")
+        regime = rr.get(r)
         if not regime: continue
         h_val, n_val, y_val = float(fc_h), float(fc_n), float(obs)
         ims = abs(h_val - n_val)

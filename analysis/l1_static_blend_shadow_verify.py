@@ -51,6 +51,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _cache import RegimeRuntime  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -119,19 +120,17 @@ def parse_time(ts):
 def scan_pair_log(curated):
     """Yield (field, regime, band, obs_time, row) tuples for shadow-stamped rows.
 
-    Buckets by the (regime, band) recorded in the pair-log's state_fc — this
-    is what a retro-score would see, and matches what the mae_over_time and
-    scorecard pipelines already use. NOTE: forecast_snapshot passes its own
-    per-lead regime to blend_l1 for the stamp decision, which may differ
-    from the state_stamp regime later written to the row; that means some
-    stamped rows land in cells NOT in the curated table. Scoring them
-    anyway is the honest read of "when the runtime applied blend, did it
-    beat served?" — an ENABLED=True flip would carry the same drift.
+    Buckets by the regime the runtime passed to blend_l1 (_cache.RegimeRuntime:
+    state_fc.regime_runtime, else rebuilt from pre-swap HRRR). Before v0.7.42
+    this read regime_synoptic, which disagrees with the runtime label on ~20%
+    of routed hours and dropped stamped rows into cells not in the table.
     """
     covered_fields = set(curated.keys())
     if not RAW_PAIR_LOG.exists():
         print(f"pair log not found at {RAW_PAIR_LOG} — nothing to verify", file=sys.stderr)
         return
+    rr = RegimeRuntime()
+    rr.prime([RAW_PAIR_LOG])
     with open(RAW_PAIR_LOG) as fh:
         for line in fh:
             try:
@@ -149,7 +148,7 @@ def scan_pair_log(curated):
             band = _band_for(int(lh))
             if band is None:
                 continue
-            regime = (r.get("state_fc") or {}).get("regime_synoptic")
+            regime = rr.get(r)
             if regime is None:
                 continue
             key = (fld, regime, band)
@@ -447,7 +446,7 @@ def main():
                   f"(no preempted_source_shadow — logged pre-v0.7.21)")
     if off_table_hits:
         print(f"  (* = cell has stamped rows but is NOT in curated table — "
-              f"forecast_snapshot's runtime regime differs from state_stamp's; "
+              f"rebuilt regime_runtime label differs from the runtime's; "
               f"{off_table_hits} such cells)")
     print()
     print("Per-field rollup:")

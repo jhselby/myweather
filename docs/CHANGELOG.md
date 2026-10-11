@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.42 • October 10, 2026 (blender tools on regime_runtime)</strong></summary>
+
+- `l1_blender_stage1`, `l1_blender_retro_score`, `l1_blender_shadow_verify` and `l1_static_blend_shadow_verify` now bucket rows by `_cache.RegimeRuntime` (primed), the regime the runtime blender looked its cell up by, instead of `regime_synoptic`.
+- **Static blender verify (live cells):** `h/nw_flow/24-47` +49.7% SHIP-READY (n7 608), `h/sw_flow/24-47` +22.7% SHIP-READY (n7 1,116). Before, 87 applied rows were scored in `h/calm/24-47`, a cell that is not live; off-table stamped cells fell from 20 to 6 (old nor_easter rows and two single rows). Curated verdict 13/6/1/0 → 14/5/1/0; `h/nw_flow/12-23` stays KILL (shadow only).
+- **Per-obs blender (shadow only):** Stage 1 STABLE cells h `calm/24-47` + `pre_frontal/6-11` and dp `calm/24-47` were label artifacts and drop; h `pre_frontal/0-5` holds. Shadow verify `t/se_flow/24-47` SHIP-READY → HOLD (n7 142 → 365).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.41 • October 10, 2026 (by-regime fitters: nor_easter + stagnant_high)</strong></summary>
 
 - `l1_selector_fit_by_regime` and `l1_selector_fit_3way` now fit `nor_easter` and `stagnant_high` as their own regimes. Both come out of the runtime classifier but were folded into `unknown`, which the selector never looks up, so neither could earn an override.

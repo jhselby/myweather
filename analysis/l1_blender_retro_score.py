@@ -47,7 +47,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path
+from _cache import cached_path, RegimeRuntime
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -111,8 +111,6 @@ def _extract_features(r, xr_spread, lead):
     """Same feature build as l1_blender_stage1._load_cells inner loop. If any
     required piece is missing, return None so caller skips the row."""
     sfc = r.get("state_fc") or {}
-    if not sfc.get("regime_synoptic"):
-        return None
     cc_sigma = float(r.get("cloud_inter_source_sigma") or 0.0)
     p_trend = float(sfc.get("pressure_trend_hpa_3h") or 0.0)
     hh = _hour_local(r.get("obs_time", ""))
@@ -192,6 +190,10 @@ def _scan(cells, since, until, verbose):
     # stage1.load_cells uses.
     fc_by_vtfield = defaultdict(list)
     path = cached_path(PAIR_URL)
+    # Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+    # before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime([path])
     with open(path) as fh:
         for line in fh:
             try: r = json.loads(line)
@@ -225,7 +227,7 @@ def _scan(cells, since, until, verbose):
             if lead is None: continue
             band = _band_for(int(lead))
             if band is None: continue
-            regime = (r.get("state_fc") or {}).get("regime_synoptic")
+            regime = rr.get(r)
             if not regime:
                 n_no_regime += 1; continue
             key = (fld, regime, band)
@@ -266,7 +268,8 @@ def _scan(cells, since, until, verbose):
 
     if verbose:
         print(f"  scanned {n_scanned:,} pair rows · scored {n_scored:,}")
-        if n_no_regime: print(f"  skipped {n_no_regime:,} rows: no regime_synoptic in state_fc")
+        if n_no_regime: print(f"  skipped {n_no_regime:,} rows: no regime label")
+        print(f"  regime_runtime labels: {rr.counts}")
         if n_no_terminal: print(f"  skipped {n_no_terminal:,} rows: missing HRRR/NBM terminal")
         if n_no_spread: print(f"  skipped {n_no_spread:,} rows: no cross-run spread pair")
         if n_out_of_window: print(f"  skipped {n_out_of_window:,} rows: outside window")

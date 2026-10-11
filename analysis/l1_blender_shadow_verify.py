@@ -39,7 +39,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _cache import cached_path
+from _cache import cached_path, RegimeRuntime
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -91,6 +91,10 @@ def parse_time(ts):
 def scan_pair_log(curated_keys):
     """Yield rows with blend_shadow, keyed to curated cells."""
     path = cached_path(PAIR_URL)
+    # Regime the runtime looked its cell up by (stamped since v0.7.35, rebuilt
+    # before from the same pass's wd/ws/t/cc rows; see _cache.RegimeRuntime).
+    rr = RegimeRuntime()
+    rr.prime([path])
     with open(path) as fh:
         for line in fh:
             try: r = json.loads(line)
@@ -102,7 +106,7 @@ def scan_pair_log(curated_keys):
             if fld is None or lh is None: continue
             band = _band_for(int(lh))
             if band is None: continue
-            regime = (r.get("state_fc") or {}).get("regime_synoptic")
+            regime = rr.get(r)
             key = (fld, regime, band)
             if key not in curated_keys: continue
             yield key, r
