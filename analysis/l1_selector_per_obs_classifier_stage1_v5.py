@@ -88,8 +88,14 @@ def hour_local(obs_time):
 def load_rows_by_field():
     """Single pass over the pair-log. Bucket rows by field. Each row gets
     `_regime_runtime`, the regime the runtime looked its cell up by
-    (stamped since v0.7.35, rebuilt before; see _cache.RegimeRuntime)."""
+    (stamped since v0.7.35, rebuilt before; see _cache.RegimeRuntime), and
+    `_solar_l2`, the sr row's forecast_l2 for the same (run_time, valid_time).
+    v0.7.44: the runtime reads solar from the snapshot entry before the
+    selector swaps sr (sr is last in the loop), i.e. sr L2. state_fc.solar_wm2
+    is post-swap — the NBM terminal whenever sr routed to NBM — so it partly
+    encoded the selector's own pick."""
     by_field = defaultdict(list)
+    sr_l2 = {}
     fc_by_vt_field = defaultdict(lambda: defaultdict(list))
     rr = RegimeRuntime()
     with open(cached_path(PAIR_URL), "rb") as fh:
@@ -98,6 +104,8 @@ def load_rows_by_field():
             except Exception: continue
             rr.observe(r)
             field = r.get("field")
+            if field == "sr" and r.get("forecast_l2") is not None:
+                sr_l2[(r.get("run_time"), r.get("valid_time"))] = r["forecast_l2"]
             if field not in FIELDS: continue
             vt = r.get("valid_time"); fc = r.get("forecast")
             if vt is not None and fc is not None:
@@ -106,7 +114,11 @@ def load_rows_by_field():
     for rows in by_field.values():
         for r in rows:
             r["_regime_runtime"] = rr.get(r)
+            r["_solar_l2"] = sr_l2.get((r.get("run_time"), r.get("valid_time")))
     print(f"  regime_runtime labels: {rr.counts}")
+    n_rows = sum(len(v) for v in by_field.values())
+    n_sol = sum(1 for v in by_field.values() for r in v if r["_solar_l2"] is not None)
+    print(f"  solar from sr forecast_l2: {n_sol:,}/{n_rows:,} rows (else state_fc.solar_wm2)")
     vt_spread_by_field = {
         f: {vt: max(fcs) - min(fcs) for vt, fcs in vtm.items() if len(fcs) >= 2}
         for f, vtm in fc_by_vt_field.items()
@@ -165,7 +177,8 @@ def build_features(rows_raw, vt_spread, drop=None):
         wd_cos = math.cos(math.radians(float(wd))) if wd is not None else 0.0
         ws_fc = float(sfc.get("wind_speed") or 0.0)
         cloud_low_fc = float(sfc.get("cloud_low") or 0.0)
-        solar_fc = float(sfc.get("solar_wm2") or 0.0)
+        solar_v = r.get("_solar_l2")
+        solar_fc = float((solar_v if solar_v is not None else sfc.get("solar_wm2")) or 0.0)
         eh = abs(float(err_l4)); en = abs(float(err_nbm))
         es = abs(float(err_served))
         yield {

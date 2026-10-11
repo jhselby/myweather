@@ -220,7 +220,7 @@ def _safe_float(v):
         return None
 
 
-def _build_learned_features(field, i, ims_i, valid_hour_local, hourly, derived, cross_run_spread, times):
+def _build_learned_features(field, i, ims_i, valid_hour_local, derived, cross_run_spread, times, entry):
     """Assemble the 12-feature dict the learned per-obs classifier consumes.
 
     Feature-name order MUST match FEATURE_NAMES in
@@ -231,15 +231,17 @@ def _build_learned_features(field, i, ims_i, valid_hour_local, hourly, derived, 
     Any None value causes l1_selector._learned_override to fall through
     (fail-safe). Emits None-values freely — the classifier can't fire on
     a partial feature set anyway.
-    """
-    def _arr_at(name):
-        arr = hourly.get(name) or []
-        return arr[i] if i < len(arr) else None
 
-    wd_i = _safe_float(_arr_at("wind_direction"))
-    ws_i = _safe_float(_arr_at("wind_speed"))
-    cloud_low_i = _safe_float(_arr_at("cloud_cover_low"))
-    solar_i = _safe_float(_arr_at("direct_radiation"))
+    v0.7.44: wd/ws/cl/sr come from the snapshot entry, the source the
+    fitters' state_fc uses, not the final hourly arrays (post-wdp/router/Lsr).
+    For sr — last in the selector loop — entry wd/ws already hold their
+    post-swap values, matching state_fc exactly; entry sr is still sr L2,
+    which the v5 fitter now trains on (sr row's forecast_l2).
+    """
+    wd_i = _safe_float(entry.get("wd"))
+    ws_i = _safe_float(entry.get("ws"))
+    cloud_low_i = _safe_float(entry.get("cl"))
+    solar_i = _safe_float(entry.get("sr"))
 
     # xr_spread is per (field, valid_time). Match cross_run_spread's keying.
     xr = None
@@ -1094,7 +1096,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # feature (None) causes _learned_override to fail-safe fall-through.
             _feats = _build_learned_features(
                 f, i, _ims_i, _valid_hour_local_i,
-                hourly, derived, cross_run_spread, times,
+                derived, cross_run_spread, times, entry,
             )
             # v0.6.646 — shadow telemetry: stamp classifier's would-pick and
             # underlying probability whenever the (field, regime, band) has a

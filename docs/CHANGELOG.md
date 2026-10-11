@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.44 • October 10, 2026 (learned selector: runtime features match training)</strong></summary>
+
+- Runtime `_build_learned_features` reads wd/ws/cl/sr from the snapshot entry (the source the fitters' `state_fc` uses) instead of the final hourly arrays (post-wdp, router, Lsr). For sr, last in the selector loop, entry wd/ws are already post-swap — an exact match to `state_fc`.
+- v5 fitter: solar feature = the sr row's `forecast_l2` (sr L2, what the runtime sees before sr is swapped) instead of `state_fc.solar_wm2`, which is post-swap and held the NBM terminal whenever sr routed to NBM, so it partly encoded the selector's own pick.
+- Same-data refit: sr `frontal/24-47` (held-out A +19.0% → −0.9%) and `ne_flow/12-23` (A +6.0% → +8.6% vs B +17.6%) fail; `se_flow/12-23` holds (+22.1% / +22.1%); `ne_flow/6-11` is curated (+5.3% / +9.8%). Goes live with the refitter run.
+- Not aligned: t/h (v2b, no live cells) see pre-swap ws/wd at runtime vs post-swap in training; xr_spread definitions still differ between fitter and runtime.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.43 • October 10, 2026 (wdp on regime_runtime: one regime label)</strong></summary>
 
 - New `state_stamp.runtime_regime_by_lead()` computes the per-lead runtime regime once per tick (after decay, before wdp) into `derived.regime_runtime_by_lead`. wdp, wdp_nbm, the selector and the blender all read it; it matched the snapshot's stamped `regime_runtime` on 48/48 leads of the 10-10 22:27 tick.
