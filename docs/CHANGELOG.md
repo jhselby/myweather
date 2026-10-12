@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.47 • October 12, 2026 (briefing: future-tense rain headlines pass; Groq error bodies logged)</strong></summary>
+
+- The present-tense rain check rejected 8 of 10 gpt-oss headlines on 10-11 and 10-12, all of them forecasts ("rain arriving this evening", "Rain returning this evening"). "arrives" is not a substring of "arriving", and "evening" was not a future marker. Added arriving, returning, returns, moving in, evening, afternoon and overnight. Present-tense claims ("Misty rain and cool 51°F") are still rejected.
+- Every rejection fell through to `llama-3.3-70b-versatile`, which has returned HTTP 404 on every call since 09-12. Groq's docs still list the model as active, so the 404 is likely an account or project setting. The waterfall now logs Groq's error body instead of raising a bare HTTPError.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.46 • October 12, 2026 (Stage 0: NBM humidity from NBM t + dp)</strong></summary>
 
 - New `analysis/h_nbm_h_from_dp_stage0.py`. Traces the dp pair-log anomaly (+64.8%) to NBM's humidity: RH computed from NBM's own temperature and dewpoint beats NBM's raw humidity by ~14% at 12–47h, stable across every half-month since Aug 20. Served dp on the NBM path is Magnus(t, h), so the h error lands in dp.

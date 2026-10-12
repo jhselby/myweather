@@ -31,3 +31,9 @@ Unchanged from [[project_10_11_session]]: 10-13 nor_easter skip reviews (wd l3_n
 - **Weak spot: the last 8 days are only +2.9% on h** (dp still +32%). 10-06 −20% and 10-10 −23%: NBM t ran 1.5–4°F cold, so RH from it came out 6–10 points too humid. Arm B (RH from served t) lost overall (h +3.9%, dp +11%) and did not fix those days. Kept in the report as a comparison column.
 - 0-5h derived raw is worse (−4.6%); L2 anchoring absorbs most of it (served 0-5 is roughly flat).
 - Next: let the digest run it daily (auto-picked). A ship would be shadow-first (stamp `h_raw_nbm_derived` in the snapshot) so the selector and l3_nbm fitters can see it. Do not ship on the 30d number while the last week is near flat.
+
+## v0.7.47 — briefing fixes (Groq 404 item from 10-11)
+- Logs 10-11..10-12: 10 gpt-oss headlines REJECTED by the present-tense rain check, 8 of them forecasts ("rain arriving this evening", "Rain returning this evening"). "arrives" is not a substring of "arriving", and "evening" was not a future marker. Added arriving/returning/returns/moving in/evening/afternoon/overnight. Tested on the logged headlines: the 4 forecast headlines pass, and the 3 present-tense ones still reject.
+- Every rejection fell through to `llama-3.3-70b-versatile`, which has returned 404 on every call since 09-12 (first logged 404 is 09-12 22:57Z). Groq's deprecations page still lists the model as active, so the cause is likely project or model access on Joe's Groq account. The waterfall now logs the response body (`resp.text[:300]`) instead of raising. Next failure will name the cause.
+- Auto mode denied reading the GROQ_API_KEY secret (credential exploration), so the model list was not checked. Joe can check model permissions in the Groq console.
+- Info-level collector logs do not show in `gcloud logging read` (only warnings/errors), so a success rate for the briefing could not be computed.

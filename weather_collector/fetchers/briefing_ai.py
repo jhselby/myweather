@@ -484,9 +484,13 @@ def _validate_headline(briefing, summary, weather_data):
         and not desc_has_rain
     )
     if data_dry_now:
+        # v0.7.47: + evening/afternoon/overnight/arriving/returning/moving in.
+        # 10-11..10-12 rejected 8 of 10 gpt-oss headlines like "rain arriving
+        # this evening" ("arrives" is not a substring of "arriving").
         future_markers = ("tomorrow", "tonight", "later", "expected", "incoming",
                           "approaching", "coming", "ahead", "soon", "begins",
-                          "arrives", "monday", "tuesday", "wednesday", "thursday",
+                          "arrives", "arriving", "returning", "returns", "moving in",
+                          "evening", "afternoon", "overnight", "monday", "tuesday", "wednesday", "thursday",
                           "friday", "saturday", "sunday")
         trend_verbs    = ("easing", "ending", "tapering", "exiting", "clearing")
         for w in ("rain", "raining", "rains", "shower", "showers", "drizzle", "downpour"):
@@ -684,7 +688,12 @@ def _call_groq_waterfall(summary, time_context, prev_context, weather_data, east
                 json=payload,
                 timeout=20,
             )
-            resp.raise_for_status()
+            if not resp.ok:
+                # Groq puts the reason (model_not_found, no access, ...) in the
+                # body; raise_for_status alone logged a bare 404 for a month.
+                logging.error(f"  ⚠ Briefing: Groq/{model} HTTP {resp.status_code}: "
+                              f"{redact_secrets(resp.text[:300])} — trying next")
+                continue
             text = resp.json()["choices"][0]["message"]["content"].strip()
             if text.startswith("```"):
                 text = text.split("\n", 1)[1] if "\n" in text else text[3:]
