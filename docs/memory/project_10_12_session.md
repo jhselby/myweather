@@ -37,3 +37,13 @@ Unchanged from [[project_10_11_session]]: 10-13 nor_easter skip reviews (wd l3_n
 - Every rejection fell through to `llama-3.3-70b-versatile`, which has returned 404 on every call since 09-12 (first logged 404 is 09-12 22:57Z). Groq's deprecations page still lists the model as active, so the cause is likely project or model access on Joe's Groq account. The waterfall now logs the response body (`resp.text[:300]`) instead of raising. Next failure will name the cause.
 - Auto mode denied reading the GROQ_API_KEY secret (credential exploration), so the model list was not checked. Joe can check model permissions in the Groq console.
 - Info-level collector logs do not show in `gcloud logging read` (only warnings/errors), so a success rate for the briefing could not be computed.
+- Deployed 13:29Z. Ticks 13:37..14:38 clean (72–85s), only the known PWS error and one NWS alerts 500 (13:57Z, upstream). Fresh gpt-oss briefings were accepted at 13:37Z and 14:17Z, but neither mentioned rain, so the validator fix is **not yet exercised**. Successful briefings do not appear in `gcloud functions logs read`; check `briefing.model` / `cached_at` in `https://data.wymancove.com/weather_data.json` instead.
+
+## Carry-forward (next session, 10-13)
+1. **Briefing verify:** on the first headline that mentions upcoming rain (rain forecast for 10-13 afternoon), confirm it passes and no longer falls through. If Groq llama is called, read the newly logged 404 body.
+2. **Groq model access (Joe):** run `curl -s https://api.groq.com/openai/v1/models -H "Authorization: Bearer $(gcloud secrets versions access latest --secret=groq-api-key)" | python3 -m json.tool | grep '"id"'`. If llama-3.3-70b-versatile is missing, enable it in the Groq console or swap `GROQ_MODELS[1]` in `briefing_ai.py`.
+3. **TEMPORARY nor_easter skip reviews:** wd l3_nbm (v0.7.24) and sr bypass (v0.7.11).
+4. **sr fresh-fire recheck:** act only if NBM sr keeps losing to HRRR by ~2x on several days.
+5. **h_nbm_h_from_dp_stage0:** read the digest line daily. Watch whether the last-week h gain recovers from +2.9%; shadow-stamp design only if it does.
+6. By-regime walker nor_easter cells reach the 3-day gate (cloud refitter owns them).
+- Later: ~10-14 t/production@12-23 clears · ~10-18 ch router nw_flow/24-47 re-read · ~10-24 backstamp prune · ~11-04 selector override.

@@ -14,7 +14,7 @@
 - [Selector recency override](project_selector_recency_override_watch.md) — do not tighten, chk ~11-04 · [Simpson-guard shadow](project_simpson_guard_shadow.md) · [Frontal detector](project_frontal_detector_health_09_14.md)
 
 ## Recent sessions (one-liners)
-- [10-12](project_10_12_session.md) triage, no ships; sr fresh fire = NBM source miss 10-11, wait; dp anomaly root = NBM h; Stage 0 h_nbm_h_from_dp PROMOTE 7 cells (30d h +11%, dp +24%), last 8d h only +2.9%
+- [10-12](project_10_12_session.md) triage, no ships; sr fresh fire = NBM source miss 10-11, wait; dp anomaly root = NBM h; Stage 0 h_nbm_h_from_dp PROMOTE 7 cells (30d h +11%, dp +24%), last 8d h only +2.9%; v0.7.47 briefing future-tense fix + Groq error logging (verify pending)
 - [10-11](project_10_11_session.md) triage, no ships; v0.7.45 ch router drops ne_flow/12-23 (verified); nw_flow/24-47 re-read ~10-18
 - [10-10](project_10_10_session.md) v0.7.39–44: regime_runtime migration done (walker, fitters, blender, wdp via derived.regime_runtime_by_lead); learned sr features fixed (solar leak) → live cells sr ne_flow/6-11 + se_flow/12-23
 - [10-09](project_10_09_session.md) v0.7.35a map order; v0.7.36 learned fitters on regime_runtime; v0.7.37 Stage 2b gate retired; v0.7.38 sweep, cc edge reversed
@@ -25,7 +25,7 @@
 - Older: [session index](reference_session_index.md)
 
 ## 📅 Scheduled
-- **10-13:** TEMPORARY nor_easter skip reviews — wd l3_nbm (v0.7.24) + sr bypass (v0.7.11); sr fresh-fire recheck; by-regime walker nor_easter cells hit 3-day gate.
+- **NEXT SESSION (10-13):** follow the carry-forward at the end of [10-12](project_10_12_session.md): briefing rain-headline verify + Groq model check, nor_easter skip reviews, sr recheck, h_nbm_h_from_dp read.
 - **~10-14:** t/production@12-23 sentry clears · **~10-18:** ch router nw_flow/24-47 re-read · **~10-24:** backstamp prune · **~11-04:** selector override.
 - [NBM skip-proposals review](project_nbm_skip_proposals_review.md) · [wg.l3_nbm sentry 09-14](project_wg_l3_nbm_sentry_09_14.md)
 
