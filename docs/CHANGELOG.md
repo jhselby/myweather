@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.46 • October 12, 2026 (Stage 0: NBM humidity from NBM t + dp)</strong></summary>
+
+- New `analysis/h_nbm_h_from_dp_stage0.py`. Traces the dp pair-log anomaly (+64.8%) to NBM's humidity: RH computed from NBM's own temperature and dewpoint beats NBM's raw humidity by ~14% at 12–47h, stable across every half-month since Aug 20. Served dp on the NBM path is Magnus(t, h), so the h error lands in dp.
+- The tool rebuilds the live NBM h path (native L2 ramp, blender) on the computed humidity. 30-day read: served h on NBM-path rows +11.0%, served dp +23.6%, 7 regime × band cells halves-stable. The last 8 days are only +2.9% on h: on 10-06 and 10-10 NBM temperature ran cold and the computed humidity ran wet.
+- Analysis only. No production change.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.45 • October 11, 2026 (ch router: drop ne_flow/12-23)</strong></summary>
 
 - Removed `ch/ne_flow/12-23` from `_IMS_SELECTOR_CELLS`; ch in that cell falls back to the pooled selector pick. 9 router cells remain.
