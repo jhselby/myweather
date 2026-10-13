@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.49 • October 13, 2026 (NBM skip-earning audit scores wd)</strong></summary>
+
+- `analysis/nbm_skip_earning_audit.py` looked up the l3_nbm wd bias under `wd`, but the fit stores it as sin/cos arrays under `wd_components`. Every wd skip cell came back THIN, so the audit had never judged one. It now applies the same sin/cos correction as `forecast_snapshot.py` to `forecast_l2_nbm` and scores circular error. Its output matches the logged `forecast_l3_nbm` to a median of 1.2°.
+- First read: all 7 non-nor'easter wd cells HOLD (se_flow cells still lose 3–17% with l3_nbm on). The two temporary nor'easter cells have no rows in 14 days; over 50 days the skip still earns (12-23h −8.8%, halves −8.2/−9.8; 24-47h −1.5%), but both windows are the same 09-26..09-29 storm.
+- Analysis only. No production change.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.48 • October 13, 2026 (briefing: Groq fallback is gpt-oss-20b)</strong></summary>
 
 - Groq's error body for `llama-3.3-70b-versatile` is `model_not_found`, and the model is no longer in the key's `/v1/models` list. Every fallback since 09-12 failed with it. The second model in the waterfall is now `openai/gpt-oss-20b` (same request shape as the 120b: reasoning_effort low, 1500 tokens). The Sources card text names the new model.

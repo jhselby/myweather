@@ -33,6 +33,7 @@ Runtime:
     MYWEATHER_REFRESH=1 python3 -m analysis.nbm_skip_earning_audit
 """
 import json
+import math
 import os
 import sys
 from collections import defaultdict
@@ -103,7 +104,25 @@ def _load_l3_bias_table():
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
     corr = doc.get("corrections") or {}
-    return {f: v for f, v in corr.items() if isinstance(v, list)}
+    out = {f: v for f, v in corr.items() if isinstance(v, list)}
+    # wd is circular: the fit stores per-lead sin/cos bias under
+    # wd_components, not a scalar array under "wd". Without this every wd
+    # skip cell scored None → THIN (found 2026-10-13).
+    wd_comp = corr.get("wd_components") or {}
+    if isinstance(wd_comp.get("sin"), list) and isinstance(wd_comp.get("cos"), list):
+        out["wd"] = wd_comp
+    return out
+
+
+def _ang_err(a, b):
+    """Absolute circular difference in degrees, 0..180."""
+    return abs((a - b + 180.0) % 360.0 - 180.0)
+
+
+def _wd_l3_apply(fc_deg, sin_c, cos_c):
+    """Mirror of forecast_snapshot's l3_nbm wd correction."""
+    r = math.radians(fc_deg)
+    return math.degrees(math.atan2(math.sin(r) - sin_c, math.cos(r) - cos_c)) % 360.0
 
 
 def _band_label(lo, hi):
@@ -141,6 +160,19 @@ def _score_cell(rows, layer, field, bias_table):
         sum_in = 0.0
         sum_cf = 0.0
         for _obs_time, lead_h, err_in in bucket:
+            if field == "wd":
+                # err_in is (forecast_l2_nbm, observed) for wd.
+                sins, coss = bias_arr["sin"], bias_arr["cos"]
+                if not (0 <= lead_h < len(sins) and lead_h < len(coss)):
+                    continue
+                sin_c, cos_c = sins[lead_h], coss[lead_h]
+                if sin_c is None or cos_c is None:
+                    continue
+                fc, obs = err_in
+                n += 1
+                sum_in += _ang_err(fc, obs)
+                sum_cf += _ang_err(_wd_l3_apply(fc, sin_c, cos_c), obs)
+                continue
             b = bias_arr[lead_h] if 0 <= lead_h < len(bias_arr) else None
             if b is None:
                 continue
@@ -222,6 +254,13 @@ def _load_rows_for_cells(cells, window_days):
                         continue
                     # Input error = error_{LAYER_INPUT[layer]}
                     input_key = LAYER_INPUT.get(layer)
+                    if field == "wd":
+                        fc = row.get(f"forecast_{input_key}") if input_key else None
+                        obs = row.get("observed")
+                        if fc is None or obs is None:
+                            continue
+                        buckets[cell].append((obs_time, lead_h, (float(fc), float(obs))))
+                        continue
                     err_in = row.get(f"error_{input_key}") if input_key else None
                     if err_in is None:
                         continue
