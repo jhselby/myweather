@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.50 • October 13, 2026 (NBM skip table keyed on the per-lead runtime regime)</strong></summary>
+
+- The collector looked up NBM skip cells by the current-conditions regime, one label for all 48 leads. The audits that choose and review those cells bucket by the per-lead forecast regime. At 12–47h the two barely overlap (wd/se_flow/24-47: 2,077 audit rows vs 1,392 fired rows, 186 in common), so cells fired on hours they were never scored on.
+- Cost over 09-13..10-13 (l3_nbm output, halves split 09-28): the skips as fired were worse than no skips for wd (−0.2/−1.7%) and wg (−1.3/−0.9%). Keying on the per-lead runtime regime beats the old keying in both halves for wd (+2.5/+1.9%) and wg (+1.0/+0.9%); ch and sr are flat or mixed. h is not an l3_nbm field at runtime (`L3_NBM_FIELDS = wg, ch, sr` + wd), so the two h skip cells have never fired and this change does not touch h.
+- `forecast_snapshot.py`: every `should_skip` lookup now uses `derived.regime_runtime_by_lead[i]` (falls back to the run-level label if missing). `nbm_skip_add_audit`, `nbm_skip_earning_audit` and `nbm_walkforward_validator` bucket rows on the same label (`state_fc.regime_runtime`, rebuilt for older rows).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.49 • October 13, 2026 (NBM skip-earning audit scores wd)</strong></summary>
 
 - `analysis/nbm_skip_earning_audit.py` looked up the l3_nbm wd bias under `wd`, but the fit stores it as sin/cos arrays under `wd_components`. Every wd skip cell came back THIN, so the audit had never judged one. It now applies the same sin/cos correction as `forecast_snapshot.py` to `forecast_l2_nbm` and scores circular error. Its output matches the logged `forecast_l3_nbm` to a median of 1.2°.

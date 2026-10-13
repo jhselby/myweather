@@ -41,7 +41,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import pair_log_paths
+from analysis._cache import pair_log_paths, RegimeRuntime
 
 REPO = Path(__file__).resolve().parent.parent
 SKIP_TABLE_PATH = REPO / "weather_collector" / "data" / "skip_table_nbm_curated.json"
@@ -219,6 +219,9 @@ def _load_rows_for_cells(cells, window_days):
 
     buckets = defaultdict(list)
     n_in = 0
+    # v0.7.50: bucket on the per-lead runtime regime the skip table fires on.
+    rr = RegimeRuntime()
+    rr.prime(pair_log_paths())
     for path in pair_log_paths():
         try:
             fh = open(path)
@@ -243,7 +246,7 @@ def _load_rows_for_cells(cells, window_days):
                 lead_h = row.get("lead_h")
                 if lead_h is None:
                     continue
-                regime = ((row.get("state_fc") or {}).get("regime_synoptic")) or None
+                regime = rr.get(row) or None
                 if not regime:
                     continue
                 # Match each candidate cell in this field.

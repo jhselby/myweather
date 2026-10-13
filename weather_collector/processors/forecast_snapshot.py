@@ -334,6 +334,15 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     # v0.7.43 — the selector/blender lookups below use the same array when
     # present (state_stamp.runtime_regime_by_lead, computed before wdp).
     _runtime_regime_by_lead = (derived or {}).get("regime_runtime_by_lead") or []
+
+    # v0.7.50 — NBM skip-table lookups key on the per-lead runtime regime,
+    # the label the skip audits bucket on (pair-log state_fc.regime_runtime).
+    # Was _wdp_state_curr (current-obs regime, one label for all 48 leads):
+    # at 12-47h the cells fired on hours the audits never scored them on.
+    def _skip_regime(i):
+        if i < len(_runtime_regime_by_lead) and _runtime_regime_by_lead[i]:
+            return _runtime_regime_by_lead[i]
+        return _wdp_state_curr
     _wdp_persist_val = ((current or {}).get("wind_direction"))
     try:
         _wdp_persist_val = float(_wdp_persist_val) if _wdp_persist_val is not None else None
@@ -899,14 +908,14 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     l2_nbm = entry.get(f"{f}_l2_nbm")
                     if l2_nbm is None:
                         continue
-                    if _should_skip_nbm(f, "l3_nbm", _wdp_state_curr, i):
+                    if _should_skip_nbm(f, "l3_nbm", _skip_regime(i), i):
                         _nbm_gate_counts["l3_nbm"][f]["skips"] += 1
                         continue
                     entry[f"{f}_l3_nbm"] = _round_for(f, l2_nbm - _l3_nbm_bias(f, i))
                     _nbm_gate_counts["l3_nbm"][f]["fires"] += 1
                 wd_l2_nbm = entry.get(f"{_L3_NBM_WD}_l2_nbm")
                 if wd_l2_nbm is not None:
-                    if _should_skip_nbm(_L3_NBM_WD, "l3_nbm", _wdp_state_curr, i):
+                    if _should_skip_nbm(_L3_NBM_WD, "l3_nbm", _skip_regime(i), i):
                         _nbm_gate_counts["l3_nbm"][_L3_NBM_WD]["skips"] += 1
                         wd_l2_nbm = None
                 if wd_l2_nbm is not None:
@@ -926,7 +935,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         fc_regime_i = _wdp_state_fc_by_lead[i] or "unknown"
                         if (fc_regime_i != _wdp_state_curr
                                 and _wdp.should_fire_at(fc_regime_i, i)):
-                            if _should_skip_nbm(_L3_NBM_WD, "wdp_nbm", _wdp_state_curr, i):
+                            if _should_skip_nbm(_L3_NBM_WD, "wdp_nbm", _skip_regime(i), i):
                                 _nbm_gate_counts["wdp_nbm"][_L3_NBM_WD]["skips"] += 1
                             else:
                                 # F3-B fix: stamp wdp_nbm as a distinct layer key
@@ -950,7 +959,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         l3_nbm = entry.get(f"{f}_l3_nbm")
                         if l3_nbm is None:
                             continue
-                        if _should_skip_nbm(f, "l4_nbm", _wdp_state_curr, i):
+                        if _should_skip_nbm(f, "l4_nbm", _skip_regime(i), i):
                             _nbm_gate_counts["l4_nbm"][f]["skips"] += 1
                             continue
                         entry[f"{f}_l4_nbm"] = _round_for(
@@ -968,7 +977,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     sr_raw_nbm_i = entry.get("sr_raw_nbm")
                     _regime_now = _wdp_state_curr if _wdp_state_curr != "unknown" else None
                     if sr_l3_nbm is not None:
-                        if _should_skip_nbm("sr", "l5_nbm", _wdp_state_curr, i):
+                        if _should_skip_nbm("sr", "l5_nbm", _skip_regime(i), i):
                             _nbm_gate_counts["l5_nbm"]["sr"]["skips"] += 1
                         else:
                             delta = _l5_nbm_correction(_regime_now, _hod, sr_raw_nbm_i)
@@ -987,7 +996,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         l3_nbm = entry.get(f"{f}_l3_nbm")
                         if l3_nbm is None:
                             continue
-                        if _should_skip_nbm(f, "l6_nbm", _wdp_state_curr, i):
+                        if _should_skip_nbm(f, "l6_nbm", _skip_regime(i), i):
                             _nbm_gate_counts["l6_nbm"][f]["skips"] += 1
                             continue
                         wd_i = entry.get(f"{_L3_NBM_WD}_l3_nbm")
@@ -1012,7 +1021,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         if (band is not None
                                 and not _chp_diurnal_skip(_wdp_state_curr, vhour)
                                 and _chp_cell_fires(_chp_nbm_cells, _wdp_state_curr, band)):
-                            if _should_skip_nbm("ch", "chp_nbm", _wdp_state_curr, i):
+                            if _should_skip_nbm("ch", "chp_nbm", _skip_regime(i), i):
                                 _nbm_gate_counts["chp_nbm"]["ch"]["skips"] += 1
                             else:
                                 # F3-B fix: stamp chp_nbm as a distinct layer key

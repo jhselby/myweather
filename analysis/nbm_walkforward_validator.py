@@ -34,7 +34,7 @@ from datetime import datetime, timedelta
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
-from _cache import pair_log_paths  # noqa: E402
+from _cache import pair_log_paths, RegimeRuntime  # noqa: E402
 
 sys.path.insert(0, os.path.join(SCRIPT_DIR, ".."))
 from weather_collector.processors.l3_nbm import L3_NBM_FIELDS as LIVE_L3
@@ -93,10 +93,13 @@ def fit():
     acc = defaultdict(list)
     # paired_acc[(field, cand, base, band)] = (Σ|err_cand|, Σ|err_base|, n)
     paired = defaultdict(lambda: [0.0, 0.0, 0])
-    # Regime × band cross-cut. Regime = row's state_fc.regime_synoptic
-    # (matches runtime skip check + HRRR walkforward's fc-side view).
+    # Regime × band cross-cut. Regime = per-lead runtime regime
+    # (state_fc.regime_runtime, rebuilt for old rows) — the label the NBM
+    # skip table fires on since v0.7.50.
     # paired_by_regime[(field, cand, base, band, regime)] = same shape as paired.
     paired_by_regime = defaultdict(lambda: [0.0, 0.0, 0])
+    rr = RegimeRuntime()
+    rr.prime(pair_log_paths())
 
     for path in pair_log_paths():
         with open(path) as fh:
@@ -117,7 +120,7 @@ def fit():
                 band = _band_of(lead_h)
                 if band is None:
                     continue
-                regime = ((r.get("state_fc") or {}).get("regime_synoptic")) or None
+                regime = rr.get(r) or None
                 for cand, base, fields in COMPARE:
                     if field not in fields:
                         continue

@@ -33,7 +33,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import pair_log_paths
+from analysis._cache import pair_log_paths, RegimeRuntime
 from analysis.nbm_regression_sentry import KILLED_LAYERS
 
 REPO = Path(__file__).resolve().parent.parent
@@ -127,6 +127,9 @@ def _accumulate_50d(proposals):
 
     # acc[(field, cand, base, regime, lo, hi)] = {"h1": [Σec, Σeb, n], "h2": ..., "all": ...}
     acc = defaultdict(lambda: {"h1": [0.0, 0.0, 0], "h2": [0.0, 0.0, 0], "all": [0.0, 0.0, 0]})
+    # v0.7.50: bucket on the per-lead runtime regime the skip table fires on.
+    rr = RegimeRuntime()
+    rr.prime(pair_log_paths())
 
     for path in pair_log_paths():
         with open(path) as fh:
@@ -143,7 +146,7 @@ def _accumulate_50d(proposals):
                     continue
                 field = r.get("field")
                 lead_h = r.get("lead_h")
-                regime = ((r.get("state_fc") or {}).get("regime_synoptic")) or None
+                regime = rr.get(r) or None
                 if field is None or lead_h is None or regime is None:
                     continue
                 for (tf, cand, base, treg, lo, hi), _ in targets.items():
