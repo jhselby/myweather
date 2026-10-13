@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.48 • October 13, 2026 (briefing: Groq fallback is gpt-oss-20b)</strong></summary>
+
+- Groq's error body for `llama-3.3-70b-versatile` is `model_not_found`, and the model is no longer in the key's `/v1/models` list. Every fallback since 09-12 failed with it. The second model in the waterfall is now `openai/gpt-oss-20b` (same request shape as the 120b: reasoning_effort low, 1500 tokens). The Sources card text names the new model.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.47 • October 12, 2026 (briefing: future-tense rain headlines pass; Groq error bodies logged)</strong></summary>
 
 - The present-tense rain check rejected 8 of 10 gpt-oss headlines on 10-11 and 10-12, all of them forecasts ("rain arriving this evening", "Rain returning this evening"). "arrives" is not a substring of "arriving", and "evening" was not a future marker. Added arriving, returning, returns, moving in, evening, afternoon and overnight. Present-tense claims ("Misty rain and cool 51°F") are still rejected.

@@ -14,7 +14,7 @@ const SOURCE_META = {
   nws_gridpoints: { name: "NWS / NBM",  desc: "NWS gridpoint hourly forecast — NBM (National Blend of Models) at our cell. L1 router source (v0.6.432) for temperature / wind speed / wind direction at leads ≥6h, where 14-day head-to-head beat the current HRRR/GFS + cascade by +11–24% MAE. Short-lead forecast (1–5h) still comes from the HRRR/GFS + station-blend cascade." },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
-  groq:         { name: "Groq", desc: "Groq AI — briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
+  groq:         { name: "Groq", desc: "Groq AI — briefing waterfall: openai/gpt-oss-120b → openai/gpt-oss-20b (free tier)" },
   tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 20 public stations within ~2.5mi (Willow Rd, Neptune Rd waterfront anchors); lightning, solar radiation, wind lull, wet bulb" },
 };
 

@@ -30,9 +30,12 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 # ~12x/day on 2026-06-19). reasoning_effort=low caps the CoT budget; the
 # bumped max_tokens gives headroom even if CoT runs long. Llama is non-reasoning
 # and doesn't need either knob.
+# v0.7.48: llama-3.3-70b-versatile returns 404 model_not_found on this key since
+# 09-12 (it is no longer in /v1/models). Fallback is now gpt-oss-20b, same
+# request shape as the 120b.
 GROQ_MODELS = [
     {"name": "openai/gpt-oss-120b",      "max_tokens": 1500, "reasoning_effort": "low"},
-    {"name": "llama-3.3-70b-versatile",  "max_tokens": 600},
+    {"name": "openai/gpt-oss-20b",       "max_tokens": 1500, "reasoning_effort": "low"},
 ]
 GROQ_TEMPERATURE = 0.85
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
