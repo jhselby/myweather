@@ -1855,8 +1855,8 @@
      Full "Accuracy over time" section (with per-field drill-down + sparklines)
      stays in Forecast accuracy below. -->
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— aggregate Prod vs 90d-ref raw, per day (12 fields, pa/pp excluded)</span></summary>
-  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(1 − prod_MAE / raw_MAE_90d_ref) × 100</code>. Denominator is each field's fixed 90-day-reference raw MAE — daily weather difficulty is absorbed by the fixed baseline, so the ratio only moves when Prod moves. Positive = Prod beating the 90d baseline; a ship that improves the stack pushes the 7d rolling median UP over the following week. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— daily Total Lift vs the public forecast (10 fields, same as the Total Lift tile)</span></summary>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(public_MAE − prod_MAE) / public_MAE × 100</code> on the same day — the Total Lift tile's number over time. Public = raw NBM (what a default weather app shows), raw HRRR for cl/cm/pr. Same-day baseline cancels the weather: a hard day raises both errors. Positive = we beat the public forecast; a ship that helps pushes the 7d median up. Today is not plotted until it is complete. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <label>Y-range: <select id="stack-health-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
       <option value="auto" selected>Auto (smart)</option>
@@ -9498,7 +9498,9 @@ load();
   // pa is excluded from aggregate — obs values are ~0 most days, % lift
   // blows up on tiny denominators. pp is excluded on MAE (its native
   // metric is Brier). All other 12 fields participate.
-  const AGGREGATE_EXCLUDE = new Set(["pa", "pp"]);
+  // v0.7.61 — dp + cc out too: same field set as the Total Lift tile
+  // (derived fields double-count t/h and cl/cm/ch).
+  const AGGREGATE_EXCLUDE = new Set(["pa", "pp", "dp", "cc"]);
 
   // Per-field layer config. Specialist labels (Lsr, Lc) reflect what the
   // numbered slot actually captures for that field per forecast_snapshot.py:
@@ -9740,21 +9742,30 @@ load();
   // pushes this UP over the following 7d rolling window.
   function aggregateSeries(metric) {
     if (metric !== "mae") return null;   // aggregate only defined for MAE
-    const rdi = (payload.raw_difficulty_index || {}).per_field || {};
-    const fields = (payload.fields || []).filter(f => !AGGREGATE_EXCLUDE.has(f) && rdi[f] && rdi[f].raw_mae_ref > 0);
+    // v0.7.61 — daily Total Lift: (public_MAE − prod_MAE) / public_MAE × 100
+    // on the SAME day, public = raw NBM for NBM-scope fields, else raw HRRR
+    // — the top tile's number plotted over time. Was 1 − prod / fixed 90d raw
+    // reference, which tracked the weather (10-14: t/ws/wg/cl "collapsed"
+    // while the public forecast ran 1.7–1.9× its normal error and we beat
+    // it by +1..+8%). The current local day is incomplete and is not plotted.
+    const fields = (payload.fields || []).filter(f => !AGGREGATE_EXCLUDE.has(f));
+    const _todayLocal = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
     const median = new Array(payload.days.length).fill(null);
     const mean = new Array(payload.days.length).fill(null);
     const p25 = new Array(payload.days.length).fill(null);
     const p75 = new Array(payload.days.length).fill(null);
     for (let i = 0; i < payload.days.length; i++) {
       const scores = [];
+      if (payload.days[i] >= _todayLocal) continue;
       for (const f of fields) {
-        const refMae = rdi[f].raw_mae_ref;
-        let prodCell = ((payload.series[f] || {}).prod_real || {})[payload.days[i]];
-        if (!prodCell) prodCell = ((payload.series[f] || {}).prod || {})[payload.days[i]];
+        const sf = payload.series[f] || {};
+        const baseCell = ((NBM_SCOPE_FIELDS.has(f) ? sf.raw_nbm : sf.raw) || {})[payload.days[i]];
+        let prodCell = (sf.prod_real || {})[payload.days[i]];
+        if (!prodCell) prodCell = (sf.prod || {})[payload.days[i]];
         const prodVal = prodCell ? prodCell.mae : null;
-        if (prodVal === null || prodVal === undefined) continue;
-        scores.push((1 - prodVal / refMae) * 100);
+        const baseVal = baseCell ? baseCell.mae : null;
+        if (prodVal == null || baseVal == null || !(baseVal > 0)) continue;
+        scores.push((baseVal - prodVal) / baseVal * 100);
       }
       if (scores.length >= 6) {
         const sorted = [...scores].sort((a, b) => a - b);

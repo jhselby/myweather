@@ -212,6 +212,11 @@ def compute_fresh_rollup():
                 e_wdp = r.get("error_wdp")
                 if e_wdp is not None:
                     per_layer["wdp"] = e_wdp
+                # v0.7.61 — public-forecast baseline (raw NBM) for wd so the
+                # daily Total Lift chart can score wd like every NBM field.
+                e_rn = r.get("error_raw_nbm")
+                if e_rn is not None:
+                    per_layer["raw_nbm"] = e_rn
                 # prod_real for L1_ONLY_FIELDS = deepest specialist present.
                 # v0.6.464 (2026-08-21): NBM-aware. Post-F3-A, wd has an
                 # applied_layer stamp on selector-picks-NBM rows. When the

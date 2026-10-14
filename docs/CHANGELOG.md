@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.61 • October 14, 2026 (Stack health chart = daily Total Lift)</strong></summary>
+
+- The Stack health trajectory (and the aggregate view in Accuracy over time, same function) plotted 1 − prod MAE / a FIXED 90-day raw reference. A fixed denominator does not absorb the weather; it exposes it. On 10-14 the line dove because the public forecast ran 1.7–1.9× its normal error on t/ws/wg/cl (front passage) — we still beat it by +1% to +8%. Across the last two weeks the chart read +17% to +51% while our real daily lift over the public forecast was +0% to +7%.
+- Now: daily (public MAE − prod MAE) / public MAE × 100, same day, public = raw NBM (raw HRRR for cl/cm/pr) — the Total Lift tile's number over time, on its field set (dp, cc, pa, pp excluded). The current local day is not plotted until complete.
+- `mae_over_time` now emits a `raw_nbm` series for wd so wd is scored like the other NBM fields.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.60 • October 14, 2026 (scoreboard audit: CLAUDE.md §0 run on every tile)</strong></summary>
 
 * **Selector Skill** — "what we served" now IS the served error on every hour (was the picked side's cascade walk; t/ws hours routed to NWS were graded as NBM, ~1.4% of rows).
