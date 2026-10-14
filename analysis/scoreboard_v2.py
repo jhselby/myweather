@@ -63,6 +63,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 from analysis._output import out as _out
+from analysis.per_field_scoring import _hrrr_prod_error, _nbm_prod_error
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 SELECTOR_TABLE_PATH = (
@@ -199,6 +200,9 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
             "hrrr":         [0.0, 0],  # [sum_abs, n]
             "nbm":          [0.0, 0],
             "prod":         [0.0, 0],
+            "sel":          [0.0, 0],  # raw of the side the selector routed THIS row to
+            "prod_hrrr":    [0.0, 0],  # Prod had every row been routed HRRR
+            "prod_nbm":     [0.0, 0],  # Prod had every row been routed NBM
             "halves_a_hrrr": [0.0, 0],
             "halves_a_prod": [0.0, 0],
             "halves_b_hrrr": [0.0, 0],
@@ -259,6 +263,35 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
                 b["nbm"][0] += vn; b["nbm"][1] += 1
                 if cell:
                     cell["nbm"][0] += vn; cell["nbm"][1] += 1
+            # v0.7.55: per-row selector raw — the raw of the source the
+            # selector actually routed this row to (selector_source stamp),
+            # not a per-field majority vote. HRRR raw = error_l1r (pre-swap)
+            # when stamped; blend picks score error_blend.
+            src = row.get("selector_source") if in_scope else "hrrr"
+            if src == "nbm":
+                e_sel = e_nbm
+            elif src in (None, "hrrr"):
+                e_sel = row.get("error_l1r", e_l1)
+            else:
+                e_sel = row.get("error_blend")
+            if e_sel is None:
+                e_sel = e_l1
+            vs = abs(float(e_sel))
+            b["sel"][0] += vs; b["sel"][1] += 1
+            if cell:
+                cell["sel"][0] += vs; cell["sel"][1] += 1
+            # v0.7.55: selector grade at the level it routes on (Prod vs Prod).
+            # Both helpers fall through to raw, which pool_ok already requires,
+            # so these share the prod pool exactly. HRRR-only fields: Prod is HRRR.
+            if in_scope:
+                ph, pn = _hrrr_prod_error(row), _nbm_prod_error(row)
+            else:
+                ph = pn = e_prod
+            for key, v in (("prod_hrrr", ph), ("prod_nbm", pn)):
+                v = abs(float(v if v is not None else e_prod))
+                b[key][0] += v; b[key][1] += 1
+                if cell:
+                    cell[key][0] += v; cell[key][1] += 1
             vp = abs(float(e_prod))
             b["prod"][0] += vp; b["prod"][1] += 1
             bucket = b["halves_b_prod"] if in_half_b else b["halves_a_prod"]
@@ -279,6 +312,9 @@ def _compute_field_cell(field, window_acc, band_picks):
     hrrr_mae = _mean(window_acc["hrrr"])
     nbm_mae = _mean(window_acc["nbm"])
     prod_mae = _mean(window_acc["prod"])
+    sel_mae = _mean(window_acc["sel"])
+    ph_mae = _mean(window_acc["prod_hrrr"])
+    pn_mae = _mean(window_acc["prod_nbm"])
     n = window_acc["prod"][1]
 
     # v0.6.557 — best_public = user default (matches per_field_scoring's
@@ -334,6 +370,14 @@ def _compute_field_cell(field, window_acc, band_picks):
         "best_public":  best_public,
         "best_public_mae": (round(best_mae, 3) if best_mae is not None else None),
         "selector_pick": selector_pick,
+        "selector_raw_mae": (round(sel_mae, 3) if sel_mae is not None else None),
+        "prod_always_hrrr_mae": (round(ph_mae, 3) if ph_mae is not None else None),
+        "prod_always_nbm_mae":  (round(pn_mae, 3) if pn_mae is not None else None),
+        # Selector lift vs the better fixed routing (Prod vs Prod). Positive =
+        # the selector's routing beats always-HRRR and always-NBM.
+        "selector_lift_vs_best_fixed_pct": (
+            round(100.0 * (min(ph_mae, pn_mae) - prod_mae) / min(ph_mae, pn_mae), 2)
+            if None not in (ph_mae, pn_mae, prod_mae) and min(ph_mae, pn_mae) > 0 else None),
         "prod_mae":     (round(prod_mae, 3) if prod_mae is not None else None),
         "lift_vs_best_public_pct": (round(lift_vs_best, 2) if lift_vs_best is not None else None),
         "lift_vs_hrrr_pct":        (round(lift_vs_hrrr, 2) if lift_vs_hrrr is not None else None),
@@ -384,13 +428,8 @@ def _rollup(per_field, per_field_band, window_label):
         else:                              winning["amber"].append(field)
         # Correction value = did prod beat SELECTED source (not best public).
         # Positive: prod < selected; flat: within ±2%; negative: prod > selected.
-        sel = cell["selector_pick"]
-        if sel == "hrrr":
-            src_mae = cell["hrrr_raw_mae"]
-        elif sel == "nbm":
-            src_mae = cell["nbm_raw_mae"]
-        else:
-            src_mae = None
+        # v0.7.55: per-row selector raw (was the raw of a majority-vote pick).
+        src_mae = cell.get("selector_raw_mae")
         if src_mae is not None and cell["prod_mae"] is not None and src_mae > 0:
             delta = 100.0 * (src_mae - cell["prod_mae"]) / src_mae
             if   delta >= 2.0:   correction_value["positive"].append(field)
@@ -437,8 +476,18 @@ def _rollup(per_field, per_field_band, window_label):
     # HRRR vs NBM vs best-chosen vs Prod on average?". Only computed on
     # touched fields (same exclusion set) so units + interpretability stay
     # consistent with the touched-field lift row.
+    # v0.7.55: every list covers the SAME fields. Pre-v0.7.55 "nbm" skipped
+    # cl/cm (no NBM) while "best_chosen" (= best_public, NOT the selector)
+    # counted them at 100, so best_chosen read worse than nbm on field mix
+    # alone (7d: 91.1 vs 88.6). Now: nbm = always-NBM policy (HRRR where NBM
+    # does not publish); best_public = user default; best_chosen = raw of
+    # the side the selector routed each row to.
     nbm_ratios = []
     best_ratios = []
+    pub_ratios = []
+    pub_ratios_w = []
+    ph_ratios, ph_ratios_w, pn_ratios, pn_ratios_w = [], [], [], []
+    n_with_nbm = 0
     prod_ratios = []
     # v0.6.560 — parallel weighted-by-n lists.
     nbm_ratios_w = []
@@ -449,15 +498,26 @@ def _rollup(per_field, per_field_band, window_label):
             continue
         h = cell.get("hrrr_raw_mae")
         n = cell.get("nbm_raw_mae")
-        b = cell.get("best_public_mae")
+        b = cell.get("selector_raw_mae")
+        bp = cell.get("best_public_mae")
         p = cell.get("prod_mae")
         n_prod = cell.get("n") or 0
         if h is None or h <= 0:
             continue
         if n is not None:
-            r = 100.0 * n / h
-            nbm_ratios.append(r)
-            if n_prod: nbm_ratios_w.append((r, n_prod))
+            n_with_nbm += 1
+        for lst, lst_w, v in ((ph_ratios, ph_ratios_w, cell.get("prod_always_hrrr_mae")),
+                              (pn_ratios, pn_ratios_w, cell.get("prod_always_nbm_mae"))):
+            if v is not None:
+                lst.append(100.0 * v / h)
+                if n_prod: lst_w.append((100.0 * v / h, n_prod))
+        r = 100.0 * (n if n is not None else h) / h
+        nbm_ratios.append(r)
+        if n_prod: nbm_ratios_w.append((r, n_prod))
+        if bp is not None:
+            r = 100.0 * bp / h
+            pub_ratios.append(r)
+            if n_prod: pub_ratios_w.append((r, n_prod))
         if b is not None:
             r = 100.0 * b / h
             best_ratios.append(r)
@@ -477,6 +537,8 @@ def _rollup(per_field, per_field_band, window_label):
     prod_mean_pct = _mean_or_none(prod_ratios)
     nbm_mean_pct_w = _weighted_or_none(nbm_ratios_w)
     best_mean_pct_w = _weighted_or_none(best_ratios_w)
+    pub_mean_pct = _mean_or_none(pub_ratios)
+    pub_mean_pct_w = _weighted_or_none(pub_ratios_w)
     prod_mean_pct_w = _weighted_or_none(prod_ratios_w)
     pipeline_value_add_pp = None
     if best_mean_pct is not None and prod_mean_pct is not None:
@@ -525,16 +587,24 @@ def _rollup(per_field, per_field_band, window_label):
             "hrrr":               (round(hrrr_baseline_pct, 1) if hrrr_baseline_pct is not None else None),
             "nbm":                (round(nbm_mean_pct, 1) if nbm_mean_pct is not None else None),
             "best_chosen":        (round(best_mean_pct, 1) if best_mean_pct is not None else None),
+            "best_public":        (round(pub_mean_pct, 1) if pub_mean_pct is not None else None),
             "prod":               (round(prod_mean_pct, 1) if prod_mean_pct is not None else None),
             "pipeline_value_add_pp": (round(pipeline_value_add_pp, 2) if pipeline_value_add_pp is not None else None),
             # v0.6.560 — n-weighted variants (each field's ratio weighted by
             # its Prod count). Field-count keys unchanged.
             "nbm_nweighted":                (round(nbm_mean_pct_w, 1) if nbm_mean_pct_w is not None else None),
             "best_chosen_nweighted":        (round(best_mean_pct_w, 1) if best_mean_pct_w is not None else None),
+            "best_public_nweighted":        (round(pub_mean_pct_w, 1) if pub_mean_pct_w is not None else None),
             "prod_nweighted":               (round(prod_mean_pct_w, 1) if prod_mean_pct_w is not None else None),
             "pipeline_value_add_pp_nweighted": (round(pipeline_value_add_pp_w, 2) if pipeline_value_add_pp_w is not None else None),
             "n_fields": len(prod_ratios),
-            "n_fields_with_nbm": len(nbm_ratios),
+            "n_fields_with_nbm": n_with_nbm,
+            # v0.7.55: the selector grade. Prod under each fixed routing vs
+            # actual Prod ("prod"), same rows. prod < both = selector earns.
+            "prod_always_hrrr":           (round(_mean_or_none(ph_ratios), 1) if ph_ratios else None),
+            "prod_always_nbm":            (round(_mean_or_none(pn_ratios), 1) if pn_ratios else None),
+            "prod_always_hrrr_nweighted": (round(_weighted_or_none(ph_ratios_w), 1) if ph_ratios_w else None),
+            "prod_always_nbm_nweighted":  (round(_weighted_or_none(pn_ratios_w), 1) if pn_ratios_w else None),
         },
         "winning_fields": {
             "green": winning["green"], "amber": winning["amber"], "red": winning["red"],
@@ -643,7 +713,7 @@ def main():
                            "regress_lift_pct": VERDICT_REGRESS_LIFT},
             "rollup_excluded_fields": sorted(list(ROLLUP_EXCLUDE)),
         },
-        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = user default per v0.6.557 — NBM raw for NBM-scope fields (NBM is the NWS backbone; iPhone Weather / weather.gov / vendor displays), HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr). Matches per_field_scoring's best_raw. Pre-v0.6.557 used argmin(hrrr_raw, nbm_raw). v0.6.560: pool-intersected — per-field hrrr_raw / nbm_raw / prod MAEs describe the SAME row set (NBM-scope: row needs hrrr+nbm+prod; HRRR-only: row needs hrrr+prod). Matches per_field_scoring's pool discipline; pre-v0.6.560 accumulated each MAE independently. selector_pick = majority vote across bands from l1_selector_table_curated.json. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail. v0.6.560: value_add_mean_pct_nweighted + mae_pct_of_hrrr._nweighted variants weight each field's contribution by its Prod n; unweighted keys stay for backwards compatibility.",
+        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = user default per v0.6.557 — NBM raw for NBM-scope fields (NBM is the NWS backbone; iPhone Weather / weather.gov / vendor displays), HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr). Matches per_field_scoring's best_raw. Pre-v0.6.557 used argmin(hrrr_raw, nbm_raw). v0.6.560: pool-intersected — per-field hrrr_raw / nbm_raw / prod MAEs describe the SAME row set (NBM-scope: row needs hrrr+nbm+prod; HRRR-only: row needs hrrr+prod). Matches per_field_scoring's pool discipline; pre-v0.6.560 accumulated each MAE independently. selector_pick = majority vote across bands from l1_selector_table_curated.json (label only). v0.7.55: selector_raw_mae = raw of the side the selector routed each row to (selector_source stamp); mae_pct_of_hrrr.best_chosen is that per-row selector raw (was best_public mislabeled), best_public added, nbm = always-NBM with HRRR where NBM does not publish so every ratio covers the same fields; correction_value grades prod vs selector_raw_mae. best_chosen is RAW and is not a selector grade (the selector routes on Prod; ch routes HRRR for its cloud corrections despite worse HRRR raw). The selector grade is mae_pct_of_hrrr.prod vs prod_always_hrrr / prod_always_nbm, and per-field selector_lift_vs_best_fixed_pct. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail. v0.6.560: value_add_mean_pct_nweighted + mae_pct_of_hrrr._nweighted variants weight each field's contribution by its Prod n; unweighted keys stay for backwards compatibility.",
     }
 
     with open(OUT_JSON, "w") as fout:
@@ -673,6 +743,15 @@ def main():
               f"negative {r['local_correction_value']['negative_count']}")
         print(f"  health: HIGH={r['health']['HIGH']} MED={r['health']['MED']} "
               f"LOW={r['health']['LOW']} NA={r['health']['NA']}")
+        m = r.get("mae_pct_of_hrrr") or {}
+        if m.get("prod") is not None and m.get("prod_always_hrrr") is not None:
+            best_fixed = min(m["prod_always_hrrr"], m["prod_always_nbm"])
+            losers = sorted(f for f, c in windows_output[label]["per_field"].items()
+                            if (c.get("selector_lift_vs_best_fixed_pct") or 0) <= -2.0)
+            print(f"  selector (Prod % of HRRR raw): actual {m['prod']} vs always-HRRR "
+                  f"{m['prod_always_hrrr']} · always-NBM {m['prod_always_nbm']} → "
+                  f"{'BEATS' if m['prod'] < best_fixed else 'LOSES TO'} best fixed routing"
+                  f"{' · losing fields: ' + ', '.join(losers) if losers else ''}")
 
 
 if __name__ == "__main__":

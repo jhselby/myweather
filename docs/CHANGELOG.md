@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.55 • October 14, 2026 (scoreboard: real selector grade)</strong></summary>
+
+- `scoreboard_v2` reported `mae_pct_of_hrrr.best_chosen` as if it were the selector's result. It was the best-public baseline (NBM raw, HRRR raw for cl/cm), and the `nbm` figure next to it averaged a different set of fields, so "best chosen" looked worse than always-NBM (7d 91.1 vs 88.6) on field mix alone.
+- New selector grade on the same rows, corrected output vs corrected output: `prod_always_hrrr` and `prod_always_nbm` against actual `prod` (rollup), and `selector_lift_vs_best_fixed_pct` per field. The digest prints one line per window: actual vs always-HRRR vs always-NBM, BEATS/LOSES TO, and the losing fields.
+- `best_chosen` is now the raw of the side the selector routed each row to (`selector_source`), labeled as raw, not a grade. `best_public` added; `nbm` covers the same fields (HRRR where NBM does not publish). "Correction value" grades Prod against that per-row selector raw instead of a majority-vote pick.
+- First read (15:34Z): 7d actual 76.8 vs always-HRRR 79.4 / always-NBM 79.9 (selector earns; h −5.7%, dp −4.5%). 24h 73.4 vs 74.7 / 71.5 (loses to always-NBM; h, ws, wg, cc, ch, dp losing).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.54 • October 14, 2026 (yesterday's rain total from station daily totals)</strong></summary>
 
 - The briefing told the AI that Oct 13 had 7.05" of rain. `derived.yesterday_precip_in` summed the obs log's `precip_in` over every 10-minute entry, but `precip_in` is the max-station WU rain RATE in in/hr, so each hour added about six hourly rates.
