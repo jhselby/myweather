@@ -9782,12 +9782,16 @@ load();
         p75[i] = q(0.75);
       }
     }
-    return { median, mean, p25, p75 };
+    // v0.7.61 — first day with a score: the chart starts there (the public
+    // baseline, raw NBM, only exists in the pair log from 2026-08-19).
+    const firstIdx = median.findIndex(v => v !== null);
+    const firstDay = firstIdx >= 0 ? payload.days[firstIdx] : undefined;
+    return { median, mean, p25, p75, firstDay };
   }
 
   function renderAggregate() {
     const agg = aggregateSeries("mae");
-    const label = "Prod vs 90d-ref raw (%, ↑ = beating baseline)";
+    const label = "Total Lift vs public forecast (%, ↑ = beating it)";
     const datasets = [];
     if (agg) {
       // p25 / p75 shaded band — draw p75 line first, then p25 with fill to p75.
@@ -9861,6 +9865,7 @@ load();
         },
         scales: {
           x: { title: { display: true, text: "obs date", color: "#8a93a3" },
+               min: agg ? agg.firstDay : undefined,
                ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
                grid: { color: "#242833" } },
           y: { title: { display: true, text: label + " — 12 fields (pa/pp excluded)", color: "#8a93a3" },
@@ -10059,7 +10064,7 @@ load();
     if (!payload || !stackHealthCanvas) return;
     const agg = aggregateSeries("mae");
     if (!agg) return;
-    const label = "Prod vs 90d-ref raw (%, ↑ = beating baseline)";
+    const label = "Total Lift vs public forecast (%, ↑ = beating it)";
     const datasets = [];
     datasets.push({
       label: "P75", data: agg.p75,
@@ -10134,6 +10139,7 @@ load();
         },
         scales: {
           x: { title: { display: true, text: "obs date", color: "#8a93a3" },
+               min: agg ? agg.firstDay : undefined,
                ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
                grid: { color: "#242833" } },
           y: { title: { display: true, text: label, color: "#8a93a3" },
