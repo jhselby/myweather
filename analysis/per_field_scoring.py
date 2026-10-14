@@ -203,6 +203,10 @@ def _prod_error_current_config(row):
     return None
 
 
+# v0.7.59 — wd residuals are circular; a linear blend of signed residuals is
+# meaningless, so wd's best rule is the better single cascade.
+CIRCULAR_FIELDS = frozenset({"wd"})
+
 # Sources where the served value is a blend of both cascades, not one side.
 BLEND_SOURCES = ("l1_blend", "blend", "tblend")
 
@@ -282,6 +286,14 @@ def _new_bucket():
         "nbm_prod":     [0.0, 0],
         "chosen_prod":  [0.0, 0],
         "alt_prod":     [0.0, 0],
+        # v0.7.59 — per (regime_runtime, band) sums of |HRRR prod| and |NBM
+        # prod| on the chooser pool. Summed to field level for the
+        # best-fixed-routing baseline; kept per cell for diagnostics.
+        "cell_fixed":   {},
+        # v0.7.59 — sum |w*e_hrrr + (1-w)*e_nbm| for w in W_GRID (signed
+        # cascade residuals, same chooser rows). min over w = the best
+        # constant blend in hindsight = the Selector Score's "perfect".
+        "wgrid":        [0.0] * 21,
         # v0.6.492 — paired per-cascade Prod buckets for the coach's table.
         # Populated only inside the pool_ok intersection so HRRR Pipeline
         # Skill / NBM Pipeline Skill / Hit Rate / Value Captured / Total
@@ -529,6 +541,17 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 # v0.6.481: per-row oracle. Oracle picks the lower
                 # cascade every row.
                 orc = min(hp, np_)
+                _sf = row.get("state_fc") or {}
+                _ck = (_sf.get("regime_runtime") or _sf.get("regime_synoptic"),
+                       _band_for(row.get("lead_h")))
+                _cf = b["cell_fixed"].setdefault(_ck, [0.0, 0.0])
+                _cf[0] += hp; _cf[1] += np_
+                if field not in CIRCULAR_FIELDS:
+                    _sh, _sn = float(e_hp), float(e_np)
+                    _wg = b["wgrid"]
+                    for _i in range(21):
+                        _w = _i / 20.0
+                        _wg[_i] += abs(_w * _sh + (1.0 - _w) * _sn)
                 b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
                 # v0.6.556: split wins / losses / ties. Ties (chosen ==
                 # alt) are cascades-agree rows, not router-skill rows —
@@ -673,7 +696,58 @@ def _compute_field(field, buckets, halves):
     else:
         value_captured_pct = None
 
+    # v0.7.59 — Selector Skill = served vs the BEST FIXED ROUTING for the
+    # field (always-HRRR or always-NBM cascade, whichever had the lower error
+    # on the same rows and window). + = the selector (plus any blend) beats
+    # the simplest static choice; 0 = matches it (wd: always-NBM is optimal);
+    # − = loses to it. Same quantity as scoreboard_v2's
+    # selector_lift_vs_best_fixed_pct, so the two scoreboards agree.
+    # Replaces Value Captured as the tile grade: VC's per-row oracle credits
+    # chance per-hour wins no forecast-time rule can capture, so fields where
+    # one source wins everywhere read red forever. A per-(regime, band)
+    # hindsight bar was tried and rejected: 35 cells over 7d is itself an
+    # oracle (wd −0.8%, 24h ch −233% on 0.6-MAE cells). VC stays in the JSON
+    # as the theoretical ceiling.
+    cf = buckets["cell_fixed"]
+    best_fixed_sum = min(sum(hs for hs, _ in cf.values()), sum(ns for _, ns in cf.values())) if cf else 0.0
+    chosen_sum = buckets["chosen_prod"][0]
+    if in_nbm_scope and best_fixed_sum > 0 and buckets["chosen_prod"][1] > 0:
+        selector_vs_fixed_pct = 100.0 * (best_fixed_sum - chosen_sum) / best_fixed_sum
+        best_fixed_mae = best_fixed_sum / buckets["chosen_prod"][1]
+    else:
+        selector_vs_fixed_pct = None
+        best_fixed_mae = None
+
+    # v0.7.59 — Selector Score = improvement achieved / improvement a perfect
+    # rule could have achieved, both measured from the best fixed routing.
+    # "Perfect" = the best CONSTANT blend weight for the field in hindsight
+    # on the same rows (w in 0..1 step 0.05; w=0/1 are the fixed routings) —
+    # a rule we could actually run, unlike the per-row oracle behind Value
+    # Captured. 100% = as good as the best real rule; 0% = no better than
+    # always one cascade; negative = worse. Headroom < 2% of the fixed
+    # routing's error = nothing to gain (score None, selector_headroom_pct
+    # says why). Can exceed 100% when per-cell blends beat one field weight.
+    wg = buckets["wgrid"]
+    n_ch = buckets["chosen_prod"][1]
+    if field in CIRCULAR_FIELDS or not any(wg):
+        best_rule_sum, best_rule_w = best_fixed_sum, None
+    else:
+        _i = min(range(21), key=lambda i: wg[i])
+        best_rule_sum, best_rule_w = min(wg[_i], best_fixed_sum), _i / 20.0
+    selector_score_pct = selector_headroom_pct = best_rule_mae = None
+    if in_nbm_scope and best_fixed_sum > 0 and n_ch > 0:
+        selector_headroom_pct = 100.0 * (best_fixed_sum - best_rule_sum) / best_fixed_sum
+        best_rule_mae = best_rule_sum / n_ch
+        if selector_headroom_pct >= 2.0:
+            selector_score_pct = 100.0 * (best_fixed_sum - chosen_sum) / (best_fixed_sum - best_rule_sum)
+
     return {
+        "selector_vs_fixed_pct": round(selector_vs_fixed_pct, 2) if selector_vs_fixed_pct is not None else None,
+        "selector_score_pct": round(selector_score_pct, 1) if selector_score_pct is not None else None,
+        "selector_headroom_pct": round(selector_headroom_pct, 2) if selector_headroom_pct is not None else None,
+        "best_rule_mae": round(best_rule_mae, 3) if best_rule_mae is not None else None,
+        "best_rule_w_hrrr": best_rule_w,
+        "best_fixed_mae": round(best_fixed_mae, 3) if best_fixed_mae is not None else None,
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,
         "nbm_raw_mae":   round(nbm, 3)  if nbm  is not None else None,
         "l1_selected_mae": round(sel, 3) if sel is not None else None,

@@ -1544,11 +1544,11 @@
     <!-- Selector Quality -->
     <div class="sb-tile" data-tile="selector_skill">
       <div class="sb-tile-title">Selector Skill</div>
-      <div class="sb-tile-sub">Value Captured: of the routing gain a perfect picker could have captured, how much did we actually get? Magnitude-aware and n-weighted.</div>
+      <div class="sb-tile-sub">Selector Score: of the improvement the best real routing rule could have made over always using one model, how much did we make? "Best real rule" = the best fixed HRRR/NBM blend weight for the field, in hindsight, same hours. 100% = matched it · 0% = no better than one model · negative = worse. Fields with &lt;2% to gain are listed as nothing to gain.</div>
 
       <div class="sb-num-row">
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">7 Day · Value Captured</div>
+          <div class="sb-num-group-lbl">7 Day · Selector Score</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -1561,7 +1561,7 @@
           </div>
         </div>
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">24 Hour · Value Captured</div>
+          <div class="sb-num-group-lbl">24 Hour · Selector Score</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -4622,6 +4622,13 @@ async function renderScoreboardTilesMinimal() {
   // available for consumers that want the magnitude-weighted view.
   const _selectorSkill = (c) => (c && c.win_rate_pct          != null) ? c.win_rate_pct          : null;
   const _valueCaptured = (c) => (c && c.value_captured_pct    != null) ? c.value_captured_pct    : null;
+  // v0.7.59 — Selector Score: achieved / achievable improvement over the
+  // best fixed routing (achievable = best constant blend in hindsight).
+  // Clamped to [-100, 150] for display + aggregation: below -100 means "worse
+  // than one model by more than there was to gain"; a tiny denominator can
+  // otherwise swing one field into the thousands and swamp the mean.
+  const _selScore      = (c) => (c && c.selector_score_pct    != null)
+    ? Math.max(-100, Math.min(150, c.selector_score_pct)) : null;
   const _prodTrend     = (c) => (c && c.prod_trend_pct        != null) ? c.prod_trend_pct        : null;
 
   const _collect = (window, fields, metricFn) => {
@@ -4753,8 +4760,8 @@ async function renderScoreboardTilesMinimal() {
     const tile = document.querySelector(`[data-tile="selector_skill"]`);
     if (!tile) return;
     const fields = _agg(NBM_SCOPE);
-    const vc7  = _collect(pf7,  fields, _valueCaptured);
-    const vc24 = _collect(pf24, fields, _valueCaptured);
+    const vc7  = _collect(pf7,  fields, _selScore);
+    const vc24 = _collect(pf24, fields, _selScore);
     const primary = {
       med7:  _median(vc7),  mean7:  _mean(vc7),
       med24: _median(vc24), mean24: _mean(vc24),
@@ -4767,6 +4774,19 @@ async function renderScoreboardTilesMinimal() {
       const cls = _clsVC(val);
       if (cls) el.classList.add(cls);
     }
+    // Fields with < 2% to gain: routing has nothing left to win there.
+    let ng = tile.querySelector(".sb-nothing-to-gain");
+    if (!ng) {
+      ng = document.createElement("div");
+      ng.className = "sb-nothing-to-gain sb-tile-sub";
+      tile.appendChild(ng);
+    }
+    const none7 = fields.filter(f => pf7[f] && pf7[f].selector_headroom_pct != null && pf7[f].selector_score_pct == null);
+    const room7 = fields.filter(f => pf7[f] && pf7[f].selector_headroom_pct != null)
+      .sort((a, b) => pf7[b].selector_headroom_pct - pf7[a].selector_headroom_pct)
+      .map(f => `${f} ${pf7[f].selector_headroom_pct.toFixed(1)}%`);
+    ng.innerHTML = `7d room to gain from routing: ${room7.join(" · ") || "—"}` +
+      (none7.length ? `<br>Nothing to gain (7d): <code>${none7.join(" · ")}</code>` : "");
   };
   _paintSelectorSkill();
 
@@ -4820,7 +4840,11 @@ async function renderScoreboardTilesMinimal() {
   //   30-70% "flat"    = middling — real gap remaining
   // Prior +33%/0% bar painted +48% aggregate green even though the
   // selector was leaving more than half of the oracle gap on the table.
-  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _valueCaptured, _lift, {win: 70, lose: 30});
+  // v0.7.59 — Selector Score (achieved / achievable vs the best constant
+  // blend in hindsight) keeps the 70/30 cutoffs; those are now reachable.
+  // Was Value Captured vs a per-row oracle no forecast-time rule can reach
+  // (wd/wg read red forever even with optimal routing).
+  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _selScore,      _lift, {win: 70, lose: 30});
   _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
 
   // v0.6.488 — National Source. Which raw source (HRRR or NBM) wins per

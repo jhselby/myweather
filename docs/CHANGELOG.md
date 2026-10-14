@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.59 • October 14, 2026 (Selector Score: achieved ÷ achievable)</strong></summary>
+
+- Selector Skill was Value Captured: routing gain vs a per-hour oracle that picks whichever model landed closer after the fact. Much of that gain is chance no forecast-time rule can capture, so wd (always-NBM, the best possible routing) read red forever and the tile could not tell "routing is wrong" from "routing is already optimal".
+- New Selector Score = improvement we made over the best fixed routing (always-HRRR or always-NBM cascade, whichever was better) ÷ improvement the best real rule could have made, where the best real rule = the best constant HRRR/NBM blend weight for the field in hindsight on the same hours. 100% = matched it, 0% = no better than one model, negative = worse. Fields with <2% to gain are listed as nothing to gain (wd today). 70/30 cutoffs kept — now reachable. Page clamps each field to −100…150% before median/mean; JSON keeps the raw value.
+- Tile also lists each field's room to gain from routing (7d: h 13.9%, sr 11.4%, ws 5.8%, wg 5.7%, ch 4.1%, t 2.3%, wd 0).
+- `per_field_scoring.json` adds `selector_score_pct`, `selector_headroom_pct`, `best_rule_mae`, `best_rule_w_hrrr`, `selector_vs_fixed_pct` (= scoreboard_v2's `selector_lift_vs_best_fixed_pct`), `best_fixed_mae`. Value Captured stays in the JSON. Attribution is unchanged and still sums (Routing + Cascade = Total on every field).
+- Tested: page scripts parse cleanly; tile values computed from the live JSON. Headless Chrome did not render the data-loaded page, so not visually confirmed on localhost.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.58 • October 14, 2026 (h: terminal blend where the L1 blend is off)</strong></summary>
 
 - 30-day head-to-head on h rows where the L1 static blend is stamped: on the 6 cells where the L1 blend is applied the two blends tie (nw_flow/24-47 +43.9% vs +41.9%, se_flow/24-47 +24.1% vs +22.3%), so L1 keeps them. Where L1 is not applied the terminal blend wins: sw_flow/12-23 +31.1% vs +20.9% (n=1147), nw_flow/12-23 +17.0% vs +4.3% (n=821), ne_flow/12-23 +44.7% vs +36.0%.
