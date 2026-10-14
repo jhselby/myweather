@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.54 • October 14, 2026 (yesterday's rain total from station daily totals)</strong></summary>
+
+- The briefing told the AI that Oct 13 had 7.05" of rain. `derived.yesterday_precip_in` summed the obs log's `precip_in` over every 10-minute entry, but `precip_in` is the max-station WU rain RATE in in/hr, so each hour added about six hourly rates.
+- The obs log now records `precip_today_in`: the median daily total of stations within 1.5 mi (fresh WU + Tempest `precip_accum_today_in`, same station set as v0.7.52). Yesterday's total is the max of yesterday's entries from 00:30 on. Until a full day of entries exists, no value is written rather than a wrong one. `precip_in` is unchanged (pp scoring reads it).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.53 • October 14, 2026 (AI headline: observed rain reaches the briefing)</strong></summary>
 
 - On Oct 13 evening the AI headline said "Overcast" in steady rain. When the model forecast had no rain, the prompt told the AI "No significant rain expected next 48h — do NOT mention rain", and the headline check rejected any rain headline on the same grounds or because the model description was dry.

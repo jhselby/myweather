@@ -46,6 +46,7 @@ def update_obs_temp_log(
     cloud_low=None,
     cloud_mid=None,
     cloud_high=None,
+    precip_today_in=None,
 ):
     """Append one 10-min observed snapshot. Returns the post-write log dict.
 
@@ -94,6 +95,8 @@ def update_obs_temp_log(
         entry["cloud_mid"] = round(cloud_mid)
     if cloud_high is not None:
         entry["cloud_high"] = round(cloud_high)
+    if precip_today_in is not None:
+        entry["precip_today_in"] = round(precip_today_in, 3)
 
     entries.append(entry)
     entries.sort(key=lambda e: e.get("time", ""))

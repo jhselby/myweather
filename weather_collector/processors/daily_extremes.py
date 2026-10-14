@@ -39,6 +39,37 @@ def _current_hour_precip_in(weather_data, current_hour_iso):
     return None
 
 
+def _nearby_precip_today_in(weather_data):
+    """Observed rain since local midnight: median of the daily totals reported
+    by stations within 1.5 mi (WU rows no more than 10 min older than the
+    newest WU report; Tempest valid and <=10 min old). None with <3 stations.
+    Same station set as the app's observedPrecipDesc()."""
+    near_mi = 1.5
+    wu = []
+    for st in ((weather_data.get("wu_stations") or {}).get("stations") or []):
+        if st.get("precip_today_in") is None or st.get("distance_mi") is None or st["distance_mi"] > near_mi:
+            continue
+        try:
+            ts = datetime.strptime(st.get("timestamp") or "", "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        wu.append((ts, st["precip_today_in"]))
+    vals = []
+    if wu:
+        newest = max(ts for ts, _ in wu)
+        vals = [v for ts, v in wu if (newest - ts).total_seconds() <= 600]
+    for st in ((weather_data.get("tempest") or {}).get("stations") or []):
+        if (st.get("valid") is not False and st.get("precip_accum_today_in") is not None
+                and st.get("distance_mi") is not None and st["distance_mi"] <= near_mi
+                and not ((st.get("age_minutes") or 0) > 10)):
+            vals.append(st["precip_accum_today_in"])
+    if len(vals) < 3:
+        return None
+    vals.sort()
+    n = len(vals)
+    return vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+
+
 def _gather_current_observation(weather_data, current_hour_iso):
     """Collect the 9 fields update_obs_temp_log records each run."""
     hyp = weather_data.get("hyperlocal", {})
@@ -98,6 +129,7 @@ def _gather_current_observation(weather_data, current_hour_iso):
         "cloud_low": cloud_low,
         "cloud_mid": cloud_mid,
         "cloud_high": cloud_high,
+        "precip_today_in": _nearby_precip_today_in(weather_data),
         # Use the station-network–corrected humidity (matches how `corrected_temp`
         # is sourced two lines above). Storing raw model humidity here causes the
         # Joiner / Fitter to see the Kalman bias itself as "error," which makes
@@ -177,9 +209,17 @@ def compute_daily_extremes(weather_data):
     ye_temps = [e["temp"] for e in ye_entries if e.get("temp") is not None]
     if ye_temps:
         derived["yesterday_high"] = round(max(ye_temps), 1)
-    ye_precip = [e["precip_in"] for e in ye_entries if e.get("precip_in") is not None]
+    # Station daily totals reset at local midnight; the max over the day is the
+    # day's total. Skip entries before 00:30 (stations may not have reset yet).
+    # Was sum(precip_in) over every 10-min entry: precip_in is a max-station
+    # RATE in in/hr, so that summed ~6 hourly rates per hour (10-13: 7.05" vs
+    # ~0.4" observed). No precip_today_in entries yet -> no value, not a guess.
+    ye_precip = [e["precip_today_in"] for e in ye_entries
+                 if e.get("precip_today_in") is not None and e.get("time", "")[11:16] >= "00:30"]
     if ye_precip:
-        derived["yesterday_precip_in"] = round(sum(ye_precip), 2)
+        derived["yesterday_precip_in"] = round(max(ye_precip), 2)
+    else:
+        derived.pop("yesterday_precip_in", None)
     ye_gusts = [e["gust_mph"] for e in ye_entries if e.get("gust_mph") is not None]
     if ye_gusts:
         derived["yesterday_peak_gust"] = round(max(ye_gusts), 1)
