@@ -176,6 +176,7 @@ from .l1_selector import (
 # cell to live apply (h/nw_flow/24-47); the rest stay shadow telemetry. Gate
 # is is_applied(), not ENABLED — see l1_static_blend.py docstring.
 from . import l1_static_blend as _l1_static_blend
+from . import terminal_static_blend as _terminal_static_blend
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
 # cells the selector routes to NBM don't silently lose wdp's coverage.
@@ -1203,6 +1204,30 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 entry[f"{f}_applied"] = "l1_blend"
                 entry[f"{f}_selector_source"] = "l1_blend"
                 continue
+            # v0.7.57 — terminal static blend: w*HRRR_terminal +
+            # (1-w)*NBM_terminal on curated (field, regime, band) cells.
+            # Same terminals as the v0.7.0 learned blender above. Stamps
+            # {f}_tblend_shadow on every covered cell; replaces the served
+            # forecast only where terminal_static_blend.is_applied().
+            _tb_w = _terminal_static_blend.weight(f, _fc_regime_i, _fc_band_i)
+            if _tb_w is not None:
+                if f in ("ch", "t"):
+                    _tb_h = entry.get(f"{f}_l6") or entry.get(f"{f}_l5") or entry.get(f"{f}_l4")
+                elif f == "sr":
+                    _tb_h = entry.get(f"{f}_l5") or entry.get(f"{f}_l4")
+                else:
+                    _tb_h = entry.get(f"{f}_l4") or entry.get(f"{f}_l3") or entry.get(f"{f}_l2")
+                _tb_n = entry.get(f"{f}_l3_nbm") or entry.get(f"{f}_l2_nbm") or raw_nbm_v
+                _tb_v = _terminal_static_blend.blend(f, _fc_regime_i, _fc_band_i, _tb_h, _tb_n)
+                if _tb_v is not None:
+                    entry[f"{f}_tblend_shadow"] = _round_for(f, _tb_v)
+                    entry[f"{f}_tblend_w_shadow"] = round(_tb_w, 3)
+                    if _terminal_static_blend.is_applied(f, _fc_regime_i, _fc_band_i):
+                        entry[f"{f}_preempted_source_shadow"] = source
+                        entry[f] = _round_for(f, _tb_v)
+                        entry[f"{f}_applied"] = "tblend"
+                        entry[f"{f}_selector_source"] = "tblend"
+                        continue
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS
                 # routing (NWS beat both HRRR and NBM in the 3-way fitter,
@@ -1317,7 +1342,8 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     # cleared cells today and _BLENDER_APPLIED_FIELDS is empty — so neither
     # was biting yet, but both would have shipped the same
     # scored-a-value-users-never-saw bug the moment a cell cleared.
-    _WRITEBACK_SOURCES = ("nbm", "l1_blend", "nws", "blend")
+    # v0.7.57 — + "tblend" (terminal static blend).
+    _WRITEBACK_SOURCES = ("nbm", "l1_blend", "nws", "blend", "tblend")
     for _f, _array_name in _SELECTOR_WRITEBACK.items():
         _arr = hourly.get(_array_name)
         if not isinstance(_arr, list):

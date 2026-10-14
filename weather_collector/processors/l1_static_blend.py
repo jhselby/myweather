@@ -63,9 +63,21 @@ ENABLED = True
 # sit at half the gate or less; not taken. The 10-03 h SUSTAINED FIRE is an
 # NBM source break, not a reason to lower the bar.
 #
+#
+# Third flip, v0.7.56 (2026-10-14) — every remaining h cell the shadow
+# verifier rated SHIP-READY, each positive on 7d, 30d and both 7d halves:
+#   nw_flow/6-11      7d +30.1% (n=122)  30d +26.7% (n=538)  halves 32.9 / 28.3
+#   pre_frontal/24-47 7d +44.8% (n=473)  30d +33.0% (n=1465) halves 49.1 / 33.4
+#   se_flow/24-47     7d +26.8% (n=591)  30d +24.4% (n=1083) halves 34.7 / 18.6
+#   sw_flow/6-11      7d +33.3% (n=250)  30d +29.7% (n=538)  halves 41.7 / 10.5
+# Not taken: nw_flow/12-23 (KILL, 7d −34.5%), pre_frontal/12-23 and
+# sw_flow/12-23 (HOLD, halves disagree), ne_flow/12-23 (HOLD, n_7d=53).
+#
 # Reversal: set APPLIED_CELLS = {} (or ENABLED = False) and redeploy.
 APPLIED_CELLS = {
-    "h": frozenset({("nw_flow", "24-47"), ("sw_flow", "24-47")}),
+    "h": frozenset({("nw_flow", "24-47"), ("sw_flow", "24-47"),
+                    ("nw_flow", "6-11"), ("pre_frontal", "24-47"),
+                    ("se_flow", "24-47"), ("sw_flow", "6-11")}),
 }
 
 _OMEGA_BY_FIELD = {}            # {field: omega}

@@ -322,6 +322,16 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             if _blend_fc is not None:
                 pair["forecast_blend"] = round(float(_blend_fc), 3)
                 pair["error_blend"] = round(float(_blend_fc) - obs_f, 3)
+            # v0.7.57 — same residual for the L1 static blend and the terminal
+            # static blend, so applied rows carry error_{applied_layer}.
+            # Pre-v0.7.57 applied l1_blend rows had no error_l1_blend and
+            # dropped out of every scorer keyed on error_{applied}
+            # (mae_over_time prod_real, sentries).
+            for _lay in ("l1_blend", "tblend"):
+                _v = pair.get(f"{_lay}_shadow")
+                if _v is not None:
+                    pair[f"forecast_{_lay}"] = round(float(_v), 3)
+                    pair[f"error_{_lay}"] = round(float(_v) - obs_f, 3)
             # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
             # we can compare against Tempest's total-shortwave obs on the same
             # units. `forecast` (direct-beam only) stays the primary forecast —

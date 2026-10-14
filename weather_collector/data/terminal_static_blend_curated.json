@@ -1,0 +1,210 @@
+{
+ "generated_at": "2026-10-14",
+ "window": [
+  "2026-09-14",
+  "2026-10-15"
+ ],
+ "halves_split": "2026-09-29",
+ "gate": {
+  "min_n": 400,
+  "min_cross_half_lift_pct": 5.0,
+  "w_range": [
+   0.05,
+   0.95
+  ]
+ },
+ "note": "served = w*HRRR_terminal + (1-w)*NBM_terminal per (field, regime_runtime, band). Lift is vs the served (applied-layer) error on the same rows.",
+ "fields": {
+  "t": {
+   "universal_w": 0.5,
+   "universal_lift_pct": 5.63,
+   "cells": [
+    {
+     "regime": "ne_flow",
+     "band": "6-11",
+     "w": 0.4,
+     "n": 599
+    },
+    {
+     "regime": "nw_flow",
+     "band": "24-47",
+     "w": 0.6,
+     "n": 3002
+    },
+    {
+     "regime": "se_flow",
+     "band": "12-23",
+     "w": 0.35,
+     "n": 1389
+    },
+    {
+     "regime": "se_flow",
+     "band": "6-11",
+     "w": 0.6,
+     "n": 477
+    }
+   ]
+  },
+  "sr": {
+   "universal_w": 0.35,
+   "universal_lift_pct": 12.75,
+   "cells": [
+    {
+     "regime": "nw_flow",
+     "band": "12-23",
+     "w": 0.35,
+     "n": 1658
+    },
+    {
+     "regime": "nw_flow",
+     "band": "24-47",
+     "w": 0.25,
+     "n": 1910
+    },
+    {
+     "regime": "nw_flow",
+     "band": "6-11",
+     "w": 0.3,
+     "n": 1053
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "0-5",
+     "w": 0.35,
+     "n": 891
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "12-23",
+     "w": 0.45,
+     "n": 1824
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "24-47",
+     "w": 0.3,
+     "n": 2076
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "6-11",
+     "w": 0.55,
+     "n": 917
+    },
+    {
+     "regime": "se_flow",
+     "band": "12-23",
+     "w": 0.6,
+     "n": 1389
+    },
+    {
+     "regime": "se_flow",
+     "band": "24-47",
+     "w": 0.6,
+     "n": 1555
+    },
+    {
+     "regime": "sw_flow",
+     "band": "12-23",
+     "w": 0.35,
+     "n": 1294
+    }
+   ]
+  },
+  "ws": {
+   "universal_w": 0.25,
+   "universal_lift_pct": 2.3,
+   "cells": [
+    {
+     "regime": "frontal",
+     "band": "24-47",
+     "w": 0.6,
+     "n": 961
+    },
+    {
+     "regime": "nw_flow",
+     "band": "6-11",
+     "w": 0.45,
+     "n": 1053
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "24-47",
+     "w": 0.45,
+     "n": 3211
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "6-11",
+     "w": 0.65,
+     "n": 917
+    }
+   ]
+  },
+  "wg": {
+   "universal_w": 0.25,
+   "universal_lift_pct": -0.43,
+   "cells": []
+  },
+  "h": {
+   "universal_w": 0.55,
+   "universal_lift_pct": 15.21,
+   "cells": [
+    {
+     "regime": "frontal",
+     "band": "24-47",
+     "w": 0.55,
+     "n": 946
+    },
+    {
+     "regime": "ne_flow",
+     "band": "12-23",
+     "w": 0.3,
+     "n": 1249
+    },
+    {
+     "regime": "nw_flow",
+     "band": "0-5",
+     "w": 0.3,
+     "n": 1318
+    },
+    {
+     "regime": "nw_flow",
+     "band": "12-23",
+     "w": 0.65,
+     "n": 1653
+    },
+    {
+     "regime": "nw_flow",
+     "band": "6-11",
+     "w": 0.45,
+     "n": 1043
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "24-47",
+     "w": 0.55,
+     "n": 3202
+    },
+    {
+     "regime": "se_flow",
+     "band": "24-47",
+     "w": 0.5,
+     "n": 2304
+    },
+    {
+     "regime": "sw_flow",
+     "band": "12-23",
+     "w": 0.75,
+     "n": 1290
+    },
+    {
+     "regime": "sw_flow",
+     "band": "24-47",
+     "w": 0.65,
+     "n": 2629
+    }
+   ]
+  }
+ }
+}

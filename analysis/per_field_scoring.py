@@ -203,6 +203,10 @@ def _prod_error_current_config(row):
     return None
 
 
+# Sources where the served value is a blend of both cascades, not one side.
+BLEND_SOURCES = ("l1_blend", "blend", "tblend")
+
+
 def _selected_l1_error(row, band_picks):
     """L1_selected residual — the raw of the source the selector picked.
     Everything above the raw counts as our local correction stack.
@@ -226,9 +230,30 @@ def _selected_l1_error(row, band_picks):
     """
     field = row.get("field")
     band = _band_for(row.get("lead_h"))
-    pick = "hrrr"
-    if field in band_picks and band in band_picks[field]:
-        pick = band_picks[field][band]
+    # v0.7.57 — grade the pick that actually SHIPPED on this row
+    # (selector_source stamp; for a blend row, the pick the blend
+    # pre-empted). Pre-v0.7.57 every row in the window was graded on
+    # TODAY's band-pool table, blind to regime cells, the recency override,
+    # learned cells and any table change during the window.
+    src = row.get("selector_source")
+    if src in BLEND_SOURCES:
+        src = row.get("preempted_source_shadow")
+    if src in ("hrrr", "nbm"):
+        pick = src
+    else:
+        pick = "hrrr"
+        if field in band_picks and band in band_picks[field]:
+            pick = band_picks[field][band]
+    # v0.7.57 — an applied L1 static blend IS the L1 seat (omega*l1 +
+    # (1-omega)*raw_nbm), so Routing attribution credits the blend's raw-level
+    # residual. Terminal blends (tblend/blend) sit above both cascades; their
+    # gain lands in the Cascade column against the pre-empted pick's raw.
+    if row.get("selector_source") == "l1_blend":
+        v = row.get("error_l1_blend")
+        if v is None and row.get("l1_blend_shadow") is not None and row.get("observed") is not None:
+            v = float(row["l1_blend_shadow"]) - float(row["observed"])
+        if v is not None:
+            return v, pick
     if pick == "nbm":
         v = row.get("error_raw_nbm")
         if v is not None:
@@ -491,13 +516,19 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                     chosen, alt = np_, hp
                 else:  # "hrrr", "hrrr_fallback", or "na" → HRRR is what shipped
                     chosen, alt = hp, np_
+                # v0.7.57 — blend rows: what shipped is the blend, so
+                # chosen = served residual; alt stays the side the selector's
+                # own pick would have left out. Oracle stays the per-row
+                # PICK oracle min(hp, np), so a blend can beat it.
+                if row.get("selector_source") in BLEND_SOURCES:
+                    chosen = abs(float(e_prod))
                 b["chosen_prod"][0] += chosen; b["chosen_prod"][1] += 1
                 b["alt_prod"][0] += alt;       b["alt_prod"][1] += 1
                 half["chosen_prod"][0] += chosen; half["chosen_prod"][1] += 1
                 half["alt_prod"][0] += alt;       half["alt_prod"][1] += 1
                 # v0.6.481: per-row oracle. Oracle picks the lower
                 # cascade every row.
-                orc = chosen if chosen <= alt else alt
+                orc = min(hp, np_)
                 b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
                 # v0.6.556: split wins / losses / ties. Ties (chosen ==
                 # alt) are cascades-agree rows, not router-skill rows —

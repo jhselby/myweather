@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.56–v0.7.57 • October 14, 2026 (selector: blend instead of pick)</strong></summary>
+
+* **Why.** Selector Skill was red on every field (Value Captured 8–49%, per-row win rate 47–57%), and Routing attribution was flat or negative everywhere but h. A 30-day retro on corrected output showed that no "recent winner" rule beats the live selector (yesterday's winner −0.2% vs the better fixed routing, last 3 days +2.5%, live +2.1%): which model wins changes day to day. A plain 50/50 average of the two corrected forecasts beat the better fixed routing by t +10.7%, sr +14.6%, h +20.9%, ws +2.1% in both halves of the month. The L1 static blender, built for this on Sept 26, had 2 of 20 cells live while 12 read SHIP-READY.
+* **v0.7.56 — four more h L1-blend cells live.** nw_flow/6-11, pre_frontal/24-47, se_flow/24-47, sw_flow/6-11, each positive on 7d, 30d and both 7d halves (+24% to +45% vs served). h now has 6 applied cells. Not taken: nw_flow/12-23 (KILL), three HOLD cells.
+* **v0.7.57 — terminal static blend for t, sr, ws.** New `terminal_static_blend.py`: served = w·HRRR terminal + (1−w)·NBM terminal per (field, runtime regime, band), weights from `analysis/terminal_blend_fit.py` → `terminal_static_blend_curated.json`. A cell is kept only if its weight, fit on one half of the month, lifts ≥5% vs the served forecast on the other half, both ways (n ≥ 400). Live: sr 10 cells (+10% to +27%), t 4 (+9.5% to +21%), ws 4 (+7.5% to +15%). h's 9 passing terminal cells stamp shadow only; its L1 blend owns h. wg: no cell passed. Each covered hour stamps `tblend_shadow`; the PWA write-back covers `tblend`.
+* **Scoring fixes.** The pair log now writes `error_l1_blend` / `error_tblend`; applied blend rows had no `error_{applied_layer}` and dropped out of `mae_over_time` and the sentries. Selector Skill / Routing attribution (`per_field_scoring`) grade each row's own shipped pick (`selector_source`, or the pick a blend pre-empted) instead of today's band table applied to the whole window; blend rows score the served blend, and the L1 blend counts as routing.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.55 • October 14, 2026 (scoreboard: real selector grade)</strong></summary>
 
 - `scoreboard_v2` reported `mae_pct_of_hrrr.best_chosen` as if it were the selector's result. It was the best-public baseline (NBM raw, HRRR raw for cl/cm), and the `nbm` figure next to it averaged a different set of fields, so "best chosen" looked worse than always-NBM (7d 91.1 vs 88.6) on field mix alone.
