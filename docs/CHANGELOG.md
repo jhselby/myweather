@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.61a–v0.7.62 • October 14, 2026 (debug page audit, continued)</strong></summary>
+
+* **Total Lift charts start at their first scored day** (2026-08-21). The public baseline (raw NBM) only exists in the pair log from 08-19; earlier days have nothing to score against, and mixing in an HRRR baseline would change what the line measures.
+* **Per-field diagnostic tables** (7d / 24h / 12h): Value Captured column → Selector Score with room to gain, the Selector Skill tile's number.
+* **L1 selector section reads the LIVE table** (`data.wymancove.com/runtime_tables/`), not the repo copy, which has been only the collector's fallback since the cloud refitter took it over 10-07. Hardcoded "currently 10 cells pick NBM" text (from 08-26) removed.
+* **R2 state-stratified accuracy** grouped errors by OBSERVED state (wind dir, speed, cloud, flow, synoptic) and recommended building corrections from it. A correction can't know the observation ahead of time, so it measured hindsight (sr by observed synoptic: 159-unit spread). Now groups by forecast state (`state_fc`; synoptic = `regime_runtime`, the label the runtime keys on). Ranking was by MAE spread in each field's own units (sr's W/m² always won) and measured difficulty, not correctability. Now ranks by **Removable**: how much served MAE drops if each group is shifted by its own median error, beyond one field-wide shift (exact on a 500-error reservoir per group, unit-free). pa/pp excluded from the ranking. First read: cc by forecast cloud cover 10.8%, dp by forecast cloud cover 7.3%, t by flow regime 5.2%; sr no longer tops (its spread was hindsight, and Lsr already keys on synoptic). Runs in the Fitter — page updates after the next Fitter pass (03:07Z).
+* Checked and passing: lead-band breakdown (Production = `prod_real`, what shipped); HRRR Pipeline Skill inputs (sr/ch `l1` equals NBM raw on ~half of hours because both read 0 at night / clear sky — not a swap).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.61 • October 14, 2026 (Stack health chart = daily Total Lift)</strong></summary>
 
 - The Stack health trajectory (and the aggregate view in Accuracy over time, same function) plotted 1 − prod MAE / a FIXED 90-day raw reference. A fixed denominator does not absorb the weather; it exposes it. On 10-14 the line dove because the public forecast ran 1.7–1.9× its normal error on t/ws/wg/cl (front passage) — we still beat it by +1% to +8%. Across the last two weeks the chart read +17% to +51% while our real daily lift over the public forecast was +0% to +7%.

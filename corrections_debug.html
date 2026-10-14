@@ -2766,7 +2766,7 @@
   <details class="layer-methodology"><summary>About the L1 sources (post-selector-arm v0.6.445)</summary>
     <div class="meta-line"><strong>HRRR-side (Open-Meteo).</strong> Open-Meteo HRRR (next 48h) + GFS (days 3-7), fetched every 10-min tick. Feeds the full HRRR cascade: L1 → L2 mesonet blend → L3 lead-decay → L4 diurnal → L5 Lsr (sr) / L6 Lc (cm/ch) / specialists (chp, wdp, clp, dpbp) / Ccd (cc derivation). Every field starts from a HRRR value at L1.</div>
     <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. <strong>Full parallel cascade shipped 2026-08-21:</strong> raw_nbm → l2_nbm (HRRR-delta reconstruction for all 9) → l3_nbm (per-lead bias, LIVE v0.6.445, scope trimmed 08-25 v0.6.472 to {wg, h, ch, cc}; sr re-added 09-04 v0.6.549) → l4_nbm for ch only (cc dropped 09-08 v0.6.563; diurnal hour-of-day) → <span style="text-decoration:line-through;opacity:0.6;">l5_nbm for sr</span> <strong style="color:#e07272;">KILLED 08-25 v0.6.471</strong> (sentry +238% MAE + walkforward −126% to −147% agreed) → l6_nbm for t (v0.6.453 scaffold, ENABLED=False mirroring HRRR L6) → chp_nbm for ch (v0.6.454) / wdp_nbm for wd (v0.6.437). clp_nbm N/A (NBM doesn't emit cl). <strong>Path B discipline (owner call 08-25):</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around — a broken cascade should be diagnosed loudly, not silently masked. Adding raw as a selector fallback was considered and rejected on those grounds.</div>
-    <div class="meta-line"><strong>🎯 L1 selector (Prod-vs-Prod, v0.6.440 fit / v0.6.445 armed).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-Prod, deepest applied HRRR layer) vs MAE(NBM-Prod, deepest applied NBM layer — l3_nbm → l4_nbm → l5_nbm → l6_nbm → chp_nbm/wdp_nbm as each fires). Fires per <code>l1_selector_table_curated.json</code>. In-scope fields: t / ws / wg / wd / h / ch / sr / dp / cc (all 9 NBM emits). Out-of-scope (HRRR-only): cl / cm / pr / pa / pp — NBM doesn't publish them. Currently 10 cells pick NBM: wg 12-47h, wd 12-23h (added 08-26 v0.6.500 after skip-table expansion + native L2 refit), dp 6-47h, cc all leads.</div>
+    <div class="meta-line"><strong>🎯 L1 selector (Prod-vs-Prod, v0.6.440 fit / v0.6.445 armed).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-Prod, deepest applied HRRR layer) vs MAE(NBM-Prod, deepest applied NBM layer — l3_nbm → l4_nbm → l5_nbm → l6_nbm → chp_nbm/wdp_nbm as each fires). Fires per <code>l1_selector_table_curated.json</code>. In-scope fields: t / ws / wg / wd / h / ch / sr / dp / cc (all 9 NBM emits). Out-of-scope (HRRR-only): cl / cm / pr / pa / pp — NBM doesn't publish them. Live per-cell picks are in the 🎯 L1 selector table below (read from the cloud refitter's live table). Since v0.7.56–58, blends (L1 static blend for h; terminal blend for t/sr/ws/h) pre-empt the pick on their cells.</div>
     <div class="meta-line"><strong>v0.6.432 L1 router retired 2026-08-19 v0.6.437.</strong> Superseded by the selector on all counts: wider scope (9 fields vs 3), stronger evidence base (30-day scoreboard vs 14-day, plus 108-day backfill for L3 fit), post-cascade application (all corrections apply first, selector picks last).</div>
     <div class="meta-line">Curves below show the current L1 forecast per field for the HRRR-side only. NBM raw is available on the per-field accuracy charts as a dashed line (<code>raw_nbm</code>) once the Fitter has a day of pair-log coverage.</div>
   </details>
@@ -2808,7 +2808,9 @@
 </details>
 <script>
 (function(){
-  const url = "weather_collector/data/l1_selector_table_curated.json?_=" + Date.now();
+  // v0.7.62 — the LIVE table (cloud refitter, runtime_tables/), not the repo
+  // copy, which is only the collector's fallback and goes stale.
+  const url = "https://data.wymancove.com/runtime_tables/l1_selector_table_curated.json?_=" + Date.now();
   fetch(url, { cache: "no-store" })
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(d => {
@@ -2871,7 +2873,9 @@
   const cells = document.querySelectorAll("td.pf-selector-cell");
   if (!cells.length) return;
   const bands = [["0-5", 0, 5], ["6-11", 6, 11], ["12-23", 12, 23], ["24-47", 24, 47]];
-  const url = "weather_collector/data/l1_selector_table_curated.json?_=" + Date.now();
+  // v0.7.62 — the LIVE table (cloud refitter, runtime_tables/), not the repo
+  // copy, which is only the collector's fallback and goes stale.
+  const url = "https://data.wymancove.com/runtime_tables/l1_selector_table_curated.json?_=" + Date.now();
   fetch(url, { cache: "no-store" })
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(d => {
@@ -3376,7 +3380,7 @@
 
 <details class="research-subsection" id="r2-state-stratified" open>
   <summary>R2. State-stratified accuracy — which regimes does the model fail in?</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE + bias by regime. Big MAE spread across bins = regime-aware correction candidate. Addressed rows excluded from top-10 (shipped corrections absorb raw signal downstream); excluded rows in collapsible below. Temperature back in the top-10 since Lt retired 07-13. Refit twice daily; published to <code>state_stratified_accuracy.json</code>. <em>MAE-only; RMSE would rerank L2-additive fields (dp/h/ws/wg).</em></div>
+  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE + bias grouped by <strong>forecast</strong> state (what a correction could act on; observed-state grouping was hindsight, retired v0.7.62). <strong>Removable</strong> = how much served MAE would drop if each group were shifted by its own median error (in-sample, beyond one field-wide shift) — unit-free, so fields rank against each other. ≥5% is worth testing. Addressed rows excluded from top-10 (shipped corrections absorb raw signal downstream); excluded rows in collapsible below. Temperature back in the top-10 since Lt retired 07-13. Refit twice daily; published to <code>state_stratified_accuracy.json</code>. <em>MAE-only; RMSE would rerank L2-additive fields (dp/h/ws/wg).</em></div>
   <div id="status-state-stratified" class="status" hidden></div>
   <div id="grid-state-stratified"></div>
 </details>
@@ -7874,13 +7878,14 @@ function renderStateStratifiedSection(ssDoc) {
   const top = unaddressed.slice(0, 10);
   const rankRows = top.map(r => {
     const isTop = r === top[0];
-    const color = r.spread >= 50 ? "#ef6450" : r.spread >= 10 ? "#f0b35e" : r.spread >= 3 ? "#74c38b" : "#8a93a3";
+    const _v = (r.removable_pct != null) ? r.removable_pct : null;  // v0.7.62
+    const color = _v == null ? "#8a93a3" : _v >= 10 ? "#ef6450" : _v >= 5 ? "#f0b35e" : _v >= 2 ? "#74c38b" : "#8a93a3";
     const rowStyle = isTop ? ' style="background:rgba(212,163,115,0.06);"' : '';
     return `<tr${rowStyle}>
       <td style="text-align:right;opacity:0.6;">${r.rank}</td>
       <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span></td>
       <td>${r.dimension_label}</td>
-      <td style="color:${color};font-weight:700;text-align:right;">${r.spread.toFixed(2)}</td>
+      <td style="color:${color};font-weight:700;text-align:right;">${_v == null ? "—" : _v.toFixed(1) + "%"}</td>
     </tr>`;
   }).join("");
 
@@ -7888,12 +7893,13 @@ function renderStateStratifiedSection(ssDoc) {
   // regression in the shipped correction (e.g., Lsr dies) surfaces via
   // spread numbers still being high on the "addressed" side.
   const addressedRows = addressed.map(r => {
-    const color = r.spread >= 50 ? "#ef6450" : r.spread >= 10 ? "#f0b35e" : r.spread >= 3 ? "#74c38b" : "#8a93a3";
+    const _v = (r.removable_pct != null) ? r.removable_pct : null;  // v0.7.62
+    const color = _v == null ? "#8a93a3" : _v >= 10 ? "#ef6450" : _v >= 5 ? "#f0b35e" : _v >= 2 ? "#74c38b" : "#8a93a3";
     return `<tr style="opacity:0.75;">
       <td style="text-align:right;opacity:0.6;">${r.rank}</td>
       <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span></td>
       <td>${r.dimension_label}</td>
-      <td style="color:${color};font-weight:700;text-align:right;">${r.spread.toFixed(2)}</td>
+      <td style="color:${color};font-weight:700;text-align:right;">${_v == null ? "—" : _v.toFixed(1) + "%"}</td>
     </tr>`;
   }).join("");
   const addressedBlockHtml = addressed.length
@@ -7907,7 +7913,7 @@ function renderStateStratifiedSection(ssDoc) {
          </div>
          <div class="meta-line" style="margin-bottom:6px;font-size:0.85em;opacity:0.7;">These rows still rank because the raw L1/L2 bias spread is real; a shipped correction absorbs the signal downstream. If a row's spread stays high AND the shipped correction's per-layer MAE also drifts, the correction has regressed.</div>
          <table class="offset-table"><thead><tr>
-           <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Spread</th>
+           <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Removable</th>
          </tr></thead><tbody>${addressedRows}</tbody></table>
        </details>`
     : "";
@@ -7965,7 +7971,7 @@ function renderStateStratifiedSection(ssDoc) {
     </div>
     <div style="margin-bottom:6px;font-weight:600;">Ranked opportunities — top 10 actionable by MAE spread across bins</div>
     <table class="offset-table"><thead><tr>
-      <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Spread</th>
+      <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Removable</th>
     </tr></thead><tbody>${rankRows}</tbody></table>
     ${addressedBlockHtml}
     ${chartHtml}

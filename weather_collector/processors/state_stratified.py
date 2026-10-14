@@ -18,6 +18,8 @@ Hypothesis under test: corrected-forecast error is not uniformly
 distributed — it depends on the meteorological regime at obs time. Big
 spread = candidate for a future regime-aware correction layer.
 """
+import random
+import statistics
 from collections import defaultdict
 
 
@@ -43,12 +45,12 @@ SYNOPTIC_BINS   = ("nw_flow", "sw_flow", "se_flow", "ne_flow",
                    "pre_frontal", "calm")
 
 DIMENSIONS = (
-    ("wind_octant",     "wind dir (obs)",      OCTANTS),
-    ("wind_speed",      "wind speed (obs)",    WIND_SPEED_BINS),
-    ("cloud_cover",     "cloud cover (obs)",   CLOUD_BINS),
+    ("wind_octant",     "wind dir (fc)",       OCTANTS),
+    ("wind_speed",      "wind speed (fc)",     WIND_SPEED_BINS),
+    ("cloud_cover",     "cloud cover (fc)",    CLOUD_BINS),
     ("pressure_trend",  "pressure trend (fc)", PRESSURE_BINS),
-    ("regime_flow",     "flow regime (obs)",   FLOW_BINS),
-    ("regime_synoptic", "synoptic (obs)",      SYNOPTIC_BINS),
+    ("regime_flow",     "flow regime (fc)",    FLOW_BINS),
+    ("regime_synoptic", "synoptic (runtime fc)", SYNOPTIC_BINS),
 )
 MIN_PAIRS_PER_FIELD = 50
 MIN_PAIRS_PER_BIN   = 20
@@ -97,7 +99,27 @@ def init_accumulators():
         "n_scanned": 0,
         "n_with_state": 0,
         "n_used": 0,
+        # v0.7.62 — bounded per-bin reservoir of signed errors (and one per
+        # field) so removable share is the ACTUAL MAE gain of a per-group
+        # median shift, not an |bias| upper bound. 500 per bin ≈ <10 MB.
+        "res": defaultdict(list),       # key -> [errors]
+        "res_seen": defaultdict(int),   # key -> rows offered
     }
+
+
+_RES_N = 500
+_rng = random.Random(1407)
+
+
+def _reservoir(acc, key, e):
+    seen = acc["res_seen"][key] = acc["res_seen"][key] + 1
+    lst = acc["res"][key]
+    if len(lst) < _RES_N:
+        lst.append(e)
+    else:
+        j = _rng.randrange(seen)
+        if j < _RES_N:
+            lst[j] = e
 
 
 def accumulate(acc, row):
@@ -122,23 +144,39 @@ def accumulate(acc, row):
     acc["n_with_state"] += 1
 
     vals = {
-        "wind_octant":     _wind_octant(sobs.get("wind_dir")),
-        "wind_speed":      _wind_speed_bin(sobs.get("wind_speed")),
-        "cloud_cover":     _cloud_bin(sobs.get("cloud_cover")),
+        # v0.7.62 — every dimension keys on the FORECAST state (state_fc),
+        # the information a correction could act on. Grouping by observed
+        # state (state_obs) measured hindsight: sr error by observed clear vs
+        # cloudy day is huge and unusable — a correction can't know the
+        # observation in advance. See feedback_condition_on_forecast_not_outcome.
+        "wind_octant":     _wind_octant(sfc.get("wind_dir")),
+        "wind_speed":      _wind_speed_bin(sfc.get("wind_speed")),
+        "cloud_cover":     _cloud_bin(sfc.get("cloud_cover")),
         "pressure_trend":  _pressure_trend_bin(sfc.get("pressure_trend_hpa_3h")),
-        "regime_flow":     sobs.get("regime_flow"),
-        "regime_synoptic": sobs.get("regime_synoptic"),
+        "regime_flow":     sfc.get("regime_flow"),
+        # regime_runtime = the per-lead label the runtime keys selector,
+        # blender and skips on; fall back to state_fc.regime_synoptic.
+        "regime_synoptic": sfc.get("regime_runtime") or sfc.get("regime_synoptic"),
     }
 
     acc["n_used"] += 1
     ov = acc["overall"][field]
     ov[0] += abs(err); ov[1] += err; ov[2] += 1
+    _reservoir(acc, (field,), err)
     for dim_key, _, _ in DIMENSIONS:
         b = vals[dim_key]
         if b is None:
             continue
         cell = acc["bins"][(field, dim_key, b)]
         cell[0] += abs(err); cell[1] += err; cell[2] += 1
+        _reservoir(acc, (field, dim_key, b), err)
+
+
+# v0.7.62 — verdict threshold on the unit-free removable share (% of MAE).
+REMOVABLE_VERDICT_PCT = 5.0
+# pa (inches, ~0 most hours) and pp (Brier) are excluded from the ranking,
+# same as the scoreboard: % ratios on near-zero MAE blow up.
+RANK_EXCLUDE = frozenset({"pa", "pp"})
 
 
 def build_output(acc, fitted_at):
@@ -175,12 +213,33 @@ def build_output(acc, fitted_at):
                     "delta": round(mae - ov_mae, 3),
                 })
             spread = max(maes) - min(maes)
+            # v0.7.62 — removable share: what a per-group additive shift
+            # (keyed on this forecast-state dimension) could remove, beyond
+            # the field's overall bias, as % of the field's MAE. Unit-free,
+            # so fields rank against each other; MAE spread (kept for
+            # display) mixed units and measured difficulty, not correctability.
+            # Actual gain on the reservoir samples: per-group median shift vs
+            # one field-wide median shift (the field-wide part is what L2
+            # already removes), each bin weighted by its true n.
+            fres = acc["res"].get((field,)) or []
+            g_med = statistics.median(fres) if fres else 0.0
+            before = after = 0.0
+            for r in bin_rows:
+                es = acc["res"].get((field, dim_key, r["label"])) or []
+                if not es:
+                    continue
+                m = statistics.median(es)
+                before += r["n"] * sum(abs(e - g_med) for e in es) / len(es)
+                after  += r["n"] * sum(abs(e - m) for e in es) / len(es)
+            removable_pct = 100.0 * (before - after) / before if before > 0 else 0.0
             by_dim[dim_key] = {
                 "label": dim_label,
                 "spread": round(spread, 3),
+                "removable_pct": round(removable_pct, 2),
                 "bins": bin_rows,
             }
-            rank.append((spread, field, dim_key, dim_label))
+            if field not in RANK_EXCLUDE:
+                rank.append((removable_pct, field, dim_key, dim_label, spread))
         fields_out.append({
             "key": field,
             "label": f_label,
@@ -191,7 +250,7 @@ def build_output(acc, fitted_at):
 
     rank.sort(reverse=True)
     ranked_opps = []
-    for i, (spread, fk, dk, dlabel) in enumerate(rank[:15], 1):
+    for i, (removable_pct, fk, dk, dlabel, spread) in enumerate(rank[:15], 1):
         ranked_opps.append({
             "rank": i,
             "field_key":      fk,
@@ -199,16 +258,18 @@ def build_output(acc, fitted_at):
             "dimension_key":  dk,
             "dimension_label": dlabel,
             "spread":         round(spread, 3),
+            "removable_pct":  round(removable_pct, 2),
         })
 
     if rank:
-        top_spread, top_field, _, top_dim = rank[0]
-        if top_spread > SPREAD_VERDICT_THRESHOLD:
-            verdict = (f"{FIELD_LABELS[top_field][0]} stratified by {top_dim} shows "
-                       f"{top_spread:.2f}-unit spread — worth building a regime-aware correction layer.")
+        top_pct, top_field, _, top_dim, _ = rank[0]
+        if top_pct >= REMOVABLE_VERDICT_PCT:
+            verdict = (f"{FIELD_LABELS[top_field][0]} by {top_dim}: shifting each group by its own "
+                       f"median error would cut served MAE {top_pct:.1f}% (in-sample) — a correction "
+                       f"keyed on this forecast state is worth testing (check no live layer already keys on it).")
         else:
-            verdict = (f"Max spread is {top_spread:.2f} — no dimension shows enough variation "
-                       f"to justify stratified correction yet. Re-run after more data.")
+            verdict = (f"Largest removable share is {top_pct:.1f}% ({FIELD_LABELS[top_field][0]} by "
+                       f"{top_dim}) — below {REMOVABLE_VERDICT_PCT:.0f}%, nothing worth a new layer.")
     else:
         verdict = "No usable stratified results."
 
