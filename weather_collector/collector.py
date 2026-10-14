@@ -743,8 +743,9 @@ def main():
         from .processors.l6_nbm import describe_applicability as _da_l6nbm
         from .processors.skip_table_nbm import describe_applicability as _da_sknbm
         from .processors.l1_static_blend import describe_applicability as _da_l1b
+        from .processors.terminal_static_blend import describe_applicability as _da_tb
         layers = []
-        for fn in (_da_l1b, _da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_hrp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1,
+        for fn in (_da_l1b, _da_tb, _da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_hrp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1,
                    _da_l3nbm, _da_l4nbm, _da_l5nbm, _da_l6nbm, _da_sknbm):
             try:
                 layers.extend(fn())

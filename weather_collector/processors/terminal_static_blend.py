@@ -90,3 +90,29 @@ def is_applied(field, regime, band):
 
 def covered_cells(field):
     return frozenset((_W.get(field) or {}).keys())
+
+
+def describe_applicability():
+    """Applicability descriptor for the terminal static blend (v0.7.62)."""
+    fields = []
+    for f in sorted(_W):
+        cells = sorted(_W[f])
+        ap = APPLIED.get(f)
+        applied = cells if ap == ALL else sorted(c for c in cells if ap and c in ap)
+        fmt = lambda cs: ", ".join(f"{r}/{b} w={_W[f][(r, b)]:.2f}" for r, b in cs) or "none"
+        fields.append({
+            "field": f,
+            "fires_when": ("ENABLED AND (regime_runtime, lead band) is an applied curated cell: serves "
+                           "w·HRRR terminal + (1−w)·NBM terminal (pre-empts the selector's pick)"),
+            "gated_by": "ENABLED + APPLIED",
+            "current_state": (f"Applied on {len(applied)} of {len(cells)} curated cells ({fmt(applied)}); "
+                              f"the rest stamp {f}_tblend_shadow only." if ENABLED else
+                              f"ENABLED False; {len(cells)} curated cells stamp {f}_tblend_shadow only."),
+        })
+    return [{
+        "layer_id": "TB",
+        "name": "Terminal static blend (HRRR/NBM corrected-output blend)",
+        "category": "general-purpose",
+        "fields": fields,
+    }]
+

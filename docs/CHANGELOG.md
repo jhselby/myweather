@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.63 • October 14, 2026 (debug page audit, completed)</strong></summary>
+
+* **R0 per-layer audit** grades HRRR-cascade layers, but on several fields the HRRR cascade serves almost no hours (7d: wg 0%, wd 0%, cc 0%, ws 5%, sr 5%; ch 90%, h 77%, t 49%, dp 35%). New "HRRR serves" column (from per_field_scoring selector picks); losing-layer rows on fields served <20% by HRRR are dimmed, and if every flagged layer is on such a field the red banner downgrades to amber ("reaches almost no user forecast").
+* **Accuracy over time (per field)**: lines relabeled "Raw (HRRR)" and "Public · NBM raw"; the thick 7-day overlay now sits on the public forecast (the scoreboard's baseline) instead of HRRR raw, so the gap between the two thick lines is that field's Total Lift.
+* **Applicability map**: NBM gate-firing telemetry logged every lead under the run-level regime while the skips decide on the per-lead runtime regime (since v0.7.50). Now one record per (operator, regime the decision used); chp_nbm keeps the run-level regime its cell gate uses. Zero-count records still emitted (dormancy ★ needs them). Terminal static blend now has `describe_applicability()` and appears in the map (TB).
+* **h architecture row** narrative updated to the 10-14 blend state (6 L1-blend + 5 terminal-blend cells, 39/48 hours blended).
+* Audit result for the remaining sections: lead-band breakdown, Health & Reliability, Total Lift — pass. Mechanism/research/archive sections score nothing and were not graded.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.61a–v0.7.62 • October 14, 2026 (debug page audit, continued)</strong></summary>
 
 * **Total Lift charts start at their first scored day** (2026-08-21). The public baseline (raw NBM) only exists in the pair log from 08-19; earlier days have nothing to score against, and mixing in an HRRR baseline would change what the line measures.

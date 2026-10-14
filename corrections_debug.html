@@ -2107,7 +2107,7 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 09-05 v0.6.551 — sentry HOT + 14/15 cells help_fresh negative)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Positive vs raw on 7d.</strong> Numeric values live in the per-field scoring table above (7d/24h/12h). <strong>Structural state (09-29):</strong> <code>L3_NBM dropped 09-05 v0.6.551</code> (sentry HOT + 14/15 cells help_fresh negative), so NBM cascade is <code>raw_nbm → l2_nbm</code> only. HRRR side runs the full L1→L2 additive → L4 → chp/dpbp/lsb/C1 stack. Routing has been carrying the field vs cascade at various times; v0.6.588 escalation cell <code>h/calm/24-47</code> live since 09-11. <strong>Current blender state (10-05):</strong> v0.7.6 L1 static blender covers h with universal ω=0.44 on 10 cells. <strong style="color:#4ad29a;">Two cells are LIVE:</strong> <code>h/nw_flow/24-47</code> (v0.7.20, 10-02; n=436, +35.5% vs served, halves 38.7/33.9) and <code>h/sw_flow/24-47</code> (v0.7.23, 10-03; n=830, +39.0%, halves 41.8/35.7). The other 8 h cells remain shadow telemetry. <span style="opacity:0.8;">The h 7d fire in early October is an NBM humidity break (from 09-30, receding), not the blender.</span> Gate is <code>is_applied()</code> — <code>ENABLED=True</code> plus a per-cell <code>APPLIED_CELLS</code> allowlist, NOT the bare flag.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Positive vs raw on 7d.</strong> Numeric values live in the per-field scoring table above (7d/24h/12h). <strong>Structural state (09-29):</strong> <code>L3_NBM dropped 09-05 v0.6.551</code> (sentry HOT + 14/15 cells help_fresh negative), so NBM cascade is <code>raw_nbm → l2_nbm</code> only. HRRR side runs the full L1→L2 additive → L4 → chp/dpbp/lsb/C1 stack. Routing has been carrying the field vs cascade at various times; v0.6.588 escalation cell <code>h/calm/24-47</code> live since 09-11. <strong>Blender state (10-14): L1 static blender ω=0.44 on 10 curated h cells; terminal static blend per-cell weights (terminal_static_blend.py). <strong style="color:#4ad29a;">Since v0.7.56–58 (10-14) h is mostly blended, not picked:</strong> 6 L1-static-blend cells live (nw_flow/6-11, nw_flow/24-47, pre_frontal/24-47, se_flow/24-47, sw_flow/6-11, sw_flow/24-47) and 5 terminal-blend cells (frontal/24-47, ne_flow/12-23, nw_flow/0-5, nw_flow/12-23, sw_flow/12-23); on 10-14 39 of 48 forecast hours were blended. Live state: Selector Score / room-to-gain columns above. <span style="opacity:0.8;">The h 7d fire in early October is an NBM humidity break (from 09-30, receding), not the blender.</span> Gate is <code>is_applied()</code> — <code>ENABLED=True</code> plus a per-cell <code>APPLIED_CELLS</code> allowlist, NOT the bare flag.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
@@ -3308,7 +3308,7 @@
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (Open-Meteo L1 seed — HRRR/GFS) and every correction layer applicable to the selected field (for t/ws/wd, "L1r (router)" line shows the v0.6.432 NBM router output at leads ≥6h) — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (Open-Meteo L1 seed — HRRR/GFS) and every correction layer applicable to the selected field (for t/ws/wd, "L1r (router)" line shows the v0.6.432 NBM router output at leads ≥6h) — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on the public forecast ("Public · NBM raw" for NBM fields, raw HRRR for cl/cm/pr — the scoreboard's baseline) and the final applied layer; the gap between them is Total Lift. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
     <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
       <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
       <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
@@ -7074,6 +7074,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     <th>L4 Applied?</th>
     <th>Specialists</th>
     <th>Production</th>
+    <th title="Share of this field's forecast hours (7d) served by the HRRR cascade these layers belong to">HRRR serves</th>
   </tr>`;
   const body = rows.map(r => {
     const l3Suspect = r.l3on && !!r.l3Worst;
@@ -7082,7 +7083,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     const l3MaeCell = r.isBrier
       ? brierMutedMaeCell(r.l3, r.b3, 2)
       : `<td>${fmt(r.l3, 2)}${biasSpan(r.b3, 2)}</td>`;
-    return `<tr>
+    return `<tr data-r0-field="${r.f.key}" data-r0-suspect="${(l3Suspect || l4Suspect || (r.specialists || []).some(s => s.enabled && !!s.worst)) ? 1 : 0}">
       <td><strong>${r.f.label}</strong> <span style="opacity:0.5;">(${r.f.key})</span>${brierTag}</td>
       <td>${fmt(r.l1, 2)}${biasSpan(r.b1, 2)}</td>
       <td>${fmt(r.l2, 2)}${biasSpan(r.b2, 2)}</td>
@@ -7096,6 +7097,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       ${appliedCell(r.l4on, l4Suspect)}
       ${specialistsCell(r.specialists)}
       ${productionCell(r.prodMae, r.prodBias)}
+      <td class="r0-share" style="opacity:0.8;">…</td>
     </tr>`;
   }).join("");
 
@@ -7124,7 +7126,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     }).filter(Boolean).join(" · ");
 
   const suspectBanner = anySuspect
-    ? `<div class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer or specialist is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked Yes ⚠ or the Specialists column's ⚠ rungs — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping the offending gate.</div></div>`
+    ? `<div id="r0-suspect-banner" class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer or specialist is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked Yes ⚠ or the Specialists column's ⚠ rungs — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping the offending gate.</div></div>`
     : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No enabled layer or specialist is losing by >3% in any lead band.</strong><div class="meta-line">Current L3_FIELDS / L4_FIELDS + live specialists (Lsr / Lc / chp / wdp) still match the data across short, mid, and long leads.</div></div>`;
 
   const missedBanner = anyMissed
@@ -7141,6 +7143,41 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   grid.innerHTML = suspectBanner + missedBanner +
     `<div style="overflow-x:auto;"><table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>` +
     brierFootnote;
+  // v0.7.62 — these are HRRR-cascade layers. A layer that loses on a field
+  // whose hours the HRRR cascade rarely serves reaches almost no user, so
+  // show each field's served share (7d, per_field_scoring selector picks)
+  // and downgrade the red banner when every flagged field is < 20% served.
+  fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(doc => {
+      const pf = ((doc.windows || {})["7d"] || {}).per_field || {};
+      const share = {};
+      for (const [f, c] of Object.entries(pf)) {
+        const p = c.selector_picks || {};
+        const tot = (p.hrrr || 0) + (p.nbm || 0) + (p.hrrr_fallback || 0) + (p.na || 0);
+        share[f] = tot ? 100 * ((p.hrrr || 0) + (p.hrrr_fallback || 0) + (p.na || 0)) / tot : null;
+      }
+      const NBM_SCOPE_R0 = new Set(["t", "h", "dp", "ws", "wg", "wd", "cc", "ch", "sr"]);
+      let flagged = 0, flaggedLow = 0;
+      grid.querySelectorAll("tr[data-r0-field]").forEach(tr => {
+        const f = tr.getAttribute("data-r0-field");
+        const v = NBM_SCOPE_R0.has(f) ? share[f] : 100;   // HRRR-only fields: always HRRR
+        const cell = tr.querySelector(".r0-share");
+        if (cell) cell.innerHTML = (v == null) ? "—" : (v < 20 ? `<span style="color:#8a93a3;">${v.toFixed(0)}%</span>` : `${v.toFixed(0)}%`);
+        if (tr.getAttribute("data-r0-suspect") === "1") {
+          flagged++;
+          if (v != null && v < 20) { flaggedLow++; tr.style.opacity = "0.6"; }
+        }
+      });
+      const banner = document.getElementById("r0-suspect-banner");
+      if (banner && flagged > 0 && flaggedLow === flagged) {
+        banner.style.borderColor = "#3a2d1f"; banner.style.background = "#1c1813";
+        banner.innerHTML = `<strong style="color:#d4a373;">⚠ Losing layers are only on fields the HRRR cascade rarely serves (&lt;20% of hours).</strong><div class="meta-line">They reach almost no user forecast — low priority unless routing for that field moves back to HRRR. Rows dimmed.</div>`;
+      }
+    })
+    .catch(() => {
+      grid.querySelectorAll(".r0-share").forEach(c => { c.textContent = "—"; });
+    });
 }
 
 // ── R2: State-stratified accuracy (active hypothesis) ─────────────────
@@ -9577,42 +9614,42 @@ load();
     // v0.6.371: prod_real is the real per-row Prod aggregate (applied_layer-keyed,
     // sample-comparable to raw/l2/l3). Specialists (Lsr, Lc, chp, clp) remain
     // visible as intermediate lines showing gate-fired-only MAE.
-    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l5_nbm", label:"Lsr (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    sr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l5", label:"Lsr"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l5_nbm", label:"Lsr (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // cc/cl/cm/ch: Lc rides l6. cm/cc have no post-Lc specialist. cl has
     // cl_persistence_gate (clp; wired v0.6.379, ENABLED=False — successor to
     // retired cl_persistence_short_lead). ch has ch_persistence_gate
     // (chp; LIVE since v0.6.358). Specialists demote to intermediate; prod_real
     // is isProd (v0.6.371).
-    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
-    cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"chp_nbm", label:"ch-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cc: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cl: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cm: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ch: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"chp_nbm", label:"ch-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // t / ws / wd carry an extra "l1r" line (v0.6.432 L1 router — NWS/NBM
     // at leads ≥6h). Distinct from prod_real: prod_real follows applied_layer
     // and IS the router where the router fired, so at long lead prod_real and
     // l1r coincide; short lead prod_real shows cascade output. The l1r line
     // visualizes router-only MAE for direct comparison with the cascade path.
-    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l6_nbm", label:"Lc/cove (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    t:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l6_nbm", label:"Lc/cove (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
     // Phase 1/2 (option-1 parallel cascade): NBM lines (raw_nbm, l2_nbm)
     // added for the 5 fields NBM emits + L2 corrects (t/ws/wg/wd/h).
     // Dashed rendering (see LAYER_STYLE). Fields NBM emits but L2 doesn't
     // (sr, ch, cc, dp) get raw_nbm only. Fields NBM doesn't emit (cl/cm/
     // pr/pp/pa) get nothing new here — selector picks HRRR always.
-    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    pa: [{key:"raw", label:"Raw"}, {key:"prod_real", label:"Prod", isProd:true}],
+    h:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    dp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pa: [{key:"raw", label:"Raw (HRRR)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // wd: L1 + L2 blend (v0.6.368a — wind_blend circular unit-vector blend of
     // current obs into first 24 leads, calm floor ≥3 mph) + wdp
     // (wd_persistence_gate, LIVE 2026-07-27 v0.6.382 — predicted-transition
     // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
     // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"wdp_nbm", label:"wd-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wd: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"wdp_nbm", label:"wd-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc
@@ -10197,11 +10234,15 @@ load();
     // drift is Raw ↔ [final]. Softened alpha (~0.35) so the daily line
     // stays visually dominant.
     const softenAlpha = 0.35;
-    const softColorFor = (key) => key === "raw"
+    // v0.7.62 — the smoothed baseline is the PUBLIC forecast the scoreboard
+    // scores against (raw NBM for NBM-scope fields, raw HRRR otherwise), so
+    // the gap between the two thick lines is this field's Total Lift.
+    const pubKey = NBM_SCOPE_FIELDS.has(field) ? "raw_nbm" : "raw";
+    const softColorFor = (key) => key === pubKey
       ? `rgba(138,147,163,${softenAlpha})`
       : `rgba(74,210,154,${softenAlpha})`;   // final applied green
     for (const L of activeLayers) {
-      if (L.key !== "raw" && !L.isProd) continue;
+      if (L.key !== pubKey && !L.isProd) continue;
       const daily = seriesFor(field, L.key, metric);
       const smoothed = rollingMean(daily);
       if (smoothed.some(v => v !== null)) {

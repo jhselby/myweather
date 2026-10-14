@@ -720,19 +720,30 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     # fires/skips per field across the snapshot's hour loop; emit one
     # record_firing() call per NBM operator after the loop. Mirrors the
     # HRRR-side L3/L4 telemetry from decay_apply.py.
-    _nbm_gate_counts = {
-        lyr: {f: {"fires": 0, "skips": 0}
-              for f in fields}
-        for lyr, fields in (
-            ("l3_nbm", list(_L3_NBM_FIELDS) + [_L3_NBM_WD]),
-            ("l4_nbm", list(_L4_NBM_FIELDS)),
-            ("l5_nbm", ["sr"]),
-            ("l6_nbm", list(_L6_NBM_FIELDS)),
-            ("chp_nbm", ["ch"]),
-            ("wdp_nbm", [_L3_NBM_WD]),
-        )
-    }
+    def _gc_new():
+        return {
+            lyr: {f: {"fires": 0, "skips": 0}
+                  for f in fields}
+            for lyr, fields in (
+                ("l3_nbm", list(_L3_NBM_FIELDS) + [_L3_NBM_WD]),
+                ("l4_nbm", list(_L4_NBM_FIELDS)),
+                ("l5_nbm", ["sr"]),
+                ("l6_nbm", list(_L6_NBM_FIELDS)),
+                ("chp_nbm", ["ch"]),
+                ("wdp_nbm", [_L3_NBM_WD]),
+            )
+        }
+    # v0.7.62 — counts per REGIME THE DECISION USED. Skips key on the
+    # per-lead runtime regime since v0.7.50, so fires are bucketed by
+    # _skip_regime(i); chp_nbm's cell gate still keys on the run-level
+    # regime and logs there. Was one run-level bucket for everything, so the
+    # applicability map's per-regime firing counts didn't match the decisions.
+    _nbm_gate_by_reg = {}
+    _nbm_leads_by_reg = {}
     for i, t in enumerate(times[:SNAPSHOT_HOURS]):
+        _gc_reg = _skip_regime(i)
+        _nbm_gate_counts = _nbm_gate_by_reg.setdefault(_gc_reg, _gc_new())
+        _nbm_leads_by_reg[_gc_reg] = _nbm_leads_by_reg.get(_gc_reg, 0) + 1
         if not t:
             continue
         entry = {"v": t}
@@ -1023,7 +1034,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                                 and not _chp_diurnal_skip(_wdp_state_curr, vhour)
                                 and _chp_cell_fires(_chp_nbm_cells, _wdp_state_curr, band)):
                             if _should_skip_nbm("ch", "chp_nbm", _skip_regime(i), i):
-                                _nbm_gate_counts["chp_nbm"]["ch"]["skips"] += 1
+                                _nbm_gate_by_reg.setdefault(_wdp_state_curr, _gc_new())["chp_nbm"]["ch"]["skips"] += 1
                             else:
                                 # F3-B fix: stamp chp_nbm as a distinct layer key
                                 # (error_chp_nbm in pair-log). Selector walk below
@@ -1031,7 +1042,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                                 entry["ch_chp_nbm"] = _round_for(
                                     "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
                                 entry["ch_chp_nbm_fired"] = True
-                                _nbm_gate_counts["chp_nbm"]["ch"]["fires"] += 1
+                                _nbm_gate_by_reg.setdefault(_wdp_state_curr, _gc_new())["chp_nbm"]["ch"]["fires"] += 1
         # Phase 4 (2026-08-19; scope expanded v0.6.540 2026-09-02) — L1
         # selector. For each field the selector table covers, ask the
         # selector which source to pick per (field, lead=i). When "nbm",
@@ -1270,16 +1281,20 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         break
         hours.append(entry)
 
-    # F4 (2026-08-21) — emit one gate-firing record per NBM operator so
+    # F4 (2026-08-21) — emit gate-firing records per NBM operator so
     # gate_firing_rollup can audit NBM dormancy the same way it audits
-    # HRRR L3/L4. Regime = _wdp_state_curr (current-tick synoptic).
-    for _lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
-        _gate_firing_log.record_firing(
-            operator=_lyr.upper(),
-            regime=_wdp_state_curr,
-            by_field=_nbm_gate_counts[_lyr],
-            leads=SNAPSHOT_HOURS,
-        )
+    # HRRR L3/L4. v0.7.62: one record per (operator, decision regime).
+    for _reg, _counts in _nbm_gate_by_reg.items():
+        for _lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
+            # Emit zero-count records too: "0 fires despite ticks in this
+            # regime" is the dormancy signal the applicability map's ★ reads.
+            _bf = _counts[_lyr]
+            _gate_firing_log.record_firing(
+                operator=_lyr.upper(),
+                regime=_reg,
+                by_field=_bf,
+                leads=_nbm_leads_by_reg.get(_reg, 0),
+            )
 
     if not hours:
         return
