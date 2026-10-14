@@ -26,10 +26,20 @@ CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "terminal_stati
 
 ENABLED = True
 
-# v0.7.57 — apply every passing cell for t, sr, ws. h stays shadow-only:
-# its L1 static blend (l1_static_blend.APPLIED_CELLS) owns h until the two
-# blends are compared on fresh shadow rows. wg: no cell passed.
-APPLIED_FIELDS = frozenset({"t", "sr", "ws"})
+# v0.7.57 — apply every passing cell for t, sr, ws. wg: no cell passed.
+# v0.7.58 — h: the 5 passing terminal cells the L1 static blend does NOT
+# apply. 30d head-to-head on L1-blend-stamped rows: on the 6 L1-applied
+# cells the two blends tie (keep L1); where L1 is not applied the terminal
+# blend wins (sw_flow/12-23 +31.1% vs L1 +20.9%, nw_flow/12-23 +17.0% vs
+# +4.3%, ne_flow/12-23 +44.7% vs +36.0%). frontal/24-47 and nw_flow/0-5
+# have no L1 cell. L1 apply runs first in forecast_snapshot, so these never
+# overlap an L1-applied hour.
+ALL = "all"
+APPLIED = {
+    "t": ALL, "sr": ALL, "ws": ALL,
+    "h": frozenset({("frontal", "24-47"), ("ne_flow", "12-23"), ("nw_flow", "0-5"),
+                    ("nw_flow", "12-23"), ("sw_flow", "12-23")}),
+}
 
 _W = {}  # {field: {(regime, band): w}}
 
@@ -72,7 +82,10 @@ def blend(field, regime, band, hrrr_term, nbm_term):
 
 
 def is_applied(field, regime, band):
-    return bool(ENABLED and field in APPLIED_FIELDS and weight(field, regime, band) is not None)
+    if not ENABLED or weight(field, regime, band) is None:
+        return False
+    cells = APPLIED.get(field)
+    return cells == ALL or (cells is not None and (regime, band) in cells)
 
 
 def covered_cells(field):

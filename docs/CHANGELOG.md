@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.58 • October 14, 2026 (h: terminal blend where the L1 blend is off)</strong></summary>
+
+- 30-day head-to-head on h rows where the L1 static blend is stamped: on the 6 cells where the L1 blend is applied the two blends tie (nw_flow/24-47 +43.9% vs +41.9%, se_flow/24-47 +24.1% vs +22.3%), so L1 keeps them. Where L1 is not applied the terminal blend wins: sw_flow/12-23 +31.1% vs +20.9% (n=1147), nw_flow/12-23 +17.0% vs +4.3% (n=821), ne_flow/12-23 +44.7% vs +36.0%.
+- Terminal blend now applied for h on its 5 passing cells that L1 does not own: frontal/24-47, ne_flow/12-23, nw_flow/0-5, nw_flow/12-23, sw_flow/12-23. `terminal_static_blend.APPLIED` is per field (all cells, or an allowlist).
+- Checked: served dew point matches Magnus(served t, served h) in all 48 hours with blends live.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.56–v0.7.57 • October 14, 2026 (selector: blend instead of pick)</strong></summary>
 
 * **Why.** Selector Skill was red on every field (Value Captured 8–49%, per-row win rate 47–57%), and Routing attribution was flat or negative everywhere but h. A 30-day retro on corrected output showed that no "recent winner" rule beats the live selector (yesterday's winner −0.2% vs the better fixed routing, last 3 days +2.5%, live +2.1%): which model wins changes day to day. A plain 50/50 average of the two corrected forecasts beat the better fixed routing by t +10.7%, sr +14.6%, h +20.9%, ws +2.1% in both halves of the month. The L1 static blender, built for this on Sept 26, had 2 of 20 cells live while 12 read SHIP-READY.
