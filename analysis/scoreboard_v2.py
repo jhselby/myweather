@@ -58,6 +58,8 @@ import os
 import sys
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
+
+import pytz
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -647,7 +649,8 @@ def _rollup(per_field, per_field_band, window_label):
 def main():
     band_picks = _load_selector_table()
     path = cached_path(PAIR_LOG_URL)
-    now = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+    # obs_time is local naive; window edges must be local (v0.7.64, was UTC).
+    now = datetime.now(pytz.timezone("America/New_York")).replace(tzinfo=None, microsecond=0)
 
     windows_output = {}
     for label, days in WINDOWS:
@@ -706,7 +709,7 @@ def main():
         }
 
     payload = {
-        "generated_at": now.isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat() + "Z",
         "source": "forecast_error_log.jsonl",
         "windows": windows_output,
         "thresholds": {

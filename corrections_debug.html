@@ -1856,7 +1856,7 @@
      stays in Forecast accuracy below. -->
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— daily Total Lift vs the public forecast (10 fields, same as the Total Lift tile)</span></summary>
-  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(public_MAE − prod_MAE) / public_MAE × 100</code> on the same day — the Total Lift tile's number over time. Public = raw NBM (what a default weather app shows), raw HRRR for cl/cm/pr. Same-day baseline cancels the weather: a hard day raises both errors. Positive = we beat the public forecast; a ship that helps pushes the 7d median up. Today is not plotted until it is complete. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(public_MAE − prod_MAE) / public_MAE × 100</code> on the same day and the same hours (only hours where both exist) — the Total Lift tile's number over time. Public = raw NBM (what a default weather app shows), raw HRRR for cl/cm/pr. Same-day baseline cancels the weather: a hard day raises both errors. Positive = we beat the public forecast; a ship that helps pushes the 7d median up. Today is not plotted until it is complete. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <label>Y-range: <select id="stack-health-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
       <option value="auto" selected>Auto (smart)</option>
@@ -9807,15 +9807,13 @@ load();
     for (let i = 0; i < payload.days.length; i++) {
       const scores = [];
       if (payload.days[i] >= _todayLocal) continue;
+      // v0.7.64 — paired rows: served and public summed over the same hours
+      // (mae_over_time.lift_paired). Was prod_real ÷ raw_nbm daily MAEs, two
+      // separately pooled row sets, so hours missing NBM counted on one side.
       for (const f of fields) {
-        const sf = payload.series[f] || {};
-        const baseCell = ((NBM_SCOPE_FIELDS.has(f) ? sf.raw_nbm : sf.raw) || {})[payload.days[i]];
-        let prodCell = (sf.prod_real || {})[payload.days[i]];
-        if (!prodCell) prodCell = (sf.prod || {})[payload.days[i]];
-        const prodVal = prodCell ? prodCell.mae : null;
-        const baseVal = baseCell ? baseCell.mae : null;
-        if (prodVal == null || baseVal == null || !(baseVal > 0)) continue;
-        scores.push((baseVal - prodVal) / baseVal * 100);
+        const cell = ((payload.lift_paired || {})[f] || {})[payload.days[i]];
+        if (!cell || cell.lift_pct == null) continue;
+        scores.push(cell.lift_pct);
       }
       if (scores.length >= 6) {
         const sorted = [...scores].sort((a, b) => a - b);

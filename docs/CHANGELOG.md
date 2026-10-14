@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.64 • October 14, 2026 (scoring windows on local time; stack health on paired hours)</strong></summary>
+
+- Every scoring window was 4 hours short. `per_field_scoring`, `scoreboard_v2` and `mae_over_time` (24h) subtracted the window from UTC now but compared it to pair-log `obs_time`, which is local time. "7d" was 6d 20h, "24h" was 20h, "12h" was 8h (since 08-19). Window edges are now local; `generated_at` stays UTC. t 24h rows 900 → 1,080.
+- Stack health trajectory divided each day's served MAE by the public forecast's MAE taken from two separately pooled series, so hours missing NBM counted on one side only (10-10 t: 1,125 vs 1,054 rows). `mae_over_time` now emits `lift_paired` (served and public summed over the same hours: `error_{applied_layer}` vs raw NBM, raw HRRR where NBM does not publish) and the chart reads it. 10-10 median moved +7.1% → +11.8%. Paired history starts 09-14 (start of the live pair log); 08-21–09-13 is blank on the chart until backfilled.
+- Checked independently (standalone script, no shared scoring code): 7d Total Lift reproduces to the third decimal (t +4.16%, ws +3.67%, wd +4.63%, dp +3.45%). In the scored windows NBM is stamped live at run time, so no look-ahead.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.63 • October 14, 2026 (debug page audit, completed)</strong></summary>
 
 * **R0 per-layer audit** grades HRRR-cascade layers, but on several fields the HRRR cascade serves almost no hours (7d: wg 0%, wd 0%, cc 0%, ws 5%, sr 5%; ch 90%, h 77%, t 49%, dp 35%). New "HRRR serves" column (from per_field_scoring selector picks); losing-layer rows on fields served <20% by HRRR are dimmed, and if every flagged layer is on such a field the red banner downgrades to amber ("reaches almost no user forecast").

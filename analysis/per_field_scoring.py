@@ -35,6 +35,8 @@ import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+
+import pytz
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -928,7 +930,9 @@ def _compute_field(field, buckets, halves):
 def main():
     band_picks = _load_selector_table()
     path = cached_path(PAIR_LOG_URL)
-    now = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+    # Pair-log obs_time is local (America/New_York) naive, so window edges
+    # must be local too. v0.7.64: was UTC now, which cut every window 4h short.
+    now = datetime.now(pytz.timezone("America/New_York")).replace(tzinfo=None, microsecond=0)
 
     windows_out = {}
     for label, days in WINDOWS:
@@ -948,7 +952,7 @@ def main():
         windows_out[label] = {"per_field": per_field}
 
     payload = {
-        "generated_at": now.isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat() + "Z",
         "source": "forecast_error_log.jsonl",
         "selector_table_source": str(SELECTOR_TABLE_PATH.name),
         "windows": windows_out,

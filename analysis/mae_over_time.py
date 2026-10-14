@@ -32,6 +32,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone, date, timedelta
 
+import pytz
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
@@ -42,6 +44,9 @@ HISTORY_URL = "https://data.wymancove.com/mae_over_time.json"
 OUT_JSON = _out("mae_over_time.json")
 
 FIELDS = ["t", "dp", "h", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pr", "pp", "pa"]
+# Public-forecast baseline for daily Total Lift: raw NBM where NBM publishes,
+# raw HRRR elsewhere. Same split as per_field_scoring.NBM_SCOPE.
+NBM_SCOPE = {"t", "ws", "wg", "wd", "h", "ch", "cc", "sr", "dp"}
 MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noise spikes
 
 # Fields routed through the permissive path (skip the strict L1/L2/L3/L4 completeness
@@ -144,6 +149,12 @@ def compute_fresh_rollup():
     # error_{applied} are both present. Pre-v0.6.269 rows without stamps are
     # skipped; those age out of the 30-day pair log by 07-31. (v0.6.371.)
     prod_real_buckets = defaultdict(list)
+    # v0.7.64 — daily Total Lift on PAIRED rows: served error (error_{applied},
+    # else top-level error — per_field_scoring._prod_error) and the public
+    # baseline, summed only over rows carrying both. prod_real and raw_nbm
+    # are pooled separately (different row sets), so their ratio is not
+    # same-hours lift. [sum|served|, sum|public|, n]
+    lift_buckets = defaultdict(lambda: [0.0, 0.0, 0])
     # Rolling last-24h buckets. Same shape as `buckets` and `prod_real_buckets`
     # but keyed by field only (no day). Populated for any row with obs_time
     # >= now - 24h.
@@ -160,7 +171,9 @@ def compute_fresh_rollup():
         for lbl, lo, hi in LAST_24H_BANDS:
             if lo <= lead <= hi: return lbl
         return None
-    cutoff_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
+    # obs_time is local naive; cutoff must be local (v0.7.64, was UTC → 20h window).
+    cutoff_24h = (datetime.now(pytz.timezone("America/New_York")).replace(tzinfo=None)
+                  - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
     n_total = 0
     with open(path) as f:
         for line in f:
@@ -178,6 +191,13 @@ def compute_fresh_rollup():
             band = _band_for(r.get("lead_h")) if in_last_24h else None
 
             applied = r.get("applied_layer")
+            e_served = r.get(f"error_{applied}") if applied else None
+            if e_served is None:
+                e_served = r.get("error")
+            e_public = r.get("error_raw_nbm") if fld in NBM_SCOPE else r.get("error_l1")
+            if e_served is not None and e_public is not None:
+                lb = lift_buckets[(day, fld)]
+                lb[0] += abs(float(e_served)); lb[1] += abs(float(e_public)); lb[2] += 1
             # v0.6.400b: skip the applied_layer path for L1_ONLY_FIELDS —
             # those fields (wd) have their own prod_real path below and would
             # otherwise double-count now that v0.6.400 makes wd emit
@@ -288,6 +308,17 @@ def compute_fresh_rollup():
             "brier": round(sqerr_mean, 4),
         }
 
+    lift_paired = defaultdict(dict)
+    for (day, fld), (s_srv, s_pub, n) in lift_buckets.items():
+        if n < MIN_N_PER_DAY or s_pub <= 0:
+            continue
+        lift_paired[fld][day] = {
+            "n": n,
+            "served_mae": round(s_srv / n, 4),
+            "public_mae": round(s_pub / n, 4),
+            "lift_pct": round(100.0 * (s_pub - s_srv) / s_pub, 2),
+        }
+
     # Rolling last-24h aggregate. MIN_N floor uses 1/7 of MIN_N_PER_DAY since
     # the window is 24h vs 7-day-hourly. Keeps thin windows out but doesn't
     # over-gate a genuinely quiet field.
@@ -367,7 +398,7 @@ def compute_fresh_rollup():
     # Coerce nested defaultdicts to dicts for JSON serialization.
     last_24h_bands = {f: {b: dict(lyrs) for b, lyrs in bands.items()}
                       for f, bands in last_24h_bands.items()}
-    return fresh, n_total, dict(last_24h), last_24h_bands, cutoff_24h
+    return fresh, n_total, dict(last_24h), last_24h_bands, cutoff_24h, dict(lift_paired)
 
 
 def merge(prior_series, fresh_series, refresh_cutoff_day):
@@ -429,7 +460,7 @@ def main():
     print(f"  prior history: {prior_days_count} days")
 
     print("[2/3] Recomputing per-day rollup from pair log...")
-    fresh_series, n_pair_rows, last_24h, last_24h_bands, cutoff_24h = compute_fresh_rollup()
+    fresh_series, n_pair_rows, last_24h, last_24h_bands, cutoff_24h, fresh_lift = compute_fresh_rollup()
     fresh_days = sorted({d for f in fresh_series.values()
                          for lyr in f.values() for d in lyr})
     print(f"  fresh rollup: {n_pair_rows:,} pair rows → {len(fresh_days)} days")
@@ -438,6 +469,13 @@ def main():
     today = date.today()
     cutoff = (today - timedelta(days=MERGE_REFRESH_DAYS - 1)).isoformat()  # inclusive
     merged, kept, over, added = merge(prior_series, fresh_series, cutoff)
+    # Paired daily Total Lift: same merge rule (recent days refresh, older
+    # days locked once written). Kept out of `series` so per-layer consumers
+    # never see it as a layer.
+    _prior_lift = {f: {"lp": d} for f, d in (prior.get("lift_paired") or {}).items()}
+    _fresh_lift = {f: {"lp": d} for f, d in fresh_lift.items()}
+    _ml, _, _, _ = merge(_prior_lift, _fresh_lift, cutoff)
+    lift_paired = {f: dict(v["lp"]) for f, v in _ml.items() if v.get("lp")}
     all_days = sorted({d for f in merged.values()
                        for lyr in f.values() for d in lyr})
     all_fields = sorted(f for f in merged if merged[f])
@@ -548,7 +586,8 @@ def main():
                    for fld, layers in merged.items()},
         "last_24h": last_24h,
         "last_24h_bands": last_24h_bands,
-        "last_24h_window_start_utc": cutoff_24h,
+        "last_24h_window_start_utc": cutoff_24h,   # local time since v0.7.64 (key name kept for readers)
+        "lift_paired": lift_paired,
         "last_7d": last_7d,
         "last_7d_days": last_7d_days,
         "raw_difficulty_index": raw_difficulty_index,
