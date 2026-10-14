@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.53 • October 14, 2026 (AI headline: observed rain reaches the briefing)</strong></summary>
+
+- On Oct 13 evening the AI headline said "Overcast" in steady rain. When the model forecast had no rain, the prompt told the AI "No significant rain expected next 48h — do NOT mention rain", and the headline check rejected any rain headline on the same grounds or because the model description was dry.
+- `briefing_ai.py` gets `_observed_precip_desc()`, the Python twin of the app's v0.7.52 rule (stations within 1.5 mi, fresh WU + Tempest ×60, KBVY text). When stations observe rain and the model description is dry: the prompt's current-conditions line uses the observed label, the precip line says rain is falling now but the model shows no more, the headline check allows rain words, and the template fallback uses the observed label.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.52 • October 14, 2026 (conditions: rain label from nearby fresh stations)</strong></summary>
 
 - v0.7.51 labeled rain intensity from the median of every wet WU station in the network, which said "Light Rain" (~0.07 in/hr) while stations within a mile of the cove read 0.12–0.24 in/hr. Several nearby WU zeros were 10+ minutes stale.

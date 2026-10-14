@@ -104,6 +104,46 @@ def _temp_range(t):
 
 
 
+_WET_RE = re.compile(r"rain|snow|drizzle|sleet|shower|thunder|storm|freezing|ice pellets|hail", re.I)
+
+
+def _observed_precip_desc(weather_data):
+    """Python twin of js/format.js observedPrecipDesc(): what nearby stations
+    say is falling now, or None. KBVY snow/sleet/freezing/thunder text wins;
+    else >=3 wet stations (and >=25% of those reporting) within 1.5 mi label
+    the median rate; else KBVY rain text. WU rows >10 min older than the
+    newest WU report are dropped; Tempest precip_rate_in is a 1-minute
+    accumulation, so x60 for in/hr."""
+    ov = (weather_data.get("current") or {}).get("condition_override") or ""
+    if re.search(r"snow|sleet|freezing|ice pellets|hail|thunder", ov, re.I):
+        return ov
+    near_mi = 1.5
+    wu = []
+    for st in ((weather_data.get("wu_stations") or {}).get("stations") or []):
+        if st.get("precip_rate_in") is None or st.get("distance_mi") is None or st["distance_mi"] > near_mi:
+            continue
+        try:
+            ts = datetime.strptime(st.get("timestamp") or "", "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        wu.append((ts, st["precip_rate_in"]))
+    rates = []
+    if wu:
+        newest = max(ts for ts, _ in wu)
+        rates = [r for ts, r in wu if (newest - ts).total_seconds() <= 600]
+    for st in ((weather_data.get("tempest") or {}).get("stations") or []):
+        if (st.get("valid") is not False and st.get("precip_rate_in") is not None
+                and st.get("distance_mi") is not None and st["distance_mi"] <= near_mi
+                and not ((st.get("age_minutes") or 0) > 10)):
+            rates.append(st["precip_rate_in"] * 60)
+    pos = sorted(r for r in rates if r > 0)
+    if len(pos) >= 3 and len(pos) >= 0.25 * len(rates):
+        med = pos[len(pos) // 2]
+        return ("Drizzle" if med < 0.01 else "Light Rain" if med < 0.10
+                else "Moderate Rain" if med < 0.30 else "Heavy Rain")
+    return ov if _WET_RE.search(ov) else None
+
+
 def _build_weather_summary(weather_data):
     """Extract only what Gemini needs — minimal tokens, no conflicting data."""
     cur = weather_data.get("current", {})
@@ -117,6 +157,10 @@ def _build_weather_summary(weather_data):
     # Current conditions
     temp = round(hyp.get("corrected_temp") or cur.get("temperature") or 0)
     sky = cur.get("condition_override") or cur.get("weather_description") or "Unknown"
+    # Observed rain beats a dry model description (same rule as the app's sky card).
+    obs_rain = _observed_precip_desc(weather_data)
+    if obs_rain and not _WET_RE.search(cur.get("weather_description") or ""):
+        sky = obs_rain
 
     # Highs/lows as ranges
     high = der.get("today_high") or (daily.get("temperature_max", [None]) or [None])[0]
@@ -188,7 +232,12 @@ def _build_weather_summary(weather_data):
     rain_inches = round(sum(precip_arr[:48]), 2) if precip_arr else 0
     precip_line = ""
     if max_pop < 30 or rain_inches < 0.05:
-        precip_line = "No significant rain expected next 48h — do NOT mention rain"
+        if obs_rain:
+            precip_line = (f"Rain falling now (stations observe {obs_rain}), but the model "
+                           f"shows no significant rain next 48h — say it is raining now, "
+                           f"do not forecast more")
+        else:
+            precip_line = "No significant rain expected next 48h — do NOT mention rain"
     else:
         rain_start = None
         for i, p in enumerate(pop_arr[:48]):
@@ -462,7 +511,8 @@ def _validate_headline(briefing, summary, weather_data):
     # "clearing — rain stays south") that read fine and shouldn't trip rejection.
     rain_words = ("rain", "shower", "drizzle", "downpour", "torrential",
                   "deluge", "soaker", "thunderstorm", "thundershower", "snow")
-    if "No significant rain expected" in summary:
+    obs_rain = _observed_precip_desc(weather_data)
+    if "No significant rain expected" in summary and not obs_rain:
         for w in rain_words:
             if in_headline(w):
                 return False, f"mentions {w!r} but forecast shows no significant rain"
@@ -485,6 +535,7 @@ def _validate_headline(briefing, summary, weather_data):
         (cur_precip is None or cur_precip == 0)
         and minutely_dry
         and not desc_has_rain
+        and not obs_rain
     )
     if data_dry_now:
         # v0.7.47: + evening/afternoon/overnight/arriving/returning/moving in.
@@ -582,6 +633,8 @@ def _templated_briefing(weather_data):
     hyp = weather_data.get("hyperlocal", {})
     der = weather_data.get("derived", {})
     sky = cur.get("weather_description") or "Conditions"
+    if not _WET_RE.search(sky):
+        sky = _observed_precip_desc(weather_data) or sky
     temp = round(hyp.get("corrected_temp") or cur.get("temperature") or 0)
     high = der.get("today_high")
     high_str = f", high {_temp_range(high)}" if high is not None else ""
