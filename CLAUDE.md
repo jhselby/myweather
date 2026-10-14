@@ -4,6 +4,23 @@ This document exists because Claude has repeatedly failed in predictable, preven
 
 ---
 
+## 0. Measure the Right Thing, Then Improve It
+
+**The rule:** The paradigm for this project is: measure the right thing, then work to improve it. Be careful and precise about what a number measures *before* doing any work to move it. Every scoreboard number must measure the correct thing, framed in terms of what it tells us to work on next. Work aimed at a wrong measurement is wasted no matter how good it is.
+
+**Measuring the wrong thing is the most common failure mode in this project** — Joe's as well as Claude's. Before trusting, presenting, or working on any number, state precisely:
+
+1. **What quantity, exactly?** Name the formula and the fields it reads. A label is not a definition (10-14: `best_chosen` was the best-public baseline, not the selector's choice).
+2. **On which rows?** It must score what actually shipped, on the same rows as anything it is compared to (10-14: Selector Skill graded *today's* selector table as if it had run all week; applied blend rows had no `error_{applied_layer}` and silently dropped out of MAE).
+3. **Against what baseline and what ceiling?** The baseline must be a real alternative; the ceiling must be reachable by a rule we could actually run. A perfect-but-real system must be able to score green and a known-bad one must score red (10-14: Value Captured's per-hour oracle was unreachable, so wd read red forever with optimal routing).
+4. **What work does it point to?** If the number would not change what we work on next, it does not belong on the scoreboard.
+
+When a number disagrees with reality ("app says overcast, it's pouring"), the number is suspect first. Fix the measurement; never defend it.
+
+**History of failures:** See 10-14 session: a month of work on correction layers while the selector — the actual weak point — was mis-measured on three separate counts.
+
+---
+
 ## 1. Git Workflow
 
 **The rule:** `git push`. That's it. No `--force-with-lease`.
@@ -179,6 +196,7 @@ These are current as of October 2026 (v0.7.47). If any seem wrong, ASK before as
 
 ## Summary of Recurring Failure Modes
 
+0. **Measuring the wrong thing** — working to improve a number before confirming, precisely, that it measures the right thing on the rows that shipped against a reachable bar (§0). The root failure; the others are downstream.
 1. **Using `--force-with-lease` when regular push works** — cost Joe hours of data loss across 5+ sessions
 2. **Guessing instead of checking state** — grep/cat would have diagnosed the issue in seconds
 3. **Wrong file paths** — confusing container paths with Mac paths, forgetting the repo location
