@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.60 • October 14, 2026 (scoreboard audit: CLAUDE.md §0 run on every tile)</strong></summary>
+
+* **Selector Skill** — "what we served" now IS the served error on every hour (was the picked side's cascade walk; t/ws hours routed to NWS were graded as NBM, ~1.4% of rows).
+* **Pipeline Lift / Attribution** — terminal-blend hours credit their routing decision (weight w applied to the two raws) to Routing; Cascade keeps only the corrections. Before, a blend's routing gain landed in Pipeline Lift. Routing + Cascade = Total still holds on every field.
+* **Prod Trend → Lift Trend** — raw Prod MAE across windows tracked the weather, not us (ws "−33% regressing" while the public forecast got 36% worse and our lift rose +1.5 → +3.7 pp; cl "+41% improving" on a flat lift). Now: Total Lift this window − prior window, in points (`lift_trend_pp`). 7d first read: h +18.3, wg +5.4, ws +2.2, sr −2.0, wd −1.7, t −3.7, **ch −12.5** (the one real decline).
+* **National Source** — compares the two cascades' corrected output (the level the selector routes on), not raw models. ch now reads HRRR (its corrected cascade wins); on raw it read NBM.
+* **Notable Calls** — current-config scoring walked a cascade by the applied layer's suffix, so blend hours were scored as the HRRR cascade; they now score the served blend.
+* Unchanged after audit: Total Lift (served vs public forecast, same rows), Health & Reliability.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.59 • October 14, 2026 (Selector Score: achieved ÷ achievable)</strong></summary>
 
 - Selector Skill was Value Captured: routing gain vs a per-hour oracle that picks whichever model landed closer after the fact. Much of that gain is chance no forecast-time rule can capture, so wd (always-NBM, the best possible routing) read red forever and the tile could not tell "routing is wrong" from "routing is already optimal".

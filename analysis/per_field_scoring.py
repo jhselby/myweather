@@ -193,6 +193,10 @@ def _prod_error_current_config(row):
     None (caller treats it the same as any missing residual).
     """
     applied = (row.get("applied_layer") or "")
+    # v0.7.60 — blend rows: the served blend IS current config (it walks
+    # neither cascade); was scored as the HRRR cascade.
+    if row.get("selector_source") in BLEND_SOURCES:
+        return _prod_error(row)
     keys = NBM_PROD_KEYS if applied.endswith("_nbm") else HRRR_PROD_KEYS
     for k in keys:
         if k in _DISABLED_LAYER_KEYS:
@@ -252,6 +256,15 @@ def _selected_l1_error(row, band_picks):
     # (1-omega)*raw_nbm), so Routing attribution credits the blend's raw-level
     # residual. Terminal blends (tblend/blend) sit above both cascades; their
     # gain lands in the Cascade column against the pre-empted pick's raw.
+    # v0.7.60 — a terminal blend's routing decision is its weight w: credit
+    # routing with the same w applied to the two raws, so Cascade keeps only
+    # the corrections (blend of terminals − blend of raws). Without this the
+    # blend's routing gain landed in Pipeline Lift / Cascade.
+    if row.get("selector_source") == "tblend":
+        w = row.get("tblend_w_shadow")
+        e_h, e_n = row.get("error_l1"), row.get("error_raw_nbm")
+        if w is not None and e_h is not None and e_n is not None:
+            return float(w) * float(e_h) + (1.0 - float(w)) * float(e_n), pick
     if row.get("selector_source") == "l1_blend":
         v = row.get("error_l1_blend")
         if v is None and row.get("l1_blend_shadow") is not None and row.get("observed") is not None:
@@ -315,6 +328,11 @@ def _new_bucket():
         # `prod_wider` / `prod_prior_wider` require only `e_prod`.
         "prod_wider":       [0.0, 0],
         "prod_prior_wider": [0.0, 0],
+        # v0.7.60 — Lift Trend: [sum|prod|, sum|public baseline|, n] per
+        # window on rows carrying both. Public baseline = NBM raw (NBM
+        # scope) or HRRR raw (HRRR-only fields), same as Total Lift.
+        "lift_cur":   [0.0, 0.0, 0],
+        "lift_prior": [0.0, 0.0, 0],
         # Per-row oracle Prod (v0.6.481): min(|chosen_prod_err|, |alt_prod_err|)
         # per row over the paired chosen/alt pool. Feeds Value Captured.
         "oracle_prod":  [0.0, 0],
@@ -432,6 +450,10 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                     vw = abs(float(e_prod))
                     acc[field]["prod_prior_wider"][0] += vw
                     acc[field]["prod_prior_wider"][1] += 1
+                    _base = e_nbm if in_nbm_scope else e_hrrr
+                    if _base is not None:
+                        _lp = acc[field]["lift_prior"]
+                        _lp[0] += vw; _lp[1] += abs(float(_base)); _lp[2] += 1
                 continue
             b = acc[field]
             half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
@@ -505,6 +527,10 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 vw = abs(float(e_prod))
                 b["prod_wider"][0] += vw
                 b["prod_wider"][1] += 1
+                _base = e_nbm if in_nbm_scope else e_hrrr
+                if _base is not None:
+                    _lc = b["lift_cur"]
+                    _lc[0] += vw; _lc[1] += abs(float(_base)); _lc[2] += 1
 
             # Per-cascade Prod residuals. Pooled unconditionally so we can
             # answer "what would Prod be if we always picked HRRR / always
@@ -532,8 +558,10 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 # chosen = served residual; alt stays the side the selector's
                 # own pick would have left out. Oracle stays the per-row
                 # PICK oracle min(hp, np), so a blend can beat it.
-                if row.get("selector_source") in BLEND_SOURCES:
-                    chosen = abs(float(e_prod))
+                # v0.7.60 — chosen = what actually shipped on EVERY row
+                # (was the picked side's cascade walk; differed on ~1.4% of
+                # t/ws rows routed to NWS, graded as NBM).
+                chosen = abs(float(e_prod))
                 b["chosen_prod"][0] += chosen; b["chosen_prod"][1] += 1
                 b["alt_prod"][0] += alt;       b["alt_prod"][1] += 1
                 half["chosen_prod"][0] += chosen; half["chosen_prod"][1] += 1
@@ -664,6 +692,16 @@ def _compute_field(field, buckets, halves):
     n_prior_wider = buckets["prod_prior_wider"][1]
     if field in TREND_EXCLUDE_FIELDS or n_prior_wider < MIN_N_TREND:
         prod_trend_pct = None
+    # v0.7.60 — Lift Trend (pp) = Total Lift this window − Total Lift the
+    # prior equal window, each vs the public baseline on its own rows.
+    # Replaces Prod Trend as the tile grade: raw Prod MAE across windows
+    # tracks the weather (10-14: ws Prod "−33% regressing" while the public
+    # forecast got 36% worse and our lift rose +1.5 → +3.7 pp).
+    lift_trend_pp = None
+    _lc, _lp = buckets["lift_cur"], buckets["lift_prior"]
+    if (field not in TREND_EXCLUDE_FIELDS and _lp[2] >= MIN_N_TREND and _lc[2] > 0
+            and _lp[1] > 0 and _lc[1] > 0):
+        lift_trend_pp = (100.0 * (_lc[1] - _lc[0]) / _lc[1]) - (100.0 * (_lp[1] - _lp[0]) / _lp[1])
 
     # v0.6.481 — Selector Win Rate + Value Captured (both diagnostic,
     # NBM-scope only; null for HRRR-only fields where there's no alt
@@ -780,6 +818,7 @@ def _compute_field(field, buckets, halves):
         "prod_prior_mae": round(prod_prior, 3) if prod_prior is not None else None,
         "n_prod_prior":   buckets["prod_prior"][1],
         "prod_trend_pct": round(prod_trend_pct, 2) if prod_trend_pct is not None else None,
+        "lift_trend_pp": round(lift_trend_pp, 2) if lift_trend_pp is not None else None,
         # v0.6.487 — wider-pool numbers Prod Trend is actually computed from.
         "prod_wider_mae":       round(prod_wider, 3) if prod_wider is not None else None,
         "prod_prior_wider_mae": round(prod_prior_wider, 3) if prod_prior_wider is not None else None,

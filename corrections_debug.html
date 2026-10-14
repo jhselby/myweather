@@ -1690,8 +1690,8 @@
 
     <!-- Prod Trend -->
     <div class="sb-tile sb-tile-wide">
-      <div class="sb-tile-title">Prod Trend</div>
-      <div class="sb-tile-sub">Change vs the prior equal window. Are we improving over time?</div>
+      <div class="sb-tile-title">Lift Trend</div>
+      <div class="sb-tile-sub">Total Lift this window minus Total Lift the prior equal window, in points. Are we getting better relative to the public forecast? (Raw MAE trend tracked the weather, not us.)</div>
 
       <div class="sb-num-row" data-tile="prod_trend">
         <div class="sb-num-group">
@@ -1758,7 +1758,7 @@
     <!-- National Source -->
     <div class="sb-tile sb-tile-wide">
       <div class="sb-tile-title">National Source <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D · lower MAE wins)</span></div>
-      <div class="sb-tile-sub">Which national raw source is currently scoring better per field. Diagnostic only — Total Lift already scores against NBM raw (or HRRR raw for the 5 HRRR-only fields), so National Source doesn't set the baseline; it's context for interpreting where the pipeline's lift is coming from.</div>
+      <div class="sb-tile-sub">Which cascade's corrected output scored better per field (always-HRRR vs always-NBM, same hours) — the level the selector routes on. HRRR-only fields compare raw.</div>
 
       <div id="national-source-body" class="sb-wfl" style="grid-template-columns: auto 1fr; row-gap: 8px; font-size: 13px;">
         <div class="sb-wfl-count sb-dim">—</div>
@@ -4629,7 +4629,8 @@ async function renderScoreboardTilesMinimal() {
   // otherwise swing one field into the thousands and swamp the mean.
   const _selScore      = (c) => (c && c.selector_score_pct    != null)
     ? Math.max(-100, Math.min(150, c.selector_score_pct)) : null;
-  const _prodTrend     = (c) => (c && c.prod_trend_pct        != null) ? c.prod_trend_pct        : null;
+  // v0.7.60 — Lift Trend (pp): change in Total Lift vs the prior window.
+  const _prodTrend     = (c) => (c && c.lift_trend_pp         != null) ? c.lift_trend_pp         : null;
 
   const _collect = (window, fields, metricFn) => {
     const vals = [];
@@ -5308,7 +5309,7 @@ async function renderScoreboardV2() {
     };
   };
 
-  const _prodTrend = (c) => (c.prod_trend_pct != null) ? c.prod_trend_pct : null;
+  const _prodTrend = (c) => (c.lift_trend_pp != null) ? c.lift_trend_pp : null;
   // Value chain — all three use VALUE_CHAIN_FIELDS.
   const chooser7  = _agg(pf7,  _chooserLift,   VALUE_CHAIN_FIELDS, "winning", "losing");
   const chooser24 = _agg(pf24, _chooserLift,   VALUE_CHAIN_FIELDS, "winning", "losing");

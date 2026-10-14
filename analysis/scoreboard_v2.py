@@ -435,9 +435,13 @@ def _rollup(per_field, per_field_band, window_label):
             if   delta >= 2.0:   correction_value["positive"].append(field)
             elif delta <= -2.0:  correction_value["negative"].append(field)
             else:                correction_value["flat"].append(field)
-        # National source score — which national raw is stronger on this field.
-        hrrr_mae = cell["hrrr_raw_mae"]
-        nbm_mae = cell["nbm_raw_mae"]
+        # National source score — which CASCADE (corrected output) is
+        # stronger on this field. v0.7.60: was raw HRRR vs raw NBM, the wrong
+        # level for routing (selector routes on corrected output; ch's raw
+        # favors NBM while its HRRR cascade wins). Falls back to raw for
+        # HRRR-only fields, where the "NBM" side is not populated.
+        hrrr_mae = cell.get("prod_always_hrrr_mae") if cell.get("in_selector_scope") else cell["hrrr_raw_mae"]
+        nbm_mae = cell.get("prod_always_nbm_mae") if cell.get("in_selector_scope") else cell["nbm_raw_mae"]
         if hrrr_mae is not None and nbm_mae is not None:
             source_score["nbm" if nbm_mae < hrrr_mae else "hrrr"].append(field)
         else:
