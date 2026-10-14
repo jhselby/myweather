@@ -77,6 +77,7 @@
     // Sky condition
     const skyCode = cur.weather_code ?? 0;
     let skyDesc = cur.weather_description || cur.condition_override || "";
+    if (!/rain|snow|drizzle|sleet|shower/i.test(skyDesc)) skyDesc = observedPrecipDesc(data) || skyDesc;
     if (!/rain|snow|drizzle|sleet|shower/i.test(skyDesc)) {
       const mn = window.__precipMinutely || [];
       if (mn.length) {
@@ -1143,7 +1144,8 @@ function renderBriefing(data) {
   const sc = document.getElementById('briefConditions');
   const scl = document.getElementById('briefConditionsLabel');
   if (sc) {
-    const raw = cur.weather_description || cur.condition_override || '--';
+    let raw = cur.weather_description || cur.condition_override || '--';
+    if (!/rain|snow|drizzle|sleet|shower/i.test(raw)) raw = observedPrecipDesc(data) || raw;
     // Override with Pirate Weather radar if it shows current precip and HRRR doesn't
     let displayCondition = raw;
     if (!/rain|snow|drizzle|sleet|shower/i.test(raw)) {

@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.51 • October 13, 2026 (conditions: observed rain beats a dry model)</strong></summary>
+
+- On Oct 13 evening the app said "Overcast" in steady rain. The model's weather code was 3 (overcast, 0.0 precip) while KBVY reported "Light Rain, Mist" and 23 of 35 WU stations were measuring rain. The app showed the model description first (since May 9, for intensity), so the airport override never reached the screen.
+- New `observedPrecipDesc()` in `format.js`, used by Right Now and both briefing condition rows. When the model description is dry: KBVY snow/sleet/freezing/thunder text wins; otherwise ≥3 WU stations (and ≥25% of those reporting) with rain set the label from their median rate (Drizzle < 0.01, Light < 0.10, Moderate < 0.30 in/hr, else Heavy); otherwise KBVY's rain text. Pirate minutely still runs after. When the model shows precip, its description stays.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.50 • October 13, 2026 (NBM skip table keyed on the per-lead runtime regime)</strong></summary>
 
 - The collector looked up NBM skip cells by the current-conditions regime, one label for all 48 leads. The audits that choose and review those cells bucket by the per-lead forecast regime. At 12–47h the two barely overlap (wd/se_flow/24-47: 2,077 audit rows vs 1,392 fired rows, 186 in common), so cells fired on hours they were never scored on.

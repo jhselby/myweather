@@ -34,6 +34,7 @@ function renderRightNow(data) {
   // ── Condition emoji + description (with Pirate-minutely override) ──
   const emoji = cur.emoji || weatherEmoji[code] || "&#127777;&#65039;";
   let desc = cur.weather_description || cur.condition_override || weatherDesc[code] || "—";
+  if (!/rain|snow|drizzle|sleet|shower/i.test(desc)) desc = observedPrecipDesc(data) || desc;
   if (!/rain|snow|drizzle|sleet|shower/i.test(desc)) {
     const mn2 = window.__precipMinutely || [];
     if (mn2.length) {

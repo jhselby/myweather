@@ -44,6 +44,25 @@ function c1Band(data, field, band, opts = {}) {
 }
 window.c1Band = c1Band;
 
+// v0.7.51 — observed precip when the model's weather code says dry. The model
+// description stays primary when it shows precip (intensity, 0e646222); when it
+// misses rain entirely, KBVY's present weather or the WU network take over.
+// Tempest is left out: its precip_rate_in is a 1-minute accumulation.
+const WET_RE = /rain|snow|drizzle|sleet|shower|thunder|storm|freezing|ice pellets|hail/i;
+function observedPrecipDesc(data) {
+  const ov = (data.current || {}).condition_override || "";
+  if (/snow|sleet|freezing|ice pellets|hail|thunder/i.test(ov)) return ov;
+  const rates = (((data.wu_stations || {}).stations) || [])
+    .map(s => s.precip_rate_in).filter(r => r != null);
+  const pos = rates.filter(r => r > 0).sort((a, b) => a - b);
+  if (pos.length >= 3 && pos.length >= 0.25 * rates.length) {
+    const med = pos[Math.floor(pos.length / 2)];
+    return med < 0.01 ? "Drizzle" : med < 0.10 ? "Light Rain" : med < 0.30 ? "Moderate Rain" : "Heavy Rain";
+  }
+  return WET_RE.test(ov) ? ov : null;
+}
+window.observedPrecipDesc = observedPrecipDesc;
+
 // Single canonical compass function — replaces both old degreesToCompass and degToCompass.
 function toCompass(deg, withDeg = true) {
   if (deg == null || isNaN(deg)) return "--";
