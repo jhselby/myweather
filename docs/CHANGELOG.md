@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.52 • October 14, 2026 (conditions: rain label from nearby fresh stations)</strong></summary>
+
+- v0.7.51 labeled rain intensity from the median of every wet WU station in the network, which said "Light Rain" (~0.07 in/hr) while stations within a mile of the cove read 0.12–0.24 in/hr. Several nearby WU zeros were 10+ minutes stale.
+- `observedPrecipDesc()` now uses only stations within 1.5 mi, drops WU rows more than 10 minutes older than the newest WU report, and adds Tempest stations (fresh ≤10 min, `precip_rate_in` is a 1-minute accumulation, so ×60 for in/hr). Same thresholds: ≥3 wet stations and ≥25% of those reporting; Drizzle < 0.01, Light < 0.10, Moderate < 0.30 in/hr, else Heavy. Oct 13 evening's readings now give "Moderate Rain".
+
+</details>
+
+<details open>
 <summary><strong>v0.7.51 • October 13, 2026 (conditions: observed rain beats a dry model)</strong></summary>
 
 - On Oct 13 evening the app said "Overcast" in steady rain. The model's weather code was 3 (overcast, 0.0 precip) while KBVY reported "Light Rain, Mist" and 23 of 35 WU stations were measuring rain. The app showed the model description first (since May 9, for intensity), so the airport override never reached the screen.

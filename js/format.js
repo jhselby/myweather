@@ -52,8 +52,19 @@ const WET_RE = /rain|snow|drizzle|sleet|shower|thunder|storm|freezing|ice pellet
 function observedPrecipDesc(data) {
   const ov = (data.current || {}).condition_override || "";
   if (/snow|sleet|freezing|ice pellets|hail|thunder/i.test(ov)) return ov;
-  const rates = (((data.wu_stations || {}).stations) || [])
-    .map(s => s.precip_rate_in).filter(r => r != null);
+  // Stations within 1.5 mi, fresh readings only, rates in in/hr.
+  // WU: drop rows >10 min older than the newest WU report (stale rows read 0).
+  // Tempest: precip_rate_in is a 1-minute accumulation, so x60.
+  const NEAR_MI = 1.5;
+  const wu = (((data.wu_stations || {}).stations) || [])
+    .filter(s => s.precip_rate_in != null && s.distance_mi != null && s.distance_mi <= NEAR_MI && s.timestamp);
+  const wuT = wu.map(s => Date.parse(s.timestamp.replace(" ", "T")));
+  const newest = Math.max(...wuT.filter(t => !isNaN(t)));
+  const rates = wu.filter((s, i) => !(newest - wuT[i] > 10 * 60000)).map(s => s.precip_rate_in);
+  ((data.tempest || {}).stations || [])
+    .filter(s => s.valid !== false && s.precip_rate_in != null && s.distance_mi != null
+      && s.distance_mi <= NEAR_MI && !(s.age_minutes > 10))
+    .forEach(s => rates.push(s.precip_rate_in * 60));
   const pos = rates.filter(r => r > 0).sort((a, b) => a - b);
   if (pos.length >= 3 && pos.length >= 0.25 * rates.length) {
     const med = pos[Math.floor(pos.length / 2)];
