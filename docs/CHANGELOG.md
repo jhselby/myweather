@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.65 • October 15, 2026 (collector crash on null daily precip)</strong></summary>
+
+- Collector returned 500 on 34 runs from 00:07 to 07:17 ET on October 15. Open-Meteo returned null `precipitation_probability_max` for one day, and `_generate_daily_forecast` compared it with `>`. Null precip probability and null max wind now read as 0. The same crash was waiting on `wind_speed_max`.
+- Also on October 14: the stack health chart's paired lift was backfilled to 08-25 from the backstamped pair log. 08-21 to 08-24 can't be recovered.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.64 • October 14, 2026 (scoring windows on local time; stack health on paired hours)</strong></summary>
 
 - Every scoring window was 4 hours short. `per_field_scoring`, `scoreboard_v2` and `mae_over_time` (24h) subtracted the window from UTC now but compared it to pair-log `obs_time`, which is local time. "7d" was 6d 20h, "24h" was 20h, "12h" was 8h (since 08-19). Window edges are now local; `generated_at` stays UTC. t 24h rows 900 → 1,080.

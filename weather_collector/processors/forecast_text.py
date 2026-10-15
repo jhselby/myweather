@@ -516,8 +516,9 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
         elif target_str == tomorrow_str:
             high = derived.get("tomorrow_high", high)
             low  = derived.get("tomorrow_low", low)
-    precip_prob = daily_data.get('precipitation_probability_max', [0] * len(daily_times))[day_index]
-    wind_max = daily_data.get('wind_speed_max', [0] * len(daily_times))[day_index]
+    # Open-Meteo can return null for a single day (10-15 overnight: 34 crashed runs).
+    precip_prob = daily_data.get('precipitation_probability_max', [0] * len(daily_times))[day_index] or 0
+    wind_max = daily_data.get('wind_speed_max', [0] * len(daily_times))[day_index] or 0
     
     parts = []
     
