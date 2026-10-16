@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.66 • October 16, 2026 (NBM wg skip removed: nw_flow 6-11h)</strong></summary>
+
+- L3_NBM now runs on wg in nw_flow at 6-11h. The skip-earning audit flagged the cell REMOVE four days running: the layer helps on the 14-day window (n=434, +3.4%) and the 50-day window (n=1,711, +5.4%). wg frontal/12-23h stays skipped (flagged 2 days, waiting).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.65 • October 15, 2026 (collector crash on null daily precip)</strong></summary>
 
 - Collector returned 500 on 34 runs from 00:07 to 07:17 ET on October 15. Open-Meteo returned null `precipitation_probability_max` for one day, and `_generate_daily_forecast` compared it with `>`. Null precip probability and null max wind now read as 0. The same crash was waiting on `wind_speed_max`.
