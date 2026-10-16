@@ -2,9 +2,16 @@
 Fetch hyper-local observations from WeatherFlow Tempest stations near Wyman Cove.
 Public station data accessed via the tempestwx.com web API (JSONP endpoint).
 API returns SI units: temp in °C, wind in m/s, precip in mm.
+
+Since 2026-10-15 the API answers 401 without a signed-in user token. We sign
+in to Joe's WeatherFlow account through Firebase (the same login tempestwx.com
+uses) and cache the 1h ID token across ticks. All four values come from Secret
+Manager via env: TEMPEST_EMAIL, TEMPEST_PASSWORD, TEMPEST_API_KEY (SWD key
+from the tempestwx.com map bundle; it rotates) and TEMPEST_FIREBASE_KEY.
 """
 import json
 import math
+import os
 import re
 import time
 
@@ -63,8 +70,9 @@ CULLED_TEMPEST_STATIONS = [
     {"id": 85569,  "name": "Preston Ct"},
 ]
 
-_API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"
-_BASE_URL = "https://swd.weatherflow.com/swd/rest/observations/station/{sid}"
+_BUILD    = "181"
+_BASE_URL = "https://swd.weatherflow.com/swd/rest/observations/location"
+_SIGNIN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
 _HEADERS  = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
     "Referer":    "https://tempestwx.com/",
@@ -93,9 +101,34 @@ def _haversine_mi(lat1, lon1, lat2, lon2):
     return R * 2 * math.asin(math.sqrt(a))
 
 
-def _fetch_station(sid):
-    url = _BASE_URL.format(sid=sid)
-    r = requests.get(url, params={"callback": "cb", "api_key": _API_KEY},
+_token = {"id_token": None, "expires_at": 0.0}
+
+
+def _env(name):
+    v = os.environ.get(name)
+    if not v:
+        raise RuntimeError(f"{name} not set")
+    return v
+
+
+def _id_token():
+    """Firebase ID token for the WeatherFlow account, cached until 5 min before expiry."""
+    if _token["id_token"] and time.time() < _token["expires_at"] - 300:
+        return _token["id_token"]
+    r = requests.post(_SIGNIN_URL, params={"key": _env("TEMPEST_FIREBASE_KEY")},
+                      json={"email": _env("TEMPEST_EMAIL"), "password": _env("TEMPEST_PASSWORD"),
+                            "returnSecureToken": True},
+                      headers=_HEADERS, timeout=10)
+    r.raise_for_status()
+    d = r.json()
+    _token["id_token"] = d["idToken"]
+    _token["expires_at"] = time.time() + int(d.get("expiresIn", 3600))
+    return _token["id_token"]
+
+
+def _fetch_station(sid, token):
+    r = requests.get(_BASE_URL, params={"callback": "cb", "api_key": _env("TEMPEST_API_KEY"),
+                                        "build": _BUILD, "location_id": sid, "token": token},
                      headers=_HEADERS, timeout=10)
     r.raise_for_status()
     m = re.match(r"cb\((.*)\)$", r.text.strip(), re.DOTALL)
@@ -115,10 +148,17 @@ def fetch_tempest():
     results = []
     errors = []
 
+    try:
+        token = _id_token()
+    except Exception as e:
+        logging.error(f"  ✗ Tempest sign-in: {e}")
+        meta["error"] = f"sign-in: {e}"
+        return None, meta
+
     for station in TEMPEST_STATIONS:
         sid = station["id"]
         try:
-            raw = _fetch_station(sid)
+            raw = _fetch_station(sid, token)
             if raw.get("status", {}).get("status_code") != 0:
                 errors.append(f"{sid}: {raw.get('status', {}).get('status_message')}")
                 continue
@@ -136,7 +176,7 @@ def fetch_tempest():
 
             entry = {
                 "station_id":   sid,
-                "station_name": raw.get("station_name", station["name"]),
+                "station_name": raw.get("public_name") or raw.get("station_name", station["name"]),
                 "waterfront":   station.get("waterfront", False),
                 "latitude":     slat,
                 "longitude":    slon,

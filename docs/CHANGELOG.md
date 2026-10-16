@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.67 • October 16, 2026 (Tempest stations back: signed-in fetch)</strong></summary>
+
+- All 19 Tempest stations returned 401 from the afternoon of October 15. WeatherFlow stopped serving station observations without a signed-in user. The fetcher now signs in to Joe's WeatherFlow account through Firebase (token cached for its 1h life), calls the new `observations/location` endpoint, and reads the email, password, SWD key and Firebase key from Secret Manager. No keys remain in the code. First tick after deploy: 19 stations, 17 valid, all under 1 min old.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.66 • October 16, 2026 (NBM wg skip removed: nw_flow 6-11h)</strong></summary>
 
 - L3_NBM now runs on wg in nw_flow at 6-11h. The skip-earning audit flagged the cell REMOVE four days running: the layer helps on the 14-day window (n=434, +3.4%) and the 50-day window (n=1,711, +5.4%). wg frontal/12-23h stays skipped (flagged 2 days, waiting).
