@@ -3,8 +3,13 @@
 For every pair-log row with field == ch and selector_mechanism == ims_threshold:
   picked  = |error| of the source the router chose (selector_source)
   other   = |error| of the source it did not choose
-  hrrr    = |error_l4|            always-HRRR policy
-  nbm     = |error_l3_nbm|, else |error_raw_nbm|   always-NBM policy
+  hrrr    = deepest stamped HRRR layer (l1_selector_fit._hrrr_prod_error:
+            chp > l6 > l4 ...), what an HRRR pick serves. always-HRRR policy
+  nbm     = deepest stamped NBM layer (l1_selector_fit._nbm_prod_error), what
+            an NBM pick serves. always-NBM policy
+  (10-18: was error_l4 / error_l3_nbm, which is not what either side ships.)
+  regime  = runtime regime the router looked the cell up by
+            (analysis._cache.RegimeRuntime), not the post-swap regime_synoptic.
   prod    = |error_{applied_layer}|   what users saw (analysis/_prod.py). Top-level
             `error` is the L2 residual by design and is NOT used as a baseline.
   l1      = |error_l1|            raw HRRR; the baseline the fit-time lifts used
@@ -16,6 +21,7 @@ log only: ims_threshold stamps exist only on post-v0.7.7 rows.
 
 Run from the repo root:  python3 scripts/ch_v075_live_verdict.py
 Set MYWEATHER_REFRESH=1 to force a fresh pair-log download.
+Set SINCE=YYYY-MM-DD to score only rows with obs_time on or after that date.
 """
 import json
 import os
@@ -24,7 +30,8 @@ from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from analysis._cache import cached_path, PAIR_LOG_URL
+from analysis._cache import cached_path, PAIR_LOG_URL, RegimeRuntime
+from analysis.l1_selector_fit import _hrrr_prod_error, _nbm_prod_error
 from analysis._prod import prod_error
 
 CELLS = {
@@ -35,6 +42,7 @@ CELLS = {
 }
 HRRR_LADDER = ("l1", "l2", "l3", "l4", "l6", "chp")
 NBM_LADDER = ("raw_nbm", "l2_nbm", "l3_nbm", "l4_nbm", "l6_nbm", "chp_nbm")
+SINCE = os.environ.get("SINCE", "")
 MIN_N = 30
 FAIL_PCT = -5.0
 
@@ -49,7 +57,10 @@ def band(lead):
 def load():
     rows = []
     n_ims = n_drop = 0
-    with open(cached_path(PAIR_LOG_URL)) as fh:
+    path = cached_path(PAIR_LOG_URL)
+    rr = RegimeRuntime()
+    rr.prime([path])
+    with open(path) as fh:
         for line in fh:
             if '"ims_threshold"' not in line:
                 continue
@@ -59,14 +70,14 @@ def load():
                 continue
             if r.get("field") != "ch" or r.get("selector_mechanism") != "ims_threshold":
                 continue
+            if r.get("obs_time", "") < SINCE:
+                continue
             n_ims += 1
-            nbm = r.get("error_l3_nbm")
-            if nbm is None:
-                nbm = r.get("error_raw_nbm")
+            nbm = _nbm_prod_error(r)
             src = r.get("selector_source")
-            eh, es, e1 = r.get("error_l4"), prod_error(r), r.get("error_l1")
+            eh, es, e1 = _hrrr_prod_error(r, "ch"), prod_error(r), r.get("error_l1")
             lead = r.get("lead_h")
-            regime = (r.get("state_fc") or {}).get("regime_synoptic")
+            regime = rr.get(r)
             if None in (nbm, eh, es, e1, lead) or src not in ("hrrr", "nbm") or not regime or band(int(lead)) is None:
                 n_drop += 1
                 continue
@@ -84,7 +95,7 @@ def load():
                 "lad": lad, "applied": r.get("applied_layer") or "?",
             })
     rows.sort(key=lambda x: x["t"])
-    return rows, n_ims, n_drop
+    return rows, n_ims, n_drop, rr.counts
 
 
 def mean(rows, k):
@@ -147,7 +158,8 @@ def ladder(rows, cells):
 
 
 def main():
-    rows, n_ims, n_drop = load()
+    rows, n_ims, n_drop, rr_counts = load()
+    print(f"regime labels: {rr_counts}")
     print(f"ch ims_threshold rows: {n_ims}  usable: {len(rows)}  dropped (missing field): {n_drop}")
     if not rows:
         print("No rows. Pair log is stale or the mechanism stamp is absent.")
@@ -198,6 +210,19 @@ def main():
     for d in sorted(days):
         m = summarize(days[d])
         print(f"  {d}  n={m['n']:>4}  {m['picked']:.2f}  {m['other']:.2f}  {m['eh']:.2f}  {m['en']:.2f}")
+
+    print("\nby cell x day: n, nbm%, picked, hrrr, picked vs always-HRRR")
+    for key in sorted(CELLS):
+        cd = defaultdict(list)
+        for r in by_cell.get(key, []):
+            cd[r["t"][:10]].append(r)
+        if not cd:
+            continue
+        print(f"  {key[0]}/{key[1]}")
+        for d in sorted(cd):
+            m = summarize(cd[d])
+            vs = 100 * (m["eh"] - m["picked"]) / m["eh"] if m["eh"] else 0.0
+            print(f"    {d}  n={m['n']:>4}  {100*m['nbm_frac']:>4.0f}%  {m['picked']:6.2f}  {m['eh']:6.2f}  {vs:+6.1f}%")
 
     ladder(rows, CELLS)
 

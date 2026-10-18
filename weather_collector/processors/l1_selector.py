@@ -379,7 +379,9 @@ _IMS_SELECTOR_CELLS = {
     # ne_flow/12-23 removed v0.7.45 (2026-10-11): lost to always-HRRR on both live reads
     # (10-04 -9.8% vs inverse; 10-03..10-11 -4.3% vs HRRR, n=204). Picked NBM 83% of the
     # time at ims < 4.5, where the two sources agree. Falls back to the pooled pick.
-    ("ch", "nw_flow",     "24-47"): (43.5, "H_low"),   # A+39.1%/B+65.8%
+    # nw_flow/24-47 removed v0.7.68 (2026-10-18): 10-03..10-18 picked 15.00 vs always-HRRR
+    # 11.40 (-31.6%, n=589), lost to the unchosen source in both halves (-55%/-14%); lost
+    # 10-05, 10-10, 10-12, won only 10-03. Falls back to the pooled pick (HRRR at 24-47).
     ("ch", "pre_frontal", "0-5"  ): (50.5, "H_low"),   # A+61.1%/B+37.9%
     ("ch", "pre_frontal", "6-11" ): (62.5, "H_low"),   # A+63.7%/B+48.4%
     ("ch", "pre_frontal", "12-23"): (78.5, "H_low"),   # A+58.8%/B+56.4%

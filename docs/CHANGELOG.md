@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.68 • October 18, 2026 (ch router drops nw_flow 24-47h)</strong></summary>
+
+- The ch per-obs router no longer routes nw_flow at 24-47h. From October 3 to 18 its picks scored 15.00 against 11.40 for always-HRRR (n=589) and lost to the source it passed over in both halves. The cell now uses the pooled pick, which is HRRR at 24-47h.
+- `scripts/ch_v075_live_verdict.py` now scores each source on the layer it actually serves (chp/l6 for HRRR, l4_nbm for NBM) instead of `error_l4`/`error_l3_nbm`, labels rows by the regime the router used, and takes `SINCE=`. Under the fix, se_flow/6-11h also loses to always-HRRR, but it stays: its fallback today would be NBM, which scores worse.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.67 • October 16, 2026 (Tempest stations back: signed-in fetch)</strong></summary>
 
 - All 19 Tempest stations returned 401 from the afternoon of October 15. WeatherFlow stopped serving station observations without a signed-in user. The fetcher now signs in to Joe's WeatherFlow account through Firebase (token cached for its 1h life), calls the new `observations/location` endpoint, and reads the email, password, SWD key and Firebase key from Secret Manager. No keys remain in the code. First tick after deploy: 19 stations, 17 valid, all under 1 min old.
