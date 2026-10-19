@@ -34,9 +34,13 @@ ENABLED = True
 # +4.3%, ne_flow/12-23 +44.7% vs +36.0%). frontal/24-47 and nw_flow/0-5
 # have no L1 cell. L1 apply runs first in forecast_snapshot, so these never
 # overlap an L1-applied hour.
+# v0.7.69 — ws 6-11 dropped: live 10-14..10-19 the blend lost to the NBM it
+# pre-empts (nw_flow -8.8% n=277, pre_frontal -47% n=48). ws 24-47 kept
+# (frontal +2.2% n=168, pre_frontal +4.7% n=166).
 ALL = "all"
 APPLIED = {
-    "t": ALL, "sr": ALL, "ws": ALL,
+    "t": ALL, "sr": ALL,
+    "ws": frozenset({("frontal", "24-47"), ("pre_frontal", "24-47")}),
     "h": frozenset({("frontal", "24-47"), ("ne_flow", "12-23"), ("nw_flow", "0-5"),
                     ("nw_flow", "12-23"), ("sw_flow", "12-23")}),
 }
