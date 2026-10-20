@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.72 • October 20, 2026 (humidity blend reaches the app; dew point follows it)</strong></summary>
+
+- The app's humidity is rebuilt from its temperature and dew point after the forecast is assembled, so the blended humidity from v0.7.71 (and every NBM humidity pick before it) never showed in the app. Dew point is now derived from the blended temperature and humidity on every blended hour, so the app's humidity equals the blend. On the last 14 days that dew point scored 25.6% better than the one that shipped.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.71 • October 20, 2026 (t, h, sr, wg served as a blend of both forecasts)</strong></summary>
 
 - Temperature, humidity, solar and gusts are now served on every hour as a weighted average of the corrected HRRR and corrected NBM forecasts, instead of picking one source. One weight per field (today: HRRR 0.45 t, 0.65 h, 0.55 sr, 0.40 wg), refit each morning by the cloud refitter on the last 14 days. A table older than 3 days switches the blend off and the previous routing serves.

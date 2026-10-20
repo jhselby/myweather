@@ -1302,6 +1302,22 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         entry[f] = _val
                         entry[f"{f}_applied"] = _layer_name
                         break
+        # v0.7.72 — dp from the field-blended t and h. collector.main() rebuilds
+        # corrected_humidity from (corrected_temperature, corrected_dew_point)
+        # after this snapshot, so a blended h never reached the PWA while dp
+        # stayed on its own cascade. Serving dp = Magnus(t, h) makes the
+        # rebuilt RH equal the blended h, and scored +25.6% vs shipped dp
+        # (14d, 10-20). Writeback covers dp via "tblend".
+        if (entry.get("t_tblend_scope_shadow") == "field"
+                and entry.get("h_tblend_scope_shadow") == "field"):
+            _dpv = magnus_dew_point_f(entry.get("t"), entry.get("h"))
+            if _dpv is not None:
+                entry["dp_preempted_source_shadow"] = entry.get("dp_selector_source")
+                entry["dp_tblend_shadow"] = _dpv
+                entry["dp_tblend_scope_shadow"] = "field"
+                entry["dp"] = _dpv
+                entry["dp_applied"] = "tblend"
+                entry["dp_selector_source"] = "tblend"
         hours.append(entry)
 
     # F4 (2026-08-21) — emit gate-firing records per NBM operator so
