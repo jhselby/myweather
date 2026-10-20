@@ -1236,7 +1236,12 @@ def selector_status():
     is the work; the sentries below it are health checks. Grade = Selector
     Score from per_field_scoring.json (served vs best fixed routing, scaled by
     what the best constant HRRR/NBM blend weight could have gained)."""
-    out = ["=" * 50, "🎯 SELECTOR — the work. Read this first; alerts below are health checks.", "=" * 50]
+    out = ["=" * 50,
+           "👤 CLAUDE: you co-own this project. The goal is a better served forecast, not a clean digest.",
+           "   Every session moves the selector forward: a ship, or the test that decides one.",
+           "   Triage is not progress. A verified win sitting unshipped is your job to move, unasked.",
+           "=" * 50,
+           "🎯 SELECTOR — the work. Read this first; alerts below are health checks.", "=" * 50]
     try:
         doc = json.loads((HERE.parent / "output" / "per_field_scoring.json").read_text())
         w7 = doc["windows"]["7d"]["per_field"]
