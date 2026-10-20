@@ -45,6 +45,55 @@ APPLIED = {
                     ("nw_flow", "12-23"), ("sw_flow", "12-23")}),
 }
 
+# v0.7.71 — field-level blend: one w per field, served on EVERY row of these
+# fields ahead of the per-cell blend, the L1 static blend and the selector
+# pick. 10-20 walk-forward (w fit on the prior 14d, next day scored vs what
+# shipped, 17 days): h +12.2%, sr +11.2%, t +4.2%, wg +3.3%. w is refit daily
+# by myweather-refitter (analysis/terminal_blend_field_fit.py) into
+# runtime_tables/; a table older than FIELD_STALE_DAYS goes no-op and the
+# per-cell path below takes over again. Reversal: FIELD_APPLIED = frozenset().
+FIELD_APPLIED = frozenset({"t", "h", "sr", "wg"})
+FIELD_TABLE_NAME = "terminal_blend_field_curated.json"
+FIELD_PATH = Path(__file__).resolve().parent.parent / "data" / FIELD_TABLE_NAME
+FIELD_STALE_DAYS = 3
+
+
+def validate_field_table(data):
+    """Structural check shared by the runtime loader and the refitter guard."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    if not data.get("fitted_at"):
+        return "missing fitted_at"
+    fields = data.get("fields")
+    if not isinstance(fields, dict) or not fields:
+        return "missing fields"
+    for f, spec in fields.items():
+        w = (spec or {}).get("w")
+        if not isinstance(w, (int, float)) or not 0.0 <= float(w) <= 1.0:
+            return f"fields[{f!r}].w missing or outside [0, 1]"
+    return None
+
+
+def field_weight(field):
+    """HRRR weight for the field-level blend, or None when the field is not
+    applied, the table is missing, or it is stale."""
+    if field not in FIELD_APPLIED:
+        return None
+    from datetime import datetime, timedelta
+    from .. import runtime_tables
+    doc = runtime_tables.get(FIELD_TABLE_NAME, FIELD_PATH, validate_field_table)
+    if not doc:
+        return None
+    try:
+        fitted = datetime.strptime(doc["fitted_at"][:16], "%Y-%m-%dT%H:%M")
+    except ValueError:
+        return None
+    if datetime.utcnow() - fitted > timedelta(days=FIELD_STALE_DAYS):
+        return None
+    spec = (doc.get("fields") or {}).get(field)
+    return float(spec["w"]) if spec else None
+
+
 _W = {}  # {field: {(regime, band): w}}
 
 
@@ -99,7 +148,19 @@ def covered_cells(field):
 def describe_applicability():
     """Applicability descriptor for the terminal static blend (v0.7.62)."""
     fields = []
+    for f in sorted(FIELD_APPLIED):
+        w = field_weight(f)
+        fields.append({
+            "field": f,
+            "fires_when": ("every row (v0.7.71 field-level blend): serves w·HRRR terminal + "
+                           "(1−w)·NBM terminal ahead of the selector pick, L1 blend and cell blends"),
+            "gated_by": "FIELD_APPLIED + daily refit ≤ 3 days old",
+            "current_state": (f"Live, w_hrrr={w:.2f}" if w is not None else
+                              "No-op: field table missing or stale; per-cell path below serves"),
+        })
     for f in sorted(_W):
+        if f in FIELD_APPLIED and field_weight(f) is not None:
+            continue
         cells = sorted(_W[f])
         ap = APPLIED.get(f)
         applied = cells if ap == ALL else sorted(c for c in cells if ap and c in ap)

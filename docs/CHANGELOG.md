@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.71 • October 20, 2026 (t, h, sr, wg served as a blend of both forecasts)</strong></summary>
+
+- Temperature, humidity, solar and gusts are now served on every hour as a weighted average of the corrected HRRR and corrected NBM forecasts, instead of picking one source. One weight per field (today: HRRR 0.45 t, 0.65 h, 0.55 sr, 0.40 wg), refit each morning by the cloud refitter on the last 14 days. A table older than 3 days switches the blend off and the previous routing serves.
+- Walk-forward test over 17 days (weight fit on the prior 14 days, scored on the next): humidity 12.2% better than what shipped (won 16 of 17 days), solar 11.2% (12 of 17), temperature 4.2% (11 of 17), gusts 3.3% (12 of 17). Before this, the blend covered only 8.5% of temperature hours and 37% of solar hours.
+- The digest now opens with a selector block: score, room to gain and best blend weight per field, plus the open selector work item.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.70 • October 20, 2026 (ch router drops se_flow 6-11h)</strong></summary>
 
 - The ch per-obs router no longer routes se_flow at 6-11h. From October 3 to 19 its picks scored 11.70 against 9.43 for always-HRRR (n=362), losing heavily on October 10, 13 and 15. It was held at v0.7.68 because the pooled 6-11h pick was NBM; the October 20 table puts that band back on HRRR. The cell now uses the pooled pick.

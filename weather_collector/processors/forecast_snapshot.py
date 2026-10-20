@@ -1175,6 +1175,29 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # picks that happen to land on the same source. Silent on any
             # consumer that doesn't read it.
             entry[f"{f}_selector_mechanism"] = _mechanism
+            # v0.7.71 — field-level terminal blend: one daily-refit w per field
+            # on every row of terminal_static_blend.FIELD_APPLIED, ahead of
+            # every other routing/blend path. Serves under the "tblend" label
+            # so writeback, error_tblend and the scorers need no change;
+            # {f}_tblend_scope_shadow = "field" separates it from cell blends.
+            _fw = _terminal_static_blend.field_weight(f)
+            if _fw is not None:
+                _keys = (("l6", "l5", "l4") if f == "t" else ("l5", "l4") if f == "sr"
+                         else ("l4", "l3", "l2"))
+                _fh = next((entry[f"{f}_{k}"] for k in _keys
+                            if entry.get(f"{f}_{k}") is not None), None)
+                _fn = next((v for v in (entry.get(f"{f}_l3_nbm"), entry.get(f"{f}_l2_nbm"), raw_nbm_v)
+                            if v is not None), None)
+                if _fh is not None and _fn is not None:
+                    _fv = _fw * float(_fh) + (1.0 - _fw) * float(_fn)
+                    entry[f"{f}_preempted_source_shadow"] = source
+                    entry[f"{f}_tblend_shadow"] = _round_for(f, _fv)
+                    entry[f"{f}_tblend_w_shadow"] = round(_fw, 3)
+                    entry[f"{f}_tblend_scope_shadow"] = "field"
+                    entry[f] = _round_for(f, _fv)
+                    entry[f"{f}_applied"] = "tblend"
+                    entry[f"{f}_selector_source"] = "tblend"
+                    continue
             # v0.7.0 — for fields in BLENDER_APPLIED_FIELDS with a curated cell
             # that matched (i.e. _blend_shadow_v computed), blender wins over
             # selector (source stamped as "blend"). Un-curated cells and fields

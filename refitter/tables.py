@@ -29,6 +29,7 @@ from weather_collector.processors.l3_nbm import validate_table as _l3_nbm_struct
 from weather_collector.processors.l4_nbm import validate_table as _l4_nbm_structure
 from weather_collector.processors.solar_correction import validate_table as _lsr_structure
 from weather_collector.processors.sr_sea_breeze_lsr_override import validate_table as _sb_structure
+from weather_collector.processors.terminal_static_blend import validate_field_table as _fblend_structure
 
 MIN_ROWS_RATIO = 0.5   # refuse a fit that saw < half the rows of the previous one
 
@@ -153,6 +154,14 @@ def _sb_hours(t):
     return len(t.get("hourly_bias_wm2") or {}) + 1   # +1: overall bias always present
 
 
+def _fblend_guard(new, prev):
+    reason = _rows_guard(_fblend_structure, "n_rows_kept", 20_000)(new, prev)
+    if reason or not prev:
+        return reason
+    missing = set(prev.get("fields") or {}) - set(new.get("fields") or {})
+    return f"fields dropped vs previous: {sorted(missing)}" if missing else None
+
+
 TABLES = [
     {
         "name": "l1_selector_table_curated.json",
@@ -240,5 +249,15 @@ TABLES = [
         "guard": _guard(_learned_structure, "generated_at", _learned_cells, "nonzero"),
         "summary": lambda new, prev: "cells: " + (", ".join(
             f"{c['field']}/{c['regime']}/{c['band']}" for c in new.get("cells") or []) or "none"),
+    },
+    {   # Field-level terminal blend w (live on t/h/sr/wg, v0.7.71). Goes no-op after 3 days unrefit.
+        "name": "terminal_blend_field_curated.json",
+        "out": "weather_collector/data/terminal_blend_field_curated.json",
+        "steps": [{"module": "analysis.terminal_blend_field_fit", "call": "fit"}],
+        "guard": _fblend_guard,
+        "summary": lambda new, prev: ", ".join(
+            f"{f} w={v['w']:.2f}" + (f" (was {prev['fields'][f]['w']:.2f})"
+                                     if prev and f in (prev.get("fields") or {}) else "")
+            for f, v in (new.get("fields") or {}).items()),
     },
 ]

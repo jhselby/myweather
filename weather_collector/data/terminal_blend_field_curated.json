@@ -1,0 +1,36 @@
+{
+  "fitted_at": "2026-10-20T15:22",
+  "window_days": 14,
+  "n_rows_kept": 53868,
+  "fields": {
+    "t": {
+      "w": 0.45,
+      "n": 14266,
+      "mae_blend": 1.8516,
+      "mae_hrrr": 2.0827,
+      "mae_nbm": 2.0007
+    },
+    "h": {
+      "w": 0.65,
+      "n": 14142,
+      "mae_blend": 4.8448,
+      "mae_hrrr": 5.5642,
+      "mae_nbm": 6.9535
+    },
+    "sr": {
+      "w": 0.55,
+      "n": 11194,
+      "mae_blend": 31.0994,
+      "mae_hrrr": 39.6,
+      "mae_nbm": 36.6727
+    },
+    "wg": {
+      "w": 0.4,
+      "n": 14266,
+      "mae_blend": 4.567,
+      "mae_hrrr": 5.0701,
+      "mae_nbm": 4.735
+    }
+  },
+  "notes": "w = HRRR weight on the terminal blend, served on every row of the field (weather_collector/processors/terminal_static_blend.py FIELD_APPLIED)."
+}
