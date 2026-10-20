@@ -370,7 +370,7 @@ _IMS_SELECTOR_CELLS = {
     #   direction "H_high" = pick HRRR when ims >= T, NBM when ims < T
     #   direction "H_low"  = pick HRRR when ims <  T, NBM when ims >= T
     ("h", "sea_breeze", "24-47"): (13.0, "H_high"),
-    # ch — 9 cells (10 at ship) from ims-threshold refit (analysis/l1_selector_ims_threshold_refit.py,
+    # ch — 7 cells (10 at ship) from ims-threshold refit (analysis/l1_selector_ims_threshold_refit.py,
     # commit 3a11ca87, 2026-09-25). Halves-stable A/B ≥ +37% test-side lift on
     # error_prod_real; ablation-cleared (commit f24ab785). Replaces the prior
     # v0.6.641 (2026-09-20) shadow table — different cell set and thresholds because
@@ -385,7 +385,9 @@ _IMS_SELECTOR_CELLS = {
     ("ch", "pre_frontal", "0-5"  ): (50.5, "H_low"),   # A+61.1%/B+37.9%
     ("ch", "pre_frontal", "6-11" ): (62.5, "H_low"),   # A+63.7%/B+48.4%
     ("ch", "pre_frontal", "12-23"): (78.5, "H_low"),   # A+58.8%/B+56.4%
-    ("ch", "se_flow",     "6-11" ): (27.5, "H_low"),   # A+58.4%/B+57.4%
+    # se_flow/6-11 removed v0.7.70 (2026-10-20): 10-03..10-19 picked 11.70 vs always-HRRR
+    # 9.43 (-24.0%, n=362); lost 10-10, 10-13, 10-15. Held at v0.7.68 while the pooled
+    # 6-11 pick was NBM; the 10-20 table puts it back on HRRR. Falls back to the pooled pick.
     ("ch", "se_flow",     "12-23"): (64.0, "H_low"),   # A+69.1%/B+53.7%
     ("ch", "se_flow",     "24-47"): (71.5, "H_low"),   # A+75.9%/B+68.7%
     ("ch", "sw_flow",     "12-23"): (84.5, "H_low"),   # A+70.6%/B+58.3%
