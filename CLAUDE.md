@@ -21,6 +21,18 @@ When a number disagrees with reality ("app says overcast, it's pouring"), the nu
 
 ---
 
+## 0a. Morning Session Order: Selector First, Digest Second
+
+**The rule:** The selector (which source/blend gets served per field × regime × lead) is where the gain is. The digest is a health check, not the agenda. Every session that starts with "check the digest" runs in this order:
+
+1. **Selector status first, before opening DIGEST.txt.** Read `analysis/output/per_field_scoring.json` → `windows.7d.per_field.*.selector_score_pct` / `selector_headroom_pct`, and the open selector work item in the latest `project_MM_DD_session.md`. The first message leads with this: score per field, room to gain, and what selector work happens today.
+2. **Digest pass, capped.** Read the top alerts and executive summary only. For each fire or verdict: one line, the known explanation if memory has one, then move on. Investigate only if it changes what gets served AND has no explanation in memory, or if Joe asks. Correction-layer items (τ, L2/L3/L4, skip tables, specialists) get no investigation while the selector has room to gain.
+3. **Back to the selector work item** for the rest of the session.
+
+**History of failures:** 10-14: "For a month now, I've been focusing on the selector and you continue to focus on the corrections." 10-20: the memory note said the same; Claude still opened with a dp-fire investigation from the digest and only reached the selector when Joe pushed. Joe chose to keep running the digest every morning; the digest is not the problem — letting it set the agenda is.
+
+---
+
 ## 1. Git Workflow
 
 **The rule:** `git push`. That's it. No `--force-with-lease`.
