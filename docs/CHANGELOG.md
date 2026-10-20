@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.73 • October 20, 2026 (humidity and solar blend weight follows the time of day)</strong></summary>
+
+- Humidity and solar now use a different HRRR/NBM blend weight for each 4-hour block of the day instead of one weight for the whole day. Today's weights: humidity leans HRRR overnight (0.90) and midday (0.85), even in the morning and evening (0.45–0.55); solar leans NBM through the morning (0.35) and HRRR late in the day (0.80). Refit each morning with the rest of the blend; a block with too little data uses the single field weight.
+- Walk-forward test over 17 days against the single weight shipped in v0.7.71: humidity 4.3% better (16 of 17 days, both halves of the window), solar 5.8% (11 of 17). Dew point follows the humidity blend. Weights by weather regime, by regime and lead time, and shorter or longer fit windows did not help.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.72 • October 20, 2026 (humidity blend reaches the app; dew point follows it)</strong></summary>
 
 - The app's humidity is rebuilt from its temperature and dew point after the forecast is assembled, so the blended humidity from v0.7.71 (and every NBM humidity pick before it) never showed in the app. Dew point is now derived from the blended temperature and humidity on every blended hour, so the app's humidity equals the blend. On the last 14 days that dew point scored 25.6% better than the one that shipped.

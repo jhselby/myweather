@@ -1,36 +1,56 @@
 {
-  "fitted_at": "2026-10-20T15:22",
+  "fitted_at": "2026-10-20T18:09",
   "window_days": 14,
-  "n_rows_kept": 53868,
+  "n_rows_kept": 53350,
   "fields": {
     "t": {
       "w": 0.45,
-      "n": 14266,
-      "mae_blend": 1.8516,
-      "mae_hrrr": 2.0827,
-      "mae_nbm": 2.0007
+      "n": 14131,
+      "mae_blend": 1.843,
+      "mae_hrrr": 2.0783,
+      "mae_nbm": 1.9917
     },
     "h": {
       "w": 0.65,
-      "n": 14142,
-      "mae_blend": 4.8448,
-      "mae_hrrr": 5.5642,
-      "mae_nbm": 6.9535
+      "n": 14007,
+      "mae_blend": 4.8719,
+      "mae_hrrr": 5.5815,
+      "mae_nbm": 6.9706,
+      "w_by_block": {
+        "0": 0.9,
+        "4": 0.55,
+        "8": 0.5,
+        "12": 0.85,
+        "16": 0.45,
+        "20": 0.55
+      },
+      "block_hours": 4,
+      "mae_block": 4.6243
     },
     "sr": {
       "w": 0.55,
-      "n": 11194,
-      "mae_blend": 31.0994,
-      "mae_hrrr": 39.6,
-      "mae_nbm": 36.6727
+      "n": 11081,
+      "mae_blend": 30.0543,
+      "mae_hrrr": 38.57,
+      "mae_nbm": 35.772,
+      "w_by_block": {
+        "0": 0.0,
+        "4": 0.0,
+        "8": 0.35,
+        "12": 0.35,
+        "16": 0.8,
+        "20": 1.0
+      },
+      "block_hours": 4,
+      "mae_block": 27.9778
     },
     "wg": {
       "w": 0.4,
-      "n": 14266,
-      "mae_blend": 4.567,
-      "mae_hrrr": 5.0701,
-      "mae_nbm": 4.735
+      "n": 14131,
+      "mae_blend": 4.5097,
+      "mae_hrrr": 5.023,
+      "mae_nbm": 4.6756
     }
   },
-  "notes": "w = HRRR weight on the terminal blend, served on every row of the field (weather_collector/processors/terminal_static_blend.py FIELD_APPLIED)."
+  "notes": "w = HRRR weight on the terminal blend, served on every row of the field (weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). w_by_block (h, sr) = w per block of local valid hour, keyed by block start; missing blocks use w."
 }

@@ -71,12 +71,17 @@ def validate_field_table(data):
         w = (spec or {}).get("w")
         if not isinstance(w, (int, float)) or not 0.0 <= float(w) <= 1.0:
             return f"fields[{f!r}].w missing or outside [0, 1]"
+        for h, bw in ((spec or {}).get("w_by_block") or {}).items():
+            if not isinstance(bw, (int, float)) or not 0.0 <= float(bw) <= 1.0:
+                return f"fields[{f!r}].w_by_block[{h!r}] outside [0, 1]"
     return None
 
 
-def field_weight(field):
+def field_weight(field, hour=None):
     """HRRR weight for the field-level blend, or None when the field is not
-    applied, the table is missing, or it is stale."""
+    applied, the table is missing, or it is stale. v0.7.73: with `hour`
+    (local valid hour), h and sr use the w of that hour's block when the
+    table has one (`w_by_block`), else the field w."""
     if field not in FIELD_APPLIED:
         return None
     from datetime import datetime, timedelta
@@ -91,7 +96,15 @@ def field_weight(field):
     if datetime.utcnow() - fitted > timedelta(days=FIELD_STALE_DAYS):
         return None
     spec = (doc.get("fields") or {}).get(field)
-    return float(spec["w"]) if spec else None
+    if not spec:
+        return None
+    blocks = spec.get("w_by_block") or {}
+    if hour is not None and blocks:
+        step = int(spec.get("block_hours") or 4)
+        bw = blocks.get(str(int(hour) // step * step))
+        if bw is not None:
+            return float(bw)
+    return float(spec["w"])
 
 
 _W = {}  # {field: {(regime, band): w}}
