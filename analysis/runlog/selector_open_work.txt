@@ -1,6 +1,5 @@
-10-20 SHIPPED v0.7.71/72: t, h, sr, wg served as one HRRR/NBM blend weight per field on every hour (refit daily by myweather-refitter, 14d window); dp = Magnus(blended t, blended h).
-  Walk-forward 17d expected vs prior shipping: h +12.2%, sr +11.2%, t +4.2%, wg +3.3%; dp +25.6% (14d).
-  NEXT: read live lift from the pair log (applied_layer tblend, tblend_scope_shadow = field) vs preempted_source_shadow after 3 days (~10-23); confirm the refitter published terminal_blend_field_curated.json at 04:30 10-21.
-  10-20 TESTED (walk-forward 17d, 8 rules vs shipped field w): time-of-day weight (6 four-hour local blocks) wins h +4.3% (16/17 days, halves +3.9/+5.0) and sr +5.8% (11/17, halves +6.8/+4.4); t/wg/ws/ch flat or worse. Regime and regime x band weights lose on every field. Shorter/longer windows (3/7/28d) no gain.
-  SHIPPED v0.7.73 (verified run 14:18 ET, every block serves its fitted w): h and sr blend w per local 4h block, refit daily, field w for blocks with n<300.
-  NEXT: Selector Score ceiling (best constant w) is now reached by construction; move it to the best runnable rule.
+10-20 SHIPPED v0.7.71-73: t, h, sr, wg served as an HRRR/NBM blend on every hour; h and sr weight per 4h local block, t and wg one weight per field; refit daily by myweather-refitter (14d); dp = Magnus(blended t, blended h).
+  Walk-forward 17d vs prior shipping: h +12.2%, sr +11.2%, t +4.2%, wg +3.3% (field w); time-of-day adds h +4.3%, sr +5.8%. Regime and regime x band weights lose on every field.
+  Selector Score ceiling is now walk-forward (best rule fit on the 14d before each day), so 100 = serving the best rule that holds out of sample. 7d still mostly pre-blend rows; reads true ~10-23.
+  NEXT: ~10-23 read live lift (applied_layer tblend, tblend_scope_shadow = field vs preempted_source_shadow) and confirm t/h/sr read ~100; confirm refitter published terminal_blend_field_curated.json at 04:30 10-21.
+  Then: wg reads −66 vs a +2.7% room; dp served 2.83 vs fixed 2.09 (old-table rows + Magnus path). Next selector candidates there.

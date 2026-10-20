@@ -1240,6 +1240,7 @@ def selector_status():
            "👤 CLAUDE: you co-own this project. The goal is a better served forecast, not a clean digest.",
            "   Every session moves the selector forward: a ship, or the test that decides one.",
            "   Triage is not progress. A verified win sitting unshipped is your job to move, unasked.",
+           "   Never ask. Lay out the options, say which one you recommend, and why.",
            "=" * 50,
            "🎯 SELECTOR — the work. Read this first; alerts below are health checks.", "=" * 50]
     try:
@@ -1263,13 +1264,13 @@ def selector_status():
             continue
         rows.append((head, f, x))
     rows.sort(key=lambda r: -r[0])
-    out.append(f"  7d (score: 100 = matches best constant blend, 0 = best fixed routing, − = worse)")
-    out.append(f"  {'field':5} {'score':>7} {'24h':>7} {'room':>6}  {'served':>7} {'fixed':>7} {'blend':>7}  w_hrrr")
+    out.append(f"  7d (score: 100 = best blend rule fit on the prior 14d, 0 = best fixed routing, − = worse)")
+    out.append(f"  {'field':5} {'score':>7} {'24h':>7} {'room':>6}  {'served':>7} {'fixed':>7} {'blend':>7}  rule")
     for head, f, x in rows:
         out.append(f"  {f:5} {num(x.get('selector_score_pct'), '7.1f')} "
                    f"{num((w24.get(f) or {}).get('selector_score_pct'), '7.1f')} {head:5.1f}%  "
                    f"{num(x.get('chosen_prod_mae'), '7.2f')} {num(x.get('best_fixed_mae'), '7.2f')} "
-                   f"{num(x.get('best_rule_mae'), '7.2f')}  {num(x.get('best_rule_w_hrrr'), '.2f')}")
+                   f"{num(x.get('best_rule_mae'), '7.2f')}  {x.get('best_rule_kind') or '—'}")
     if flat:
         out.append(f"  no room (<2%): {', '.join(flat)}")
     try:

@@ -3,6 +3,7 @@
 
 - Humidity and solar now use a different HRRR/NBM blend weight for each 4-hour block of the day instead of one weight for the whole day. Today's weights: humidity leans HRRR overnight (0.90) and midday (0.85), even in the morning and evening (0.45–0.55); solar leans NBM through the morning (0.35) and HRRR late in the day (0.80). Refit each morning with the rest of the blend; a block with too little data uses the single field weight.
 - Walk-forward test over 17 days against the single weight shipped in v0.7.71: humidity 4.3% better (16 of 17 days, both halves of the window), solar 5.8% (11 of 17). Dew point follows the humidity blend. Weights by weather regime, by regime and lead time, and shorter or longer fit windows did not help.
+- Scoreboard: the Selector Score's "perfect" is now the best blend rule fit on the 14 days before each scored day (one weight per field, or per time block), instead of the best single weight in hindsight. The served blend is now that hindsight rule, so the old bar read 100% by construction; the new one is always reachable, so 100% means we serve the best rule that holds up on days it wasn't fit on.
 
 </details>
 

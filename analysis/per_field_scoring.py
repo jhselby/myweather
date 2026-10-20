@@ -213,6 +213,71 @@ def _prod_error_current_config(row):
 # meaningless, so wd's best rule is the better single cascade.
 CIRCULAR_FIELDS = frozenset({"wd"})
 
+# v0.7.73 — walk-forward Selector Score ceiling (see _compute_field).
+WF_TRAIN_DAYS = 14
+WF_BLOCK_HOURS = 4
+WF_MIN_BLOCK_N = 300
+WF_MIN_FIELD_N = 2000
+WF_MIN_COVERAGE = 0.8
+
+
+def _walkforward_weights(pair_log_path, first_day):
+    """{(field, obs_day): {"field": w, "block": {block_start_hour: w}}} for
+    every obs_day >= first_day, each fit on the WF_TRAIN_DAYS before it from
+    the same HRRR/NBM prod residuals the score uses. Same fit as
+    analysis/terminal_blend_field_fit.py, refit per day."""
+    grids = defaultdict(lambda: [0.0] * 22)  # (field, day, block|None) -> 21 sums + n
+    lo = (datetime.strptime(first_day, "%Y-%m-%d") - timedelta(days=WF_TRAIN_DAYS)).strftime("%Y-%m-%d")
+    with open(pair_log_path) as fin:
+        for line in fin:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            field = row.get("field")
+            day = (row.get("obs_time") or "")[:10]
+            if field not in NBM_SCOPE or field in CIRCULAR_FIELDS or day < lo:
+                continue
+            e_hp, e_np = _hrrr_prod_error(row), _nbm_prod_error(row)
+            if e_hp is None or e_np is None:
+                continue
+            sh, sn = float(e_hp), float(e_np)
+            vt = row.get("valid_time") or ""
+            keys = [(field, day, None)]
+            if len(vt) >= 13:
+                keys.append((field, day, int(vt[11:13]) // WF_BLOCK_HOURS * WF_BLOCK_HOURS))
+            gs = [grids[k] for k in keys]
+            for i in range(21):
+                w = i / 20.0
+                e = abs(w * sh + (1.0 - w) * sn)
+                for g in gs:
+                    g[i] += e
+            for g in gs:
+                g[21] += 1
+
+    def best(sums, n, floor):
+        return min(range(21), key=lambda i: sums[i]) / 20.0 if n >= floor else None
+
+    days = sorted({d for (_, d, _) in grids})
+    out = {}
+    for field in NBM_SCOPE - CIRCULAR_FIELDS:
+        for d in days:
+            if d < first_day:
+                continue
+            start = (datetime.strptime(d, "%Y-%m-%d") - timedelta(days=WF_TRAIN_DAYS)).strftime("%Y-%m-%d")
+            agg = defaultdict(lambda: [0.0] * 22)
+            for (f, dd, blk), g in grids.items():
+                if f == field and start <= dd < d:
+                    a = agg[blk]
+                    for i in range(22):
+                        a[i] += g[i]
+            wf = best(agg[None], agg[None][21], WF_MIN_FIELD_N) if None in agg else None
+            if wf is None:
+                continue
+            blocks = {blk: best(a, a[21], WF_MIN_BLOCK_N) for blk, a in agg.items() if blk is not None}
+            out[(field, d)] = {"field": wf, "block": {k: v for k, v in blocks.items() if v is not None}}
+    return out
+
 # Sources where the served value is a blend of both cascades, not one side.
 BLEND_SOURCES = ("l1_blend", "blend", "tblend")
 
@@ -309,6 +374,12 @@ def _new_bucket():
         # cascade residuals, same chooser rows). min over w = the best
         # constant blend in hindsight = the Selector Score's "perfect".
         "wgrid":        [0.0] * 21,
+        # v0.7.73 — walk-forward rule errors on the same rows: w fit on the
+        # 14 days before each row's obs day, one w per field ("wf_field") or
+        # one per 4-hour block of local valid time ("wf_block"). The Selector
+        # Score's "perfect" is the better of the two (see _compute_field).
+        "wf_field":     [0.0, 0],
+        "wf_block":     [0.0, 0],
         # v0.6.492 — paired per-cascade Prod buckets for the coach's table.
         # Populated only inside the pool_ok intersection so HRRR Pipeline
         # Skill / NBM Pipeline Skill / Hit Rate / Value Captured / Total
@@ -383,7 +454,7 @@ def _new_bucket_halves():
     }
 
 
-def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_picks):
+def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_picks, wf_weights=None):
     """window_start = start of current window. prior_start = start of the
     equal-length window preceding it (used for Prod trend). Rows in
     [prior_start, window_start) only contribute to prod_prior.
@@ -582,6 +653,16 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                     for _i in range(21):
                         _w = _i / 20.0
                         _wg[_i] += abs(_w * _sh + (1.0 - _w) * _sn)
+                    _ww = (wf_weights or {}).get((field, obs_time[:10]))
+                    if _ww:
+                        _vt = row.get("valid_time") or ""
+                        _wb = (_ww["block"].get(int(_vt[11:13]) // WF_BLOCK_HOURS * WF_BLOCK_HOURS)
+                               if len(_vt) >= 13 else None)
+                        _wb = _ww["field"] if _wb is None else _wb
+                        b["wf_field"][0] += abs(_ww["field"] * _sh + (1.0 - _ww["field"]) * _sn)
+                        b["wf_field"][1] += 1
+                        b["wf_block"][0] += abs(_wb * _sh + (1.0 - _wb) * _sn)
+                        b["wf_block"][1] += 1
                 b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
                 # v0.6.556: split wins / losses / ties. Ties (chosen ==
                 # alt) are cascades-agree rows, not router-skill rows —
@@ -767,13 +848,30 @@ def _compute_field(field, buckets, halves):
     # always one cascade; negative = worse. Headroom < 2% of the fixed
     # routing's error = nothing to gain (score None, selector_headroom_pct
     # says why). Can exceed 100% when per-cell blends beat one field weight.
+    #
+    # v0.7.73 — "perfect" is now WALK-FORWARD, not hindsight: each row is
+    # blended with the w fit on the 14 days before its obs day (one w per
+    # field, or one per 4-hour local block), the better shape over the window
+    # wins. Reachable by construction, so 100% = serving the best rule that
+    # holds up out of sample. Hindsight was no longer a ceiling once the
+    # served blend IS a constant w (v0.7.71), and a hindsight per-block bar
+    # overfits (7d t read 12.6% room; walk-forward block gain was +0.4%).
+    # The hindsight constant w stays as best_constant_w_hindsight.
     wg = buckets["wgrid"]
     n_ch = buckets["chosen_prod"][1]
-    if field in CIRCULAR_FIELDS or not any(wg):
-        best_rule_sum, best_rule_w = best_fixed_sum, None
-    else:
-        _i = min(range(21), key=lambda i: wg[i])
-        best_rule_sum, best_rule_w = min(wg[_i], best_fixed_sum), _i / 20.0
+    best_rule_w = best_rule_kind = None
+    if field not in CIRCULAR_FIELDS and any(wg):
+        best_rule_w = min(range(21), key=lambda i: wg[i]) / 20.0
+    best_rule_sum = best_fixed_sum
+    _wf_cov = buckets["wf_field"][1] / n_ch if n_ch else 0.0
+    if field not in CIRCULAR_FIELDS and _wf_cov >= WF_MIN_COVERAGE:
+        # Rows without a walk-forward fit (thin prior days) score as the
+        # served value would have, so coverage gaps don't add or hide room.
+        _gap = chosen_sum * (1.0 - _wf_cov)
+        for _kind in ("field", "block"):
+            _sum = buckets[f"wf_{_kind}"][0] + _gap
+            if _sum < best_rule_sum:
+                best_rule_sum, best_rule_kind = _sum, _kind
     selector_score_pct = selector_headroom_pct = best_rule_mae = None
     if in_nbm_scope and best_fixed_sum > 0 and n_ch > 0:
         selector_headroom_pct = 100.0 * (best_fixed_sum - best_rule_sum) / best_fixed_sum
@@ -786,7 +884,11 @@ def _compute_field(field, buckets, halves):
         "selector_score_pct": round(selector_score_pct, 1) if selector_score_pct is not None else None,
         "selector_headroom_pct": round(selector_headroom_pct, 2) if selector_headroom_pct is not None else None,
         "best_rule_mae": round(best_rule_mae, 3) if best_rule_mae is not None else None,
-        "best_rule_w_hrrr": best_rule_w,
+        "best_rule_kind": best_rule_kind,
+        "best_constant_w_hindsight": best_rule_w,
+        "wf_field_mae": round(buckets["wf_field"][0] / buckets["wf_field"][1], 3) if buckets["wf_field"][1] else None,
+        "wf_block_mae": round(buckets["wf_block"][0] / buckets["wf_block"][1], 3) if buckets["wf_block"][1] else None,
+        "wf_coverage": round(_wf_cov, 3),
         "best_fixed_mae": round(best_fixed_mae, 3) if best_fixed_mae is not None else None,
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,
         "nbm_raw_mae":   round(nbm, 3)  if nbm  is not None else None,
@@ -934,12 +1036,15 @@ def main():
     # must be local too. v0.7.64: was UTC now, which cut every window 4h short.
     now = datetime.now(pytz.timezone("America/New_York")).replace(tzinfo=None, microsecond=0)
 
+    wf_first_day = (now - timedelta(days=max(d for _, d in WINDOWS))).strftime("%Y-%m-%d")
+    wf_weights = _walkforward_weights(path, wf_first_day)
+
     windows_out = {}
     for label, days in WINDOWS:
         window_start = (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M")
         halves_midpoint = (now - timedelta(days=days / 2)).strftime("%Y-%m-%dT%H:%M")
         prior_start = (now - timedelta(days=days * 2)).strftime("%Y-%m-%dT%H:%M")
-        acc, halves = _accumulate(path, window_start, halves_midpoint, prior_start, band_picks)
+        acc, halves = _accumulate(path, window_start, halves_midpoint, prior_start, band_picks, wf_weights)
         per_field = {f: _compute_field(f, acc[f], halves[f]) for f in FIELDS}
         # Raw-difficulty index (7d only — reference is trailing 90d, no 24h
         # analog). Attaches per_field ratio so the diagnostic table can show
