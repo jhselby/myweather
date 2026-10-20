@@ -1,3 +1,4 @@
-10-20: one HRRR/NBM blend weight per field, served on every row, for h, sr, t, wg; w refit daily in the cloud over the prior 14d.
-  Walk-forward 17d vs shipped: h +12.2% (16/17 days), sr +11.2% (12/17), t +4.2% (11/17), wg +3.3% (12/17). dp via Magnus +25.6%.
-  Open question for Joe: replace the per-cell tblend cells + L1 blend for h, or fill only uncovered rows (only full replacement tested).
+10-20 SHIPPED v0.7.71/72: t, h, sr, wg served as one HRRR/NBM blend weight per field on every hour (refit daily by myweather-refitter, 14d window); dp = Magnus(blended t, blended h).
+  Walk-forward 17d expected vs prior shipping: h +12.2%, sr +11.2%, t +4.2%, wg +3.3%; dp +25.6% (14d).
+  NEXT: read live lift from the pair log (applied_layer tblend, tblend_scope_shadow = field) vs preempted_source_shadow after 3 days (~10-23); confirm the refitter published terminal_blend_field_curated.json at 04:30 10-21.
+  Then: ws and ch have no room under one field weight; look for the next selector gain in per-band or regime weights only if they beat field w walk-forward.
