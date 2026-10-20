@@ -25,7 +25,7 @@ When a number disagrees with reality ("app says overcast, it's pouring"), the nu
 
 **The rule:** The selector (which source/blend gets served per field × regime × lead) is where the gain is. The digest is a health check, not the agenda. Every session that starts with "check the digest" runs in this order:
 
-1. **Selector status first, before opening DIGEST.txt.** Read `analysis/output/per_field_scoring.json` → `windows.7d.per_field.*.selector_score_pct` / `selector_headroom_pct`, and the open selector work item in the latest `project_MM_DD_session.md`. The first message leads with this: score per field, room to gain, and what selector work happens today.
+1. **Selector status first.** The 🎯 SELECTOR block at the head of DIGEST.txt (built by `analysis/runlog/build_executive_summary.py:selector_status`) shows Selector Score, room to gain and best blend weight per field, plus the open work item from `analysis/runlog/selector_open_work.txt`. The first message leads with this block and what selector work happens today. **Before the session ends, update `selector_open_work.txt`** with the current selector item; the digest flags it STALE after 3 days.
 2. **Digest pass, capped.** Read the top alerts and executive summary only. For each fire or verdict: one line, the known explanation if memory has one, then move on. Investigate only if it changes what gets served AND has no explanation in memory, or if Joe asks. Correction-layer items (τ, L2/L3/L4, skip tables, specialists) get no investigation while the selector has room to gain.
 3. **Back to the selector work item** for the rest of the session.
 

@@ -1228,6 +1228,57 @@ def persistence_skill_watch():
     return regression_lines, at_risk_lines, prod_delta_lines
 
 
+SELECTOR_WORK = Path(__file__).resolve().parent / "selector_open_work.txt"
+
+
+def selector_status():
+    """Selector block for the head of the digest (CLAUDE.md §0a). The selector
+    is the work; the sentries below it are health checks. Grade = Selector
+    Score from per_field_scoring.json (served vs best fixed routing, scaled by
+    what the best constant HRRR/NBM blend weight could have gained)."""
+    out = ["=" * 50, "🎯 SELECTOR — the work. Read this first; alerts below are health checks.", "=" * 50]
+    try:
+        doc = json.loads((HERE.parent / "output" / "per_field_scoring.json").read_text())
+        w7 = doc["windows"]["7d"]["per_field"]
+        w24 = (doc["windows"].get("24h") or {}).get("per_field") or {}
+    except (OSError, KeyError, json.JSONDecodeError) as e:
+        return out + [f"  ⚠ per_field_scoring.json unreadable ({e})", ""]
+
+    def num(v, fmt):
+        if isinstance(v, (int, float)):
+            return format(v, fmt)
+        width = re.match(r"\d*", fmt).group(0)
+        return "—".rjust(int(width) if width else 0)
+
+    rows, flat = [], []
+    for f, x in w7.items():
+        head = x.get("selector_headroom_pct")
+        if head is None or head < 2.0:
+            flat.append(f)
+            continue
+        rows.append((head, f, x))
+    rows.sort(key=lambda r: -r[0])
+    out.append(f"  7d (score: 100 = matches best constant blend, 0 = best fixed routing, − = worse)")
+    out.append(f"  {'field':5} {'score':>7} {'24h':>7} {'room':>6}  {'served':>7} {'fixed':>7} {'blend':>7}  w_hrrr")
+    for head, f, x in rows:
+        out.append(f"  {f:5} {num(x.get('selector_score_pct'), '7.1f')} "
+                   f"{num((w24.get(f) or {}).get('selector_score_pct'), '7.1f')} {head:5.1f}%  "
+                   f"{num(x.get('chosen_prod_mae'), '7.2f')} {num(x.get('best_fixed_mae'), '7.2f')} "
+                   f"{num(x.get('best_rule_mae'), '7.2f')}  {num(x.get('best_rule_w_hrrr'), '.2f')}")
+    if flat:
+        out.append(f"  no room (<2%): {', '.join(flat)}")
+    try:
+        work = SELECTOR_WORK.read_text().strip()
+        from datetime import datetime
+        age = (datetime.now() - datetime.fromtimestamp(SELECTOR_WORK.stat().st_mtime)).days
+        out.append(f"  Open selector work (updated {age}d ago{' — STALE, update it' if age > 3 else ''}):")
+        out.extend(f"    {ln}" for ln in work.splitlines())
+    except OSError:
+        out.append(f"  ⚠ no open selector work recorded ({SELECTOR_WORK.name})")
+    out.append("")
+    return out
+
+
 def main():
     if not STATUS_TSV.exists():
         print("ERROR: run_status.tsv missing — run runner first.", file=sys.stderr)
@@ -1290,7 +1341,7 @@ def main():
             if b == "kill" and prior_b != "kill":
                 kills_new.append((name, verdict))
 
-    out = []
+    out = selector_status()
 
     # v0.6.390k action list: mirror the highest-severity sentry alerts at
     # the very top so the digest's actionable content is above the
