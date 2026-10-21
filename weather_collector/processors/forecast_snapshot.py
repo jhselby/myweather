@@ -1181,8 +1181,10 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # so writeback, error_tblend and the scorers need no change;
             # {f}_tblend_scope_shadow = "field" separates it from cell blends.
             # v0.7.73: h and sr take the w of the local valid hour's block.
+            # v0.7.74: t takes the w of its lead band.
             _fw = _terminal_static_blend.field_weight(
-                f, int(t[11:13]) if isinstance(t, str) and len(t) >= 13 else None)
+                f, int(t[11:13]) if isinstance(t, str) and len(t) >= 13 else None,
+                _fc_band_i)
             if _fw is not None:
                 _keys = (("l6", "l5", "l4") if f == "t" else ("l5", "l4") if f == "sr"
                          else ("l4", "l3", "l2"))

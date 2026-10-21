@@ -222,10 +222,11 @@ WF_MIN_COVERAGE = 0.8
 
 
 def _walkforward_weights(pair_log_path, first_day):
-    """{(field, obs_day): {"field": w, "block": {block_start_hour: w}}} for
-    every obs_day >= first_day, each fit on the WF_TRAIN_DAYS before it from
-    the same HRRR/NBM prod residuals the score uses. Same fit as
-    analysis/terminal_blend_field_fit.py, refit per day."""
+    """{(field, obs_day): {"field": w, "block": {block_start_hour: w},
+    "band": {lead_band: w}}} for every obs_day >= first_day, each fit on the
+    WF_TRAIN_DAYS before it from the same HRRR/NBM prod residuals the score
+    uses. Same fit as analysis/terminal_blend_field_fit.py, refit per day.
+    v0.7.74: per-lead-band w added (t ships it)."""
     grids = defaultdict(lambda: [0.0] * 22)  # (field, day, block|None) -> 21 sums + n
     lo = (datetime.strptime(first_day, "%Y-%m-%d") - timedelta(days=WF_TRAIN_DAYS)).strftime("%Y-%m-%d")
     with open(pair_log_path) as fin:
@@ -246,6 +247,9 @@ def _walkforward_weights(pair_log_path, first_day):
             keys = [(field, day, None)]
             if len(vt) >= 13:
                 keys.append((field, day, int(vt[11:13]) // WF_BLOCK_HOURS * WF_BLOCK_HOURS))
+            _bn = _band_for(row.get("lead_h"))
+            if _bn:
+                keys.append((field, day, _bn))
             gs = [grids[k] for k in keys]
             for i in range(21):
                 w = i / 20.0
@@ -274,8 +278,10 @@ def _walkforward_weights(pair_log_path, first_day):
             wf = best(agg[None], agg[None][21], WF_MIN_FIELD_N) if None in agg else None
             if wf is None:
                 continue
-            blocks = {blk: best(a, a[21], WF_MIN_BLOCK_N) for blk, a in agg.items() if blk is not None}
-            out[(field, d)] = {"field": wf, "block": {k: v for k, v in blocks.items() if v is not None}}
+            blocks = {blk: best(a, a[21], WF_MIN_BLOCK_N) for blk, a in agg.items() if isinstance(blk, int)}
+            bands = {blk: best(a, a[21], WF_MIN_BLOCK_N) for blk, a in agg.items() if isinstance(blk, str)}
+            out[(field, d)] = {"field": wf, "block": {k: v for k, v in blocks.items() if v is not None},
+                               "band": {k: v for k, v in bands.items() if v is not None}}
     return out
 
 # Sources where the served value is a blend of both cascades, not one side.
@@ -380,6 +386,7 @@ def _new_bucket():
         # Score's "perfect" is the better of the two (see _compute_field).
         "wf_field":     [0.0, 0],
         "wf_block":     [0.0, 0],
+        "wf_band":      [0.0, 0],
         # v0.6.492 — paired per-cascade Prod buckets for the coach's table.
         # Populated only inside the pool_ok intersection so HRRR Pipeline
         # Skill / NBM Pipeline Skill / Hit Rate / Value Captured / Total
@@ -663,6 +670,9 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                         b["wf_field"][1] += 1
                         b["wf_block"][0] += abs(_wb * _sh + (1.0 - _wb) * _sn)
                         b["wf_block"][1] += 1
+                        _wd = _ww["band"].get(_band_for(row.get("lead_h")), _ww["field"])
+                        b["wf_band"][0] += abs(_wd * _sh + (1.0 - _wd) * _sn)
+                        b["wf_band"][1] += 1
                 b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
                 # v0.6.556: split wins / losses / ties. Ties (chosen ==
                 # alt) are cascades-agree rows, not router-skill rows —
@@ -868,7 +878,7 @@ def _compute_field(field, buckets, halves):
         # Rows without a walk-forward fit (thin prior days) score as the
         # served value would have, so coverage gaps don't add or hide room.
         _gap = chosen_sum * (1.0 - _wf_cov)
-        for _kind in ("field", "block"):
+        for _kind in ("field", "block", "band"):
             _sum = buckets[f"wf_{_kind}"][0] + _gap
             if _sum < best_rule_sum:
                 best_rule_sum, best_rule_kind = _sum, _kind
@@ -888,6 +898,7 @@ def _compute_field(field, buckets, halves):
         "best_constant_w_hindsight": best_rule_w,
         "wf_field_mae": round(buckets["wf_field"][0] / buckets["wf_field"][1], 3) if buckets["wf_field"][1] else None,
         "wf_block_mae": round(buckets["wf_block"][0] / buckets["wf_block"][1], 3) if buckets["wf_block"][1] else None,
+        "wf_band_mae": round(buckets["wf_band"][0] / buckets["wf_band"][1], 3) if buckets["wf_band"][1] else None,
         "wf_coverage": round(_wf_cov, 3),
         "best_fixed_mae": round(best_fixed_mae, 3) if best_fixed_mae is not None else None,
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,

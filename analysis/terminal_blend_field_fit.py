@@ -19,6 +19,13 @@ halves +6.8/+4.4). Regime, regime x band, band (except wg +0.6) and
 3/7/28-day windows did not beat the field w. A block with n < MIN_BLOCK_N
 is left out and the runtime falls back to the field w.
 
+v0.7.74: t gets one w per lead band (`w_by_band`, keyed "0-5", "6-11",
+"12-23", "24-47"). At short lead the HRRR terminal carries the L2 obs nudge
+and NBM's does not, so one field w gave the shipped blend 1.14 at 0-5h vs
+HRRR-only 0.93. 10-21 walk-forward, 17 days: t +1.8% (halves +1.2/+2.3,
+9/17 days), 0-5h 1.14 -> 0.94. Per-band w for h, sr, wg, ws was flat or
+mixed. A band with n < MIN_BLOCK_N falls back to the field w.
+
 Writes weather_collector/data/terminal_blend_field_curated.json.
 """
 import json
@@ -38,6 +45,8 @@ WINDOW_DAYS = 14
 GRID = [i / 20 for i in range(21)]
 MIN_N = 2000
 BLOCK_FIELDS = ("h", "sr")
+BAND_FIELDS = ("t",)
+BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
 BLOCK_HOURS = 4
 MIN_BLOCK_N = 300
 
@@ -62,6 +71,8 @@ def fit():
     n = {f: 0 for f in FIELDS}
     bsums = {}  # (field, block start hour) -> grid sums
     bn = {}
+    dsums = {}  # (field, lead band) -> grid sums
+    dn = {}
     n_rows = 0
     with open(cached_path(PAIR_LOG_URL)) as fin:
         for line in fin:
@@ -85,6 +96,14 @@ def fit():
                 bk = (f, int(vt[11:13]) // BLOCK_HOURS * BLOCK_HOURS)
                 bs = bsums.setdefault(bk, [0.0] * len(GRID))
                 bn[bk] = bn.get(bk, 0) + 1
+                for i, w in enumerate(GRID):
+                    bs[i] += abs(w * eh + (1.0 - w) * en)
+            lead = r.get("lead_h")
+            band = next((b for b, lo, hi in BANDS if lead is not None and lo <= lead < hi), None)
+            if f in BAND_FIELDS and band:
+                bk = (f, band)
+                bs = dsums.setdefault(bk, [0.0] * len(GRID))
+                dn[bk] = dn.get(bk, 0) + 1
                 for i, w in enumerate(GRID):
                     bs[i] += abs(w * eh + (1.0 - w) * en)
 
@@ -118,13 +137,24 @@ def fit():
             x["mae_block"] = round(bmae / n[f], 4) if blocks else None
             print(f"     by {BLOCK_HOURS}h block: {blocks}  "
                   f"in-sample {100 * (bfield - bmae) / bfield:+.1f}% vs field w" if bfield else "")
+        if f in BAND_FIELDS:
+            bands = {}
+            for b, _, _ in BANDS:
+                bs = dsums.get((f, b))
+                if bs and dn[(f, b)] >= MIN_BLOCK_N:
+                    bands[b] = GRID[min(range(len(GRID)), key=lambda k: bs[k])]
+            x["w_by_band"] = bands
+            bmae = sum(min(dsums[(f, b)]) for b in bands)
+            x["mae_band"] = round(bmae / n[f], 4) if bands else None
+            print(f"     by lead band: {bands}")
 
     out = {"fitted_at": now.strftime("%Y-%m-%dT%H:%M"), "window_days": WINDOW_DAYS,
            "n_rows_kept": n_rows, "fields": fields,
            "notes": "w = HRRR weight on the terminal blend, served on every row of the field "
                     "(weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). "
                     "w_by_block (h, sr) = w per block of local valid hour, keyed by block "
-                    "start; missing blocks use w."}
+                    "start; missing blocks use w. w_by_band (t) = w per lead band; "
+                    "missing bands use w."}
     with open(OUT_PATH, "w") as fout:
         json.dump(out, fout, indent=2)
     print(f"  wrote {OUT_PATH}")

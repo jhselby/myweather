@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.74 • October 21, 2026 (temperature blend weight follows the lead time)</strong></summary>
+
+- Temperature now uses a different HRRR/NBM blend weight for each lead-time band instead of one weight for every hour. Today's weights: HRRR 0.90 for the next 0–5 hours, 0.80 at 6–11, 0.55 at 12–23, 0.30 at 24–47. In the first hours the corrected HRRR has already been pulled toward the latest observations and NBM has not, so the single weight (0.50) was giving away that advantage: at 0–5 hours the blend scored 1.14°F against 0.93°F for HRRR alone. Last night's NBM cold miss (7–10°F too cold at 03–06Z) made the gap obvious.
+- Walk-forward test over 17 days against v0.7.71's single weight: 1.8% better overall (both halves of the window, 9 of 17 days), and 0–5 hours 1.14 → 0.94°F. Dew point follows the temperature blend. Per-band weights for humidity, solar, gusts and wind did not help. A weight that reacts to each source's recent misses also did not help: it can only see a miss that has already started, and most of the damage lands on forecasts made before it.
+- Scoreboard: the Selector Score's "perfect" now also considers one weight per lead band.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.73 • October 20, 2026 (humidity and solar blend weight follows the time of day)</strong></summary>
 
 - Humidity and solar now use a different HRRR/NBM blend weight for each 4-hour block of the day instead of one weight for the whole day. Today's weights: humidity leans HRRR overnight (0.90) and midday (0.85), even in the morning and evening (0.45–0.55); solar leans NBM through the morning (0.35) and HRRR late in the day (0.80). Refit each morning with the rest of the blend; a block with too little data uses the single field weight.
