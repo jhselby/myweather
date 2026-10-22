@@ -288,7 +288,7 @@ def _build_learned_features(field, i, ims_i, valid_hour_local, derived, cross_ru
     }
 
 
-def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None, hyperlocal=None, cross_run_spread=None):
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None, hyperlocal=None, cross_run_spread=None, ecmwf_hourly=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -821,6 +821,14 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             target_utc = TZ.localize(naive).astimezone(_dt_timezone.utc)
         except (ValueError, TypeError):
             target_utc = None
+        # v0.7.75 — ECMWF IFS raw t/h at this hour (local-time keyed), the
+        # third input of the field-level blend. Pair log emits
+        # forecast_ecmwf / error_ecmwf.
+        _ec = (ecmwf_hourly or {}).get(t[:13]) if isinstance(t, str) else None
+        if _ec:
+            for _ef in ("t", "h"):
+                if _ec.get(_ef) is not None:
+                    entry[f"{_ef}_ecmwf"] = _round_for(_ef, float(_ec[_ef]))
         # v0.6.431 — NWS gridpoint (NBM-derived) values at this hour.
         if nws_gridpoints:
             if target_utc is not None:
@@ -1194,6 +1202,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                             if v is not None), None)
                 if _fh is not None and _fn is not None:
                     _fv = _fw * float(_fh) + (1.0 - _fw) * float(_fn)
+                    # v0.7.75 — t and h: 3-way blend with ECMWF IFS raw when
+                    # this hour has an ECMWF value and the table has w3;
+                    # otherwise the 2-way blend above serves.
+                    _w3 = _terminal_static_blend.field_weight3(
+                        f, int(t[11:13]) if isinstance(t, str) and len(t) >= 13 else None,
+                        _fc_band_i)
+                    _fe = entry.get(f"{f}_ecmwf")
+                    if _w3 is not None and _fe is not None:
+                        _fv = _w3[0] * float(_fh) + _w3[1] * float(_fn) + _w3[2] * float(_fe)
+                        _fw = _w3[0]
+                        entry[f"{f}_tblend_wn_shadow"] = round(_w3[1], 3)
+                        entry[f"{f}_tblend_we_shadow"] = round(_w3[2], 3)
                     entry[f"{f}_preempted_source_shadow"] = source
                     entry[f"{f}_tblend_shadow"] = _round_for(f, _fv)
                     entry[f"{f}_tblend_w_shadow"] = round(_fw, 3)

@@ -70,9 +70,9 @@ def test_layer_tuples_match():
     error_log = _extract_error_log_tuple()
     assert snapshot is not None, "could not locate _derive_applied_layer walk tuple"
     assert error_log is not None, "could not locate forecast_error_log emit tuple"
-    # nws and the *_nbm columns are emitted for scoring but are not part of
+    # nws, ecmwf (v0.7.75) and the *_nbm columns are emitted for scoring but are not part of
     # the HRRR-side applied_layer walk (NBM attribution is selector_source).
-    hrrr_log = {k for k in error_log if k != "nws" and not k.endswith("_nbm")}
+    hrrr_log = {k for k in error_log if k not in ("nws", "ecmwf") and not k.endswith("_nbm")}
     missing_in_log = set(snapshot) - set(error_log)
     missing_in_snap = hrrr_log - set(snapshot)
     assert not missing_in_log, (

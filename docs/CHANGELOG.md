@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.75 • October 22, 2026 (ECMWF joins the temperature and humidity blend)</strong></summary>
+
+- Temperature and humidity are now a blend of three models instead of two: the corrected HRRR, the corrected NBM, and the European model (ECMWF IFS, raw). Today's temperature weights (HRRR / NBM / ECMWF): 0.85 / 0.05 / 0.10 for the next 0–5 hours, then about 0.30 / 0.00 / 0.70 at 6–23 hours and 0.15 / 0.10 / 0.75 at 24–47. Humidity splits more evenly, weighted by time of day. The weights are refit every morning. If ECMWF is missing for an hour, that hour falls back to the two-model blend.
+- Why: NBM has run 5–10°F too cold on three of the last six nights. Neither the gap between HRRR and NBM nor the forecast cloud cover predicted those misses. ECMWF is a different model with different errors, and from 6 hours out it beat both of the others on temperature even before blending.
+- Walk-forward test over 17 days (weights fit on the 14 days before each day): temperature 19.1% better than v0.7.74 (both halves of the window, 13 of 17 days), humidity 11.5% (13 of 17). The test used ECMWF runs that were 1–3 days old, so the model the forecast now uses is fresher than the one tested. Dew point is calculated from the blended temperature and humidity, so it improves too.
+- Scoreboard: the Selector Score's "perfect" now includes the three-model blend for temperature and humidity, so the room it shows is room this blend can actually capture. Pair log records `forecast_ecmwf` / `error_ecmwf`.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.74 • October 21, 2026 (temperature blend weight follows the lead time)</strong></summary>
 
 - Temperature now uses a different HRRR/NBM blend weight for each lead-time band instead of one weight for every hour. Today's weights: HRRR 0.90 for the next 0–5 hours, 0.80 at 6–11, 0.55 at 12–23, 0.30 at 24–47. In the first hours the corrected HRRR has already been pulled toward the latest observations and NBM has not, so the single weight (0.50) was giving away that advantage: at 0–5 hours the blend scored 1.14°F against 0.93°F for HRRR alone. Last night's NBM cold miss (7–10°F too cold at 03–06Z) made the gap obvious.

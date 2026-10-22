@@ -75,17 +75,29 @@ def validate_field_table(data):
             for h, bw in ((spec or {}).get(key) or {}).items():
                 if not isinstance(bw, (int, float)) or not 0.0 <= float(bw) <= 1.0:
                     return f"fields[{f!r}].{key}[{h!r}] outside [0, 1]"
+        w3s = [("w3", (spec or {}).get("w3"))] if (spec or {}).get("w3") is not None else []
+        for key in ("w3_by_band", "w3_by_block"):
+            w3s += [(f"{key}[{k!r}]", v) for k, v in ((spec or {}).get(key) or {}).items()]
+        for name, w3 in w3s:
+            if not _valid_w3(w3):
+                return f"fields[{f!r}].{name} not three weights in [0, 1] summing to 1"
     return None
 
 
-def field_weight(field, hour=None, band=None):
-    """HRRR weight for the field-level blend, or None when the field is not
-    applied, the table is missing, or it is stale. v0.7.73: with `hour`
-    (local valid hour), h and sr use the w of that hour's block when the
-    table has one (`w_by_block`), else the field w. v0.7.74: with `band`
-    (lead band name), t uses the w of that band (`w_by_band`)."""
-    if field not in FIELD_APPLIED:
-        return None
+def _valid_w3(w3):
+    return (isinstance(w3, list) and len(w3) == 3
+            and all(isinstance(x, (int, float)) and 0.0 <= float(x) <= 1.0 for x in w3)
+            and abs(sum(float(x) for x in w3) - 1.0) < 1e-6)
+
+
+# v0.7.75 — ECMWF IFS raw as the third input on t and h. 10-22 walk-forward
+# (fit prior 14d, next day scored, 17 days) vs the shipped 2-way rule:
+# t +19.1% (halves +14.4/+23.0, 13/17 days), h +11.5% (+7.3/+16.2, 13/17).
+# Reversal: FIELD3_APPLIED = frozenset() and redeploy (2-way serves again).
+FIELD3_APPLIED = frozenset({"t", "h"})
+
+
+def _field_spec(field):
     from datetime import datetime, timedelta
     from .. import runtime_tables
     doc = runtime_tables.get(FIELD_TABLE_NAME, FIELD_PATH, validate_field_table)
@@ -97,7 +109,34 @@ def field_weight(field, hour=None, band=None):
         return None
     if datetime.utcnow() - fitted > timedelta(days=FIELD_STALE_DAYS):
         return None
-    spec = (doc.get("fields") or {}).get(field)
+    return (doc.get("fields") or {}).get(field) or None
+
+
+def field_weight3(field, hour=None, band=None):
+    """[w_hrrr, w_nbm, w_ecmwf] for the 3-way field blend, or None when the
+    field is not in FIELD3_APPLIED or the table has no w3 (the 2-way
+    field_weight then serves). t keys on lead band, h on 4h block."""
+    if field not in FIELD3_APPLIED or field not in FIELD_APPLIED:
+        return None
+    spec = _field_spec(field)
+    if not spec or spec.get("w3") is None:
+        return None
+    w3 = (spec.get("w3_by_band") or {}).get(band) if band else None
+    if w3 is None and hour is not None and spec.get("w3_by_block"):
+        step = int(spec.get("block_hours") or 4)
+        w3 = spec["w3_by_block"].get(str(int(hour) // step * step))
+    return [float(x) for x in (w3 or spec["w3"])]
+
+
+def field_weight(field, hour=None, band=None):
+    """HRRR weight for the field-level blend, or None when the field is not
+    applied, the table is missing, or it is stale. v0.7.73: with `hour`
+    (local valid hour), h and sr use the w of that hour's block when the
+    table has one (`w_by_block`), else the field w. v0.7.74: with `band`
+    (lead band name), t uses the w of that band (`w_by_band`)."""
+    if field not in FIELD_APPLIED:
+        return None
+    spec = _field_spec(field)
     if not spec:
         return None
     bw = (spec.get("w_by_band") or {}).get(band) if band else None
@@ -173,7 +212,9 @@ def describe_applicability():
             "fires_when": ("every row (v0.7.71 field-level blend): serves w·HRRR terminal + "
                            "(1−w)·NBM terminal ahead of the selector pick, L1 blend and cell blends"),
             "gated_by": "FIELD_APPLIED + daily refit ≤ 3 days old",
-            "current_state": (f"Live, w_hrrr={w:.2f}" if w is not None else
+            "current_state": (f"Live, w_hrrr={w:.2f}" + (
+                f"; 3-way with ECMWF w3={field_weight3(f)}" if field_weight3(f) else "")
+                if w is not None else
                               "No-op: field table missing or stale; per-cell path below serves"),
         })
     for f in sorted(_W):

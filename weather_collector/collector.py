@@ -799,9 +799,23 @@ def main():
         nbm_extract = load_json("nbm_point_extract.json", default=None)
     except Exception:
         nbm_extract = None
+    # v0.7.75 — ECMWF IFS hourly t/h (local time) for the 3-way field blend.
+    # Only from a real ECMWF response; the GFS fallback carries no hourly.
+    ecmwf_hourly = None
+    try:
+        if (fetched.sources.get("ecmwf_daily") or {}).get("model") == "ECMWF daily":
+            _eh = (fetched.daily_data or {}).get("hourly") or {}
+            ecmwf_hourly = {
+                ts[:13]: {"t": tv, "h": hv}
+                for ts, tv, hv in zip(_eh.get("time") or [], _eh.get("temperature_2m") or [],
+                                      _eh.get("relative_humidity_2m") or [])
+            } or None
+    except Exception as e:
+        logging.warning(f"  ⚠  ECMWF hourly unavailable: {redact_secrets(e)}")
     try:
         append_forecast_snapshot(
             weather_data.get("hourly", {}),
+            ecmwf_hourly=ecmwf_hourly,
             derived=weather_data.get("derived", {}),
             nws_gridpoints=weather_data.get("nws_gridpoints"),
             nbm_extract=nbm_extract,

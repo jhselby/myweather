@@ -26,10 +26,23 @@ HRRR-only 0.93. 10-21 walk-forward, 17 days: t +1.8% (halves +1.2/+2.3,
 9/17 days), 0-5h 1.14 -> 0.94. Per-band w for h, sr, wg, ws was flat or
 mixed. A band with n < MIN_BLOCK_N falls back to the field w.
 
+v0.7.75: ECMWF IFS (Open-Meteo ecmwf_ifs025) as a third input on t and h.
+`w3` = [w_hrrr, w_nbm, w_ecmwf] per field, plus `w3_by_band` (t) and
+`w3_by_block` (h). 10-22 walk-forward (fit prior 14d, next day scored,
+17 days) vs the shipped 2-way rule: t +19.1% (halves +14.4/+23.0, 13/17
+days), h +11.5% (halves +7.3/+16.2, 13/17). ECMWF errors for the fit come
+from Open-Meteo's previous-runs archive, using a run at least 24/48/72h
+older than the valid hour (day N = 1 for lead <= 17h, 2 for <= 41h, else 3)
+so the fit never sees an ECMWF run the collector could not have had. The
+runtime serves the freshest run, so live ECMWF is at least this good. A
+missing archive leaves w3 out and the runtime serves the 2-way blend.
+
 Writes weather_collector/data/terminal_blend_field_curated.json.
 """
 import json
 import sys
+import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -55,6 +68,46 @@ HRRR_KEYS = {"t": ("error_l6", "error_l5", "error_l4"),
 HRRR_DEFAULT = ("error_l4", "error_l3", "error_l2")
 NBM_KEYS = ("error_l3_nbm", "error_l2_nbm", "error_raw_nbm")
 
+E_VARS = {"t": "temperature_2m", "h": "relative_humidity_2m"}
+E_KEY = {"t": "band", "h": "block"}
+GRID3 = [(i / 20, j / 20, round(1 - (i + j) / 20, 2)) for i in range(21) for j in range(21 - i)]
+PREV_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
+
+
+def _ecmwf_day(lead):
+    return 1 if lead <= 17 else 2 if lead <= 41 else 3
+
+
+def ecmwf_history(start, end):
+    """{"YYYY-MM-DDTHH": {field: [None, day1, day2, day3]}} in local time,
+    from Open-Meteo's previous-runs archive. {} on any failure."""
+    from weather_collector.config import LAT, LON
+    hourly = [f"{v}_previous_day{n}" for v in E_VARS.values() for n in (1, 2, 3)]
+    q = urllib.parse.urlencode({
+        "latitude": LAT, "longitude": LON, "hourly": ",".join(hourly),
+        "models": "ecmwf_ifs025", "temperature_unit": "fahrenheit",
+        "timezone": "America/New_York", "start_date": start, "end_date": end})
+    try:
+        with urllib.request.urlopen(f"{PREV_RUNS_URL}?{q}", timeout=60) as resp:
+            h = json.load(resp)["hourly"]
+    except Exception as e:  # noqa: BLE001
+        print(f"  ECMWF previous-runs fetch failed ({e}); no w3")
+        return {}
+    out = {}
+    for i, t in enumerate(h["time"]):
+        out[t[:13]] = {f: [None] + [h[f"{v}_previous_day{n}"][i] for n in (1, 2, 3)]
+                       for f, v in E_VARS.items()}
+    return out
+
+
+def _best3(rows):
+    import numpy as np
+    a = np.asarray(rows, dtype=float)
+    w = np.asarray(GRID3)
+    s = np.abs(a @ w.T).sum(0)
+    k = int(s.argmin())
+    return [float(x) for x in GRID3[k]], float(s[k])
+
 
 def _first(row, keys):
     for k in keys:
@@ -74,6 +127,9 @@ def fit():
     dsums = {}  # (field, lead band) -> grid sums
     dn = {}
     n_rows = 0
+    ehist = ecmwf_history((now - timedelta(days=WINDOW_DAYS + 1)).strftime("%Y-%m-%d"),
+                          now.strftime("%Y-%m-%d"))
+    e3 = {}  # (field, key or None) -> [(eh, en, ee)]
     with open(cached_path(PAIR_LOG_URL)) as fin:
         for line in fin:
             if '"field"' not in line:
@@ -100,6 +156,16 @@ def fit():
                     bs[i] += abs(w * eh + (1.0 - w) * en)
             lead = r.get("lead_h")
             band = next((b for b, lo, hi in BANDS if lead is not None and lo <= lead < hi), None)
+            if f in E_VARS and ehist and lead is not None and r.get("observed") is not None:
+                fe = (ehist.get(vt[:13]) or {}).get(f)
+                fe = fe[_ecmwf_day(lead)] if fe else None
+                if fe is not None:
+                    ee = float(fe) - float(r["observed"])
+                    sub = band if E_KEY[f] == "band" else (
+                        str(int(vt[11:13]) // BLOCK_HOURS * BLOCK_HOURS) if len(vt) >= 13 else None)
+                    e3.setdefault((f, None), []).append((eh, en, ee))
+                    if sub is not None:
+                        e3.setdefault((f, sub), []).append((eh, en, ee))
             if f in BAND_FIELDS and band:
                 bk = (f, band)
                 bs = dsums.setdefault(bk, [0.0] * len(GRID))
@@ -147,6 +213,19 @@ def fit():
             bmae = sum(min(dsums[(f, b)]) for b in bands)
             x["mae_band"] = round(bmae / n[f], 4) if bands else None
             print(f"     by lead band: {bands}")
+        rows3 = e3.get((f, None)) or []
+        if len(rows3) >= MIN_N:
+            w3, s3 = _best3(rows3)
+            subs = {}
+            for (ef, sub), rr in sorted(e3.items(), key=lambda kv: str(kv[0])):
+                if ef == f and sub is not None and len(rr) >= MIN_BLOCK_N:
+                    subs[sub] = _best3(rr)[0]
+            x["w3"] = w3
+            x[f"w3_by_{E_KEY[f]}"] = subs
+            x["n3"] = len(rows3)
+            x["mae_3way"] = round(s3 / len(rows3), 4)
+            print(f"     3-way (hrrr, nbm, ecmwf) {w3} n={len(rows3):,} mae {x['mae_3way']:.3f}; "
+                  f"by {E_KEY[f]}: {subs}")
 
     out = {"fitted_at": now.strftime("%Y-%m-%dT%H:%M"), "window_days": WINDOW_DAYS,
            "n_rows_kept": n_rows, "fields": fields,
@@ -154,7 +233,9 @@ def fit():
                     "(weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). "
                     "w_by_block (h, sr) = w per block of local valid hour, keyed by block "
                     "start; missing blocks use w. w_by_band (t) = w per lead band; "
-                    "missing bands use w."}
+                    "missing bands use w. w3 (t, h) = [hrrr, nbm, ecmwf] weights, "
+                    "w3_by_band (t) / w3_by_block (h); served when the ECMWF hourly is "
+                    "present, else the 2-way w."}
     with open(OUT_PATH, "w") as fout:
         json.dump(out, fout, indent=2)
     print(f"  wrote {OUT_PATH}")

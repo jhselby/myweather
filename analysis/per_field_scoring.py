@@ -42,6 +42,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 from analysis._output import out as _out
+from analysis import terminal_blend_field_fit as _tbf
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 SELECTOR_TABLE_PATH = (
@@ -227,8 +228,13 @@ def _walkforward_weights(pair_log_path, first_day):
     WF_TRAIN_DAYS before it from the same HRRR/NBM prod residuals the score
     uses. Same fit as analysis/terminal_blend_field_fit.py, refit per day.
     v0.7.74: per-lead-band w added (t ships it)."""
+    global _EHIST
     grids = defaultdict(lambda: [0.0] * 22)  # (field, day, block|None) -> 21 sums + n
     lo = (datetime.strptime(first_day, "%Y-%m-%d") - timedelta(days=WF_TRAIN_DAYS)).strftime("%Y-%m-%d")
+    # v0.7.75 — 3-way rule (HRRR/NBM/ECMWF IFS) on t and h, ECMWF from the
+    # previous-runs archive with the same run-age rule the fit uses.
+    _EHIST = _tbf.ecmwf_history(lo, datetime.now().strftime("%Y-%m-%d"))
+    e3rows = defaultdict(list)  # (field, day) -> [(sub, sh, sn, se)]
     with open(pair_log_path) as fin:
         for line in fin:
             try:
@@ -250,6 +256,9 @@ def _walkforward_weights(pair_log_path, first_day):
             _bn = _band_for(row.get("lead_h"))
             if _bn:
                 keys.append((field, day, _bn))
+            _se = _ecmwf_err(row)
+            if _se is not None:
+                e3rows[(field, day)].append((_e3_sub(field, row), sh, sn, _se))
             gs = [grids[k] for k in keys]
             for i in range(21):
                 w = i / 20.0
@@ -282,7 +291,37 @@ def _walkforward_weights(pair_log_path, first_day):
             bands = {blk: best(a, a[21], WF_MIN_BLOCK_N) for blk, a in agg.items() if isinstance(blk, str)}
             out[(field, d)] = {"field": wf, "block": {k: v for k, v in blocks.items() if v is not None},
                                "band": {k: v for k, v in bands.items() if v is not None}}
+            if field in _tbf.E_VARS:
+                rr = [x for (f, dd), xs in e3rows.items() if f == field and start <= dd < d for x in xs]
+                if len(rr) >= WF_MIN_FIELD_N:
+                    out[(field, d)]["w3"] = _tbf._best3([x[1:] for x in rr])[0]
+                    subs = defaultdict(list)
+                    for x in rr:
+                        subs[x[0]].append(x[1:])
+                    out[(field, d)]["w3_sub"] = {k: _tbf._best3(v)[0] for k, v in subs.items()
+                                                 if k is not None and len(v) >= WF_MIN_BLOCK_N}
     return out
+
+
+_EHIST = {}
+
+
+def _ecmwf_err(row):
+    """ECMWF IFS archive residual for a t/h row (run-age rule of the fit), or None."""
+    field = row.get("field")
+    vt, lead, obs = row.get("valid_time") or "", row.get("lead_h"), row.get("observed")
+    if field not in _tbf.E_VARS or lead is None or obs is None or len(vt) < 13:
+        return None
+    fe = (_EHIST.get(vt[:13]) or {}).get(field)
+    fe = fe[_tbf._ecmwf_day(lead)] if fe else None
+    return float(fe) - float(obs) if fe is not None else None
+
+
+def _e3_sub(field, row):
+    if _tbf.E_KEY.get(field) == "band":
+        return _band_for(row.get("lead_h"))
+    vt = row.get("valid_time") or ""
+    return str(int(vt[11:13]) // WF_BLOCK_HOURS * WF_BLOCK_HOURS) if len(vt) >= 13 else None
 
 # Sources where the served value is a blend of both cascades, not one side.
 BLEND_SOURCES = ("l1_blend", "blend", "tblend")
@@ -336,6 +375,12 @@ def _selected_l1_error(row, band_picks):
     if row.get("selector_source") == "tblend":
         w = row.get("tblend_w_shadow")
         e_h, e_n = row.get("error_l1"), row.get("error_raw_nbm")
+        # v0.7.75 — 3-way rows (t, h with ECMWF) stamp wn/we; ECMWF has no
+        # correction layer, so its raw IS its terminal.
+        wn, we, e_e = row.get("tblend_wn_shadow"), row.get("tblend_we_shadow"), row.get("error_ecmwf")
+        if (w is not None and wn is not None and we is not None and e_e is not None
+                and e_h is not None and e_n is not None):
+            return float(w) * float(e_h) + float(wn) * float(e_n) + float(we) * float(e_e), pick
         if w is not None and e_h is not None and e_n is not None:
             return float(w) * float(e_h) + (1.0 - float(w)) * float(e_n), pick
     if row.get("selector_source") == "l1_blend":
@@ -387,6 +432,9 @@ def _new_bucket():
         "wf_field":     [0.0, 0],
         "wf_block":     [0.0, 0],
         "wf_band":      [0.0, 0],
+        # v0.7.75 — 3-way HRRR/NBM/ECMWF walk-forward rule (t, h); rows with
+        # no ECMWF archive value score as the shipped 2-way shape.
+        "wf_3way":      [0.0, 0],
         # v0.6.492 — paired per-cascade Prod buckets for the coach's table.
         # Populated only inside the pool_ok intersection so HRRR Pipeline
         # Skill / NBM Pipeline Skill / Hit Rate / Value Captured / Total
@@ -673,6 +721,14 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                         _wd = _ww["band"].get(_band_for(row.get("lead_h")), _ww["field"])
                         b["wf_band"][0] += abs(_wd * _sh + (1.0 - _wd) * _sn)
                         b["wf_band"][1] += 1
+                        _se = _ecmwf_err(row) if _ww.get("w3") else None
+                        if _se is not None:
+                            _w3 = _ww["w3_sub"].get(_e3_sub(field, row)) or _ww["w3"]
+                            b["wf_3way"][0] += abs(_w3[0] * _sh + _w3[1] * _sn + _w3[2] * _se)
+                        else:
+                            _w2 = _wd if field == "t" else _wb
+                            b["wf_3way"][0] += abs(_w2 * _sh + (1.0 - _w2) * _sn)
+                        b["wf_3way"][1] += 1
                 b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
                 # v0.6.556: split wins / losses / ties. Ties (chosen ==
                 # alt) are cascades-agree rows, not router-skill rows —
@@ -878,7 +934,7 @@ def _compute_field(field, buckets, halves):
         # Rows without a walk-forward fit (thin prior days) score as the
         # served value would have, so coverage gaps don't add or hide room.
         _gap = chosen_sum * (1.0 - _wf_cov)
-        for _kind in ("field", "block", "band"):
+        for _kind in ("field", "block", "band", "3way"):
             _sum = buckets[f"wf_{_kind}"][0] + _gap
             if _sum < best_rule_sum:
                 best_rule_sum, best_rule_kind = _sum, _kind
@@ -899,6 +955,7 @@ def _compute_field(field, buckets, halves):
         "wf_field_mae": round(buckets["wf_field"][0] / buckets["wf_field"][1], 3) if buckets["wf_field"][1] else None,
         "wf_block_mae": round(buckets["wf_block"][0] / buckets["wf_block"][1], 3) if buckets["wf_block"][1] else None,
         "wf_band_mae": round(buckets["wf_band"][0] / buckets["wf_band"][1], 3) if buckets["wf_band"][1] else None,
+        "wf_3way_mae": round(buckets["wf_3way"][0] / buckets["wf_3way"][1], 3) if buckets["wf_3way"][1] else None,
         "wf_coverage": round(_wf_cov, 3),
         "best_fixed_mae": round(best_fixed_mae, 3) if best_fixed_mae is not None else None,
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,

@@ -72,6 +72,9 @@ def fetch_daily_ecmwf():
         "latitude": LAT,
         "longitude": LON,
         "daily": ",".join(DAILY_VARS),
+        # v0.7.75 — hourly t/h ride the same call as the third input of the
+        # field-level terminal blend (terminal_static_blend.field_weight3).
+        "hourly": "temperature_2m,relative_humidity_2m",
         "models": "ecmwf_ifs025",
         "forecast_days": 10,
         **OM_UNITS,
@@ -79,7 +82,8 @@ def fetch_daily_ecmwf():
     data, meta = _om_get(params, "ECMWF daily")
     if data is None:
         logging.warning("  ⚠️  ECMWF unavailable — falling back to GFS seamless")
-        fb = {k: v for k, v in params.items() if k != "models"}
+        # No hourly on the fallback: GFS hourly must never be stamped as ECMWF.
+        fb = {k: v for k, v in params.items() if k not in ("models", "hourly")}
         logging.warning("  ⏳ Attempting GFS fallback...")
         data, meta = _om_get(fb, "GFS seamless (ECMWF fallback)")
         if data is None:
