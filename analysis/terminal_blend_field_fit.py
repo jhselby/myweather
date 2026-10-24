@@ -37,6 +37,12 @@ so the fit never sees an ECMWF run the collector could not have had. The
 runtime serves the freshest run, so live ECMWF is at least this good. A
 missing archive leaves w3 out and the runtime serves the 2-way blend.
 
+v0.7.81: ws joins the field blend with the same 3-way rule (band-keyed w and
+w3_by_band, like t). 10-24 walk-forward on terminal inputs (fit prior 14d,
+next day scored, 17 days) vs what was served: pooled +6.4%, vs NBM raw (the
+normal source) +9.3%; every band has both halves positive. Before this ws was
+NBM-terminal at 6-47h (zero edge over NBM there).
+
 Writes weather_collector/data/terminal_blend_field_curated.json.
 """
 import json
@@ -53,12 +59,12 @@ if str(ROOT) not in sys.path:
 from analysis._cache import cached_path, PAIR_LOG_URL  # noqa: E402
 
 OUT_PATH = ROOT / "weather_collector" / "data" / "terminal_blend_field_curated.json"
-FIELDS = ("t", "h", "sr", "wg")
+FIELDS = ("t", "h", "sr", "wg", "ws")
 WINDOW_DAYS = 14
 GRID = [i / 20 for i in range(21)]
 MIN_N = 2000
 BLOCK_FIELDS = ("h", "sr")
-BAND_FIELDS = ("t",)
+BAND_FIELDS = ("t", "ws")
 BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
 BLOCK_HOURS = 4
 MIN_BLOCK_N = 300
@@ -68,8 +74,8 @@ HRRR_KEYS = {"t": ("error_l6", "error_l5", "error_l4"),
 HRRR_DEFAULT = ("error_l4", "error_l3", "error_l2")
 NBM_KEYS = ("error_l3_nbm", "error_l2_nbm", "error_raw_nbm")
 
-E_VARS = {"t": "temperature_2m", "h": "relative_humidity_2m"}
-E_KEY = {"t": "band", "h": "block"}
+E_VARS = {"t": "temperature_2m", "h": "relative_humidity_2m", "ws": "wind_speed_10m"}
+E_KEY = {"t": "band", "h": "block", "ws": "band"}
 GRID3 = [(i / 20, j / 20, round(1 - (i + j) / 20, 2)) for i in range(21) for j in range(21 - i)]
 PREV_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 
@@ -85,7 +91,7 @@ def ecmwf_history(start, end):
     hourly = [f"{v}_previous_day{n}" for v in E_VARS.values() for n in (1, 2, 3)]
     q = urllib.parse.urlencode({
         "latitude": LAT, "longitude": LON, "hourly": ",".join(hourly),
-        "models": "ecmwf_ifs025", "temperature_unit": "fahrenheit",
+        "models": "ecmwf_ifs025", "temperature_unit": "fahrenheit", "wind_speed_unit": "mph",
         "timezone": "America/New_York", "start_date": start, "end_date": end})
     try:
         with urllib.request.urlopen(f"{PREV_RUNS_URL}?{q}", timeout=60) as resp:
@@ -232,9 +238,9 @@ def fit():
            "notes": "w = HRRR weight on the terminal blend, served on every row of the field "
                     "(weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). "
                     "w_by_block (h, sr) = w per block of local valid hour, keyed by block "
-                    "start; missing blocks use w. w_by_band (t) = w per lead band; "
-                    "missing bands use w. w3 (t, h) = [hrrr, nbm, ecmwf] weights, "
-                    "w3_by_band (t) / w3_by_block (h); served when the ECMWF hourly is "
+                    "start; missing blocks use w. w_by_band (t, ws) = w per lead band; "
+                    "missing bands use w. w3 (t, h, ws) = [hrrr, nbm, ecmwf] weights, "
+                    "w3_by_band (t, ws) / w3_by_block (h); served when the ECMWF hourly is "
                     "present, else the 2-way w."}
     with open(OUT_PATH, "w") as fout:
         json.dump(out, fout, indent=2)

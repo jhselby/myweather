@@ -52,7 +52,7 @@ APPLIED = {
 # by myweather-refitter (analysis/terminal_blend_field_fit.py) into
 # runtime_tables/; a table older than FIELD_STALE_DAYS goes no-op and the
 # per-cell path below takes over again. Reversal: FIELD_APPLIED = frozenset().
-FIELD_APPLIED = frozenset({"t", "h", "sr", "wg"})
+FIELD_APPLIED = frozenset({"t", "h", "sr", "wg", "ws"})
 FIELD_TABLE_NAME = "terminal_blend_field_curated.json"
 FIELD_PATH = Path(__file__).resolve().parent.parent / "data" / FIELD_TABLE_NAME
 FIELD_STALE_DAYS = 3
@@ -94,7 +94,8 @@ def _valid_w3(w3):
 # (fit prior 14d, next day scored, 17 days) vs the shipped 2-way rule:
 # t +19.1% (halves +14.4/+23.0, 13/17 days), h +11.5% (+7.3/+16.2, 13/17).
 # Reversal: FIELD3_APPLIED = frozenset() and redeploy (2-way serves again).
-FIELD3_APPLIED = frozenset({"t", "h"})
+# v0.7.81: ws joins (band-keyed, 10-24 walk-forward +6.4% vs served, +9.3% vs NBM raw).
+FIELD3_APPLIED = frozenset({"t", "h", "ws"})
 
 
 def _field_spec(field):

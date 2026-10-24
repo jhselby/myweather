@@ -74,7 +74,7 @@ def fetch_daily_ecmwf():
         "daily": ",".join(DAILY_VARS),
         # v0.7.75 — hourly t/h ride the same call as the third input of the
         # field-level terminal blend (terminal_static_blend.field_weight3).
-        "hourly": "temperature_2m,relative_humidity_2m",
+        "hourly": "temperature_2m,relative_humidity_2m,wind_speed_10m",
         "models": "ecmwf_ifs025",
         "forecast_days": 10,
         **OM_UNITS,

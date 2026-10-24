@@ -826,7 +826,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # forecast_ecmwf / error_ecmwf.
         _ec = (ecmwf_hourly or {}).get(t[:13]) if isinstance(t, str) else None
         if _ec:
-            for _ef in ("t", "h"):
+            for _ef in ("t", "h", "ws"):
                 if _ec.get(_ef) is not None:
                     entry[f"{_ef}_ecmwf"] = _round_for(_ef, float(_ec[_ef]))
         # v0.6.431 — NWS gridpoint (NBM-derived) values at this hour.

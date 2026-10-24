@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.81 • October 24, 2026 (ECMWF joins the wind speed blend)</strong></summary>
+
+- Wind speed is now a blend of HRRR, NBM and ECMWF, with the mix set by how far ahead the forecast is, refit daily. Before this, wind speed from 6 hours out was just NBM, so it was no better than what a normal weather app shows.
+- Why: on the last 17 days, tested the way it would run live, the blend cut wind speed error by 6.4% against what we were serving and by 9.3% against NBM alone. It helped at every lead time, in both halves of the test.
+- It replaces the old wind blend that only applied in a few frontal conditions at 24–47 hours, which had been losing to NBM.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.80 • October 24, 2026 (fixed a stuck "update available" dot)</strong></summary>
 
 - Fixed the red "update available" dot on the refresh button that stayed lit after v0.7.76 and could not be cleared by refreshing.
