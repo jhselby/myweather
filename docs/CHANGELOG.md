@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.80 • October 24, 2026 (fixed a stuck "update available" dot)</strong></summary>
+
+- Fixed the red "update available" dot on the refresh button that stayed lit after v0.7.76 and could not be cleared by refreshing.
+- Cause: the update check compares the version shown in the app with the version file, and the version file had not been bumped since v0.7.75. The version file and the offline cache version now move together with the app version on every release.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.79 • October 24, 2026 (debug page: selector vs always-HRRR removed)</strong></summary>
 
 - Removed the "selector vs always-HRRR" line added in v0.7.78 from the debug scoreboard.
