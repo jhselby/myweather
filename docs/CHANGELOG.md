@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.76 • October 24, 2026 (persistence layer narrowed to 0–5 hours for cloud cover)</strong></summary>
+
+- Cloud cover (high) now uses the persistence correction only for the first 0–5 hours. Beyond that, the stack falls back to the layer below, which is the better forecast at longer leads.
+- Why: over the last 7 days, the persistence correction beat the layer below at 0–5 hours (11.1 vs 13.0 error) and lost badly at 6–11 hours (16.7 vs 10.2) and 12–23 hours (21.0 vs 12.1). Clear-sky hours at 12–23 hours were being forecast at 19–50% cloud. The 66-day view from September 21 shows the same band pattern.
+- Scoreboard: the 24-hour cascade for cloud cover was −99.6 points, almost all from this layer. This change targets that directly.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.75 • October 22, 2026 (ECMWF joins the temperature and humidity blend)</strong></summary>
 
 - Temperature and humidity are now a blend of three models instead of two: the corrected HRRR, the corrected NBM, and the European model (ECMWF IFS, raw). Today's temperature weights (HRRR / NBM / ECMWF): 0.85 / 0.05 / 0.10 for the next 0–5 hours, then about 0.30 / 0.00 / 0.70 at 6–23 hours and 0.15 / 0.10 / 0.75 at 24–47. Humidity splits more evenly, weighted by time of day. The weights are refit every morning. If ECMWF is missing for an hour, that hour falls back to the two-model blend.

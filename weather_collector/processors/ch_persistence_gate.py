@@ -53,6 +53,14 @@ ENABLED = True  # Flipped 2026-07-19 v0.6.358 after 7-day gate cleared + refresh
 # back to False; static _CELL_SKIP still holds the pre-existing 10 cells.
 CHP_CELL_GATE_ENABLED = True
 
+# v0.7.76 — chp narrowed to 0-5h. Persistence beats L6 at 0-5h and loses at
+# every longer lead: 7d paired rows chp vs L6 at 6-11h 16.7 vs 10.2 (+64%),
+# 12-23h 21.0 vs 12.1 (+74%); 0-5h 11.1 vs 13.0. The 66-day anchor (09-21,
+# [[project_chp_narrow_to_0_5h_watch]]) shows the same band pattern. Served
+# ch at 12-23h showed clear-sky hours at 19-50% cloud (10-22/23). Reversal:
+# set back to ("0-5", "6-11", "12-23", "24-47").
+CHP_LEAD_BANDS = ("0-5",)
+
 FIELD = "ch"
 HOURLY_KEY = "cloud_cover_high"
 
@@ -204,6 +212,8 @@ def _cell_fires(cells, regime, band):
     When `CHP_CELL_GATE_ENABLED`, the dynamic per-cell gate can additionally
     demote cells whose recent chp-vs-L6 performance says persistence loses."""
     if regime == "frontal":
+        return False
+    if band not in CHP_LEAD_BANDS:
         return False
     if (regime, band) in _CELL_SKIP:
         return False
