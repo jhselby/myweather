@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.78 • October 24, 2026 (debug page: selector vs always-HRRR)</strong></summary>
+
+- The debug page scoreboard now shows how the selector does against always using HRRR, over 7 days and 24 hours.
+- Why: the existing "routing" number also credits HRRR for beating NBM, so it can't tell whether the selector's own picks help. This one compares the selector's pick to HRRR alone on the same hours.
+- Today: 24 hours +19.2%, 7 days +9.7%. The 7-day temperature number is still −31% because the October 21–22 NBM cold-bust days are still inside that window.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.77 • October 24, 2026 (collector memory leak fixed)</strong></summary>
 
 - The data collector no longer runs out of memory overnight. It was being killed at its 2 GB limit four times in one night (02:47, 04:57, 06:47 and 09:37 UTC), which cut those updates short.

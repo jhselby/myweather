@@ -1682,6 +1682,24 @@
           </div>
         </div>
       </div>
+      <!-- v0.7.78 — selector skill vs always-HRRR. Routing above credits
+           HRRR-over-NBM too (baseline NBM); this line does not. -->
+      <div class="sb-num-row" style="margin-top:10px;">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-cell">
+            <div class="sb-num-sublbl">selector vs always-HRRR</div>
+            <div class="sb-num" data-cell="selhrrr7">—</div>
+          </div>
+        </div>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-cell">
+            <div class="sb-num-sublbl">selector vs always-HRRR</div>
+            <div class="sb-num" data-cell="selhrrr24">—</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4705,7 +4723,7 @@ async function renderScoreboardTilesMinimal() {
     if (!tileMean && !tileMed) return;
     const fields = _agg(LIFT_SCOPE);
     const _decomp = (win) => {
-      const rs = [], cs = [], ts = [];
+      const rs = [], cs = [], ts = [], hs = [];
       for (const f of fields) {
         const c = win[f];
         if (!c) continue;
@@ -4716,8 +4734,10 @@ async function renderScoreboardTilesMinimal() {
         rs.push(r);
         cs.push(cas);
         ts.push(t);
+        // v0.7.78 — selector vs always-HRRR raw (sel_vs_hrrr_pct, already published).
+        if (c.sel_vs_hrrr_pct != null) hs.push(c.sel_vs_hrrr_pct);
       }
-      return { rs, cs, ts };
+      return { rs, cs, ts, hs };
     };
     const _paintCells = (tile, mapping) => {
       if (!tile) return;
@@ -4735,6 +4755,7 @@ async function renderScoreboardTilesMinimal() {
     _paintCells(tileMean, {
       routing7:  _mean(d7.rs),   cascade7:  _mean(d7.cs),   total7:  _mean(d7.ts),
       routing24: _mean(d24.rs),  cascade24: _mean(d24.cs),  total24: _mean(d24.ts),
+      selhrrr7:  _mean(d7.hs),   selhrrr24: _mean(d24.hs),
     });
     // Median: per-column typical field. Not additive.
     _paintCells(tileMed, {
