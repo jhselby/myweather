@@ -8,7 +8,7 @@ deploy-collector:
 	  --trigger-http \
 	  --no-allow-unauthenticated \
 	  --timeout=1800s \
-	  --memory=2048MB \
+	  --memory=4096MB \
 	  --max-instances=1 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811,GEMINI_MODEL=gemini-2.5-flash-lite \
 	  --set-secrets=WU_API_KEY=wu-api-key:latest,PIRATE_WEATHER_API_KEY=PIRATE_WEATHER_API_KEY:latest,GEMINI_API_KEY=gemini-api-key:latest,EBIRD_API_KEY=ebird-api-key:latest,GROQ_API_KEY=groq-api-key:latest,TEMPEST_EMAIL=tempest-email:latest,TEMPEST_PASSWORD=tempest-password:latest,TEMPEST_API_KEY=tempest-api-key:latest,TEMPEST_FIREBASE_KEY=tempest-firebase-key:latest

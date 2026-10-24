@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.77 • October 24, 2026 (collector memory leak fixed)</strong></summary>
+
+- The data collector no longer runs out of memory overnight. It was being killed at its 2 GB limit four times in one night (02:47, 04:57, 06:47 and 09:37 UTC), which cut those updates short.
+- Cause: each update reads several large files, including a 21 MB forecast log. The memory was freed afterward, but the system kept holding on to it, so usage crept up and spiked by about 350 MB. The collector now hands that memory back after each large step. Forecasts and scores are unchanged.
+- After the fix, memory at the end of an update is about 130–180 MB instead of 500–700 MB, with a peak near 520 MB. The collector's memory limit is also raised from 2 GB to 4 GB for margin.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.76 • October 24, 2026 (persistence layer narrowed to 0–5 hours for cloud cover)</strong></summary>
 
 - Cloud cover (high) now uses the persistence correction only for the first 0–5 hours. Beyond that, the stack falls back to the layer below, which is the better forecast at longer leads.

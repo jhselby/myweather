@@ -3,6 +3,8 @@
 Wyman Cove Weather Station - Main Collector
 Orchestrates all data fetching and processing
 """
+import ctypes
+import gc
 import json
 import logging
 import math
@@ -412,6 +414,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     try:
         from .processors.cross_run_spread import stamp as stamp_cross_run_spread
         stamp_cross_run_spread(weather_data)
+        _release_freed_heap()
     except Exception as e:
         logging.warning(f"  ⚠  cross_run_spread stamp failed: {redact_secrets(e)}")
 
@@ -484,6 +487,17 @@ def _rss_mib():
         return -1
 
 
+def _release_freed_heap():
+    # glibc keeps freed heap pages in the process. The cross-run stamp parses the
+    # whole forecast_log.json (~21 MiB) each tick; its objects are freed on return
+    # but RSS stays ~350 MiB higher until malloc_trim hands the pages back.
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
+
+
 def main():
     """Main execution function."""
     logging.info("\n" + "=" * 60)
@@ -545,6 +559,7 @@ def main():
         tempest_data=fetched.tempest_data
     )
     logging.info(f"  ⏱  Build weather data: {time.time() - t0:.1f}s")
+    _release_freed_heap()
 
     # AI briefing — generates headline, wires to payload, records source status
     apply_briefing_to_weather_data(weather_data)
@@ -867,6 +882,7 @@ def main():
     recompute_derived_moisture_arrays(weather_data)
 
     # Upload weather data to GCS
+    _release_freed_heap()
     upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
     # Flush gate-firing records buffered by decay_apply / etc. this tick.
