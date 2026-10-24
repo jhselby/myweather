@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.79 • October 24, 2026 (debug page: selector vs always-HRRR removed)</strong></summary>
+
+- Removed the "selector vs always-HRRR" line added in v0.7.78 from the debug scoreboard.
+- Why: the scoreboard measures against what a normal weather source shows, which is NBM where NBM publishes the field and HRRR only where it doesn't. HRRR alone on a field NBM covers is not an alternative anyone uses, so the number answered no useful question.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.78 • October 24, 2026 (debug page: selector vs always-HRRR)</strong></summary>
 
 - The debug page scoreboard now shows how the selector does against always using HRRR, over 7 days and 24 hours.
