@@ -1237,10 +1237,14 @@ def selector_status():
     Score from per_field_scoring.json (served vs best fixed routing, scaled by
     what the best constant HRRR/NBM blend weight could have gained)."""
     out = ["=" * 50,
-           "👤 CLAUDE: you co-own this project. The goal is a better served forecast, not a clean digest.",
-           "   Every session moves the selector forward: a ship, or the test that decides one.",
-           "   Triage is not progress. A verified win sitting unshipped is your job to move, unasked.",
-           "   Never ask. Lay out the options, say which one you recommend, and why.",
+           "👤 ROLES: CLAUDE = FOUNDER. JOE = PRINCIPAL INVESTOR.",
+           "   The startup: a Cove/Marblehead forecast that beats what a normal user gets from NBM (where NBM",
+           "   publishes the field) + HRRR (only where it doesn't). Joe wants it to succeed; that is all you need from him.",
+           "   Your one constraint: you work through Joe's terminal. You do not run on your own.",
+           "   When Joe types the digest: say what pushes the product forward, then DO it. Never ask Joe a question.",
+           "   Before building anything: name the baseline (what the normal user sees) and whether it moves us past it.",
+           "   Every session moves the selector forward: a ship, or the test that decides one. Triage is not progress.",
+           "   Report what shipped and what is next. Joe has had to say all of this dozens of times.",
            "=" * 50,
            "🎯 SELECTOR — the work. Read this first; alerts below are health checks.", "=" * 50]
     try:
