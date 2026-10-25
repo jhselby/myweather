@@ -28,7 +28,7 @@ mixed. A band with n < MIN_BLOCK_N falls back to the field w.
 
 v0.7.75: ECMWF IFS (Open-Meteo ecmwf_ifs025) as a third input on t and h.
 `w3` = [w_hrrr, w_nbm, w_ecmwf] per field, plus `w3_by_band` (t) and
-`w3_by_block` (h). 10-22 walk-forward (fit prior 14d, next day scored,
+`w3_by_band` (h; v0.7.82). 10-22 walk-forward (fit prior 14d, next day scored,
 17 days) vs the shipped 2-way rule: t +19.1% (halves +14.4/+23.0, 13/17
 days), h +11.5% (halves +7.3/+16.2, 13/17). ECMWF errors for the fit come
 from Open-Meteo's previous-runs archive, using a run at least 24/48/72h
@@ -75,7 +75,7 @@ HRRR_DEFAULT = ("error_l4", "error_l3", "error_l2")
 NBM_KEYS = ("error_l3_nbm", "error_l2_nbm", "error_raw_nbm")
 
 E_VARS = {"t": "temperature_2m", "h": "relative_humidity_2m", "ws": "wind_speed_10m"}
-E_KEY = {"t": "band", "h": "block", "ws": "band"}
+E_KEY = {"t": "band", "h": "band", "ws": "band"}
 GRID3 = [(i / 20, j / 20, round(1 - (i + j) / 20, 2)) for i in range(21) for j in range(21 - i)]
 PREV_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 

@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.82 • October 25, 2026 (humidity blend now follows forecast distance)</strong></summary>
+
+- Humidity is still a blend of HRRR, NBM and ECMWF, but the mix now depends on how far ahead the forecast is instead of the time of day, refit daily.
+- Why: on the last 17 days, tested the way it would run live, this cut humidity error by 5.9% against the time-of-day mix, better in both halves of the window. HRRR humidity gets much worse with distance and the blend now leans on ECMWF there.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.81 • October 24, 2026 (ECMWF joins the wind speed blend)</strong></summary>
 
 - Wind speed is now a blend of HRRR, NBM and ECMWF, with the mix set by how far ahead the forecast is, refit daily. Before this, wind speed from 6 hours out was just NBM, so it was no better than what a normal weather app shows.
