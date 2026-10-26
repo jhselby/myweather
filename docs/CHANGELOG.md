@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.84 • October 26, 2026 (solar radiation: ECMWF logged, not yet used)</strong></summary>
+
+- The collector now records ECMWF's solar radiation forecast next to the other sources. Nothing shown in the app changes.
+- Why: tested on the last 30 days the way it would run live, adding ECMWF to the solar radiation blend cut error by 3.8–4.6%, but the same test on wind speed did not hold up live at 6–47 hours, so solar radiation waits for live rows before it is used.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.83 • October 26, 2026 (debug tile no longer lists fields with nothing to gain)</strong></summary>
 
 - The Selector Skill tile's "room to gain" line listed fields at 0.0% next to fields with real room. It now lists only fields with at least 2% room; the rest stay under "Nothing to gain".
