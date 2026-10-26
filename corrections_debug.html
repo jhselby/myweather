@@ -4787,7 +4787,7 @@ async function renderScoreboardTilesMinimal() {
       tile.appendChild(ng);
     }
     const none7 = fields.filter(f => pf7[f] && pf7[f].selector_headroom_pct != null && pf7[f].selector_score_pct == null);
-    const room7 = fields.filter(f => pf7[f] && pf7[f].selector_headroom_pct != null)
+    const room7 = fields.filter(f => pf7[f] && pf7[f].selector_headroom_pct != null && pf7[f].selector_headroom_pct >= 2.0)
       .sort((a, b) => pf7[b].selector_headroom_pct - pf7[a].selector_headroom_pct)
       .map(f => `${f} ${pf7[f].selector_headroom_pct.toFixed(1)}%`);
     ng.innerHTML = `7d room to gain from routing: ${room7.join(" · ") || "—"}` +

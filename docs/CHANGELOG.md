@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.83 • October 26, 2026 (debug tile no longer lists fields with nothing to gain)</strong></summary>
+
+- The Selector Skill tile's "room to gain" line listed fields at 0.0% next to fields with real room. It now lists only fields with at least 2% room; the rest stay under "Nothing to gain".
+
+</details>
+
+<details open>
 <summary><strong>v0.7.82 • October 25, 2026 (humidity blend now follows forecast distance)</strong></summary>
 
 - Humidity is still a blend of HRRR, NBM and ECMWF, but the mix now depends on how far ahead the forecast is instead of the time of day, refit daily.
