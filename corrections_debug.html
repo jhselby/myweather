@@ -9813,7 +9813,10 @@ load();
       for (const f of fields) {
         const cell = ((payload.lift_paired || {})[f] || {})[payload.days[i]];
         if (!cell || cell.lift_pct == null) continue;
-        scores.push(cell.lift_pct);
+        // Clip each field's daily lift to ±100% before averaging: a field whose
+        // public MAE is near zero on a day gives a ratio in the thousands (10-23
+        // ch −963% alone pulled the mean to −80 while the median was +4).
+        scores.push(Math.max(-100, Math.min(100, cell.lift_pct)));
       }
       if (scores.length >= 6) {
         const sorted = [...scores].sort((a, b) => a - b);
