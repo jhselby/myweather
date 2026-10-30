@@ -1271,8 +1271,13 @@ def selector_status():
     out.append(f"  7d (score: 100 = best blend rule fit on the prior 14d, 0 = best fixed routing, − = worse)")
     out.append(f"  {'field':5} {'score':>7} {'24h':>7} {'room':>6}  {'served':>7} {'fixed':>7} {'blend':>7}  rule")
     for head, f, x in rows:
+        # The score divides by headroom: at 24h a 5% headroom turns a 15% gap
+        # into −287. Under 10% headroom the 24h score is not a read, so show n/m.
+        w24_f = w24.get(f) or {}
+        w24_head = w24_f.get("selector_headroom_pct")
+        w24_score = "n/m".rjust(7) if (w24_head is not None and w24_head < 10.0) else num(w24_f.get("selector_score_pct"), "7.1f")
         out.append(f"  {f:5} {num(x.get('selector_score_pct'), '7.1f')} "
-                   f"{num((w24.get(f) or {}).get('selector_score_pct'), '7.1f')} {head:5.1f}%  "
+                   f"{w24_score} {head:5.1f}%  "
                    f"{num(x.get('chosen_prod_mae'), '7.2f')} {num(x.get('best_fixed_mae'), '7.2f')} "
                    f"{num(x.get('best_rule_mae'), '7.2f')}  {x.get('best_rule_kind') or '—'}")
     if flat:
