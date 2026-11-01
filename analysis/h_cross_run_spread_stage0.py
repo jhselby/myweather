@@ -149,7 +149,7 @@ def analyze_field(field, groups, test_start):
 
     lo_m = per_bin[0]["test_mean_abs_err"]
     hi_m = per_bin[4]["test_mean_abs_err"]
-    ratio = hi_m / lo_m if lo_m and lo_m > 0 else None
+    ratio = hi_m / lo_m if lo_m and lo_m > 0 and hi_m is not None else None
 
     # Monotone-ish check: allow one small dip; require net rise
     rises = sum(1 for i in range(4)
