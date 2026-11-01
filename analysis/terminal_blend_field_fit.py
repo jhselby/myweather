@@ -78,6 +78,9 @@ E_VARS = {"t": "temperature_2m", "h": "relative_humidity_2m", "ws": "wind_speed_
 E_KEY = {"t": "band", "h": "band", "ws": "band"}
 GRID3 = [(i / 20, j / 20, round(1 - (i + j) / 20, 2)) for i in range(21) for j in range(21 - i)]
 PREV_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
+# 11-05 gate: True fits ECMWF on the pair log's live error_ecmwf (fresh runs) where a row has
+# one, archive otherwise. Stays False until the walk-forward on 14d of pair-log rows decides.
+ECMWF_FROM_PAIR_LOG = False
 
 
 def _ecmwf_day(lead):
@@ -178,8 +181,12 @@ def fit():
             if f in E_VARS and ehist and lead is not None and r.get("observed") is not None and len(vt) >= 13:
                 fe = (ehist.get(_ecmwf_key(vt)) or {}).get(f)
                 fe = fe[_ecmwf_day(lead)] if fe else None
-                if fe is not None:
+                ee = None
+                if ECMWF_FROM_PAIR_LOG and r.get("error_ecmwf") is not None:
+                    ee = float(r["error_ecmwf"])
+                elif fe is not None:
                     ee = float(fe) - float(r["observed"])
+                if ee is not None:
                     sub = band if E_KEY[f] == "band" else (
                         str(int(vt[11:13]) // BLOCK_HOURS * BLOCK_HOURS) if len(vt) >= 13 else None)
                     e3.setdefault((f, None), []).append((eh, en, ee))

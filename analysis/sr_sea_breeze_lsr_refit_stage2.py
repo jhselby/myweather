@@ -241,8 +241,8 @@ def axis_key(r, label):
 def main():
     rows = load_rows()
     n_total = len(rows)
-    if n_total == 0:
-        print("No sea_breeze sr rows found.")
+    if n_total < 2:
+        print(f"Too few sea_breeze sr rows to split train/test (n={n_total}); no verdict.")
         return
 
     split = int(n_total * 0.6)

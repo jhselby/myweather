@@ -1,7 +1,7 @@
 import json, sys, collections
 sys.path.insert(0,'.')
 from weather_collector.processors.regime_classifier import classify_synoptic_regime as cls
-P='/Users/josephselby/.cache/myweather/forecast_error_log.jsonl'
+import os; P=os.path.expanduser('~/.cache/myweather/forecast_error_log.jsonl')
 # pass 1: per (run,valid) gather HRRR-side (pre-swap) value + selector source for wd ws t cc
 pre=collections.defaultdict(dict); src=collections.defaultdict(dict); rows=[]
 def hrrr(r):

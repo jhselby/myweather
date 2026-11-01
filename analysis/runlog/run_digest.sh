@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run every analysis/*.py, extract verdict/headline lines, write one digest
 # with an executive summary at the top (deltas vs prior run).
-cd /Users/josephselby/Documents/myweather
+cd "$(cd "$(dirname "$0")/../.." && pwd)"
 TOOL_DIR=analysis/runlog          # tracked tooling
 LOG_DIR=analysis/output/runlog    # gitignored artifacts
 DIGEST=analysis/output/DIGEST.txt
