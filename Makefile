@@ -148,6 +148,11 @@ check-stale:
 # locally (~5-10 min), uploads to GCS (~5 min), deletes the HWM sidecar
 # so the next publisher-CF tick reseeds from the fresh base.
 backstamp-rebuild-and-upload:
+	@if [ "$(CONFIRM_DROP_OLD_ROWS)" != "1" ]; then \
+	  echo "REFUSING: the rebuild covers only the raw pair log (30 days) and overwrites the bucket file."; \
+	  echo "Rows older than the raw log (2026-08-25..2026-10-01) exist only in the bucket copy and would be lost."; \
+	  echo "Back up gs://myweather-data/forecast_error_log_backstamped.jsonl first, then rerun with CONFIRM_DROP_OLD_ROWS=1."; \
+	  exit 1; fi
 	python3 -m analysis.nbm_backstamp
 	gsutil -h "Cache-Control:no-cache" cp \
 	  ~/.cache/myweather_nbm_backstamp/forecast_error_log_backstamped.jsonl \
