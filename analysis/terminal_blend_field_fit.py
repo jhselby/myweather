@@ -84,6 +84,19 @@ def _ecmwf_day(lead):
     return 1 if lead <= 17 else 2 if lead <= 41 else 3
 
 
+# The live ECMWF hourly (forecast_snapshot ecmwf_hourly, read by the served blend
+# and stamped as forecast_ecmwf in the pair log) sits one hour behind the archive's
+# valid-hour label: live forecast_ecmwf at valid hour T equals archive T-1h (mean
+# |diff| 0.4 vs 1.4 for t, 4.9 vs 45 for sr, 10-26..10-31). Join the archive on the
+# live convention so the fit weights the ECMWF value the served blend receives.
+ECMWF_LIVE_LAG_H = 1
+
+
+def _ecmwf_key(valid_time):
+    t = datetime.strptime(valid_time[:13], "%Y-%m-%dT%H") - timedelta(hours=ECMWF_LIVE_LAG_H)
+    return t.strftime("%Y-%m-%dT%H")
+
+
 def ecmwf_history(start, end):
     """{"YYYY-MM-DDTHH": {field: [None, day1, day2, day3]}} in local time,
     from Open-Meteo's previous-runs archive. {} on any failure."""
@@ -162,8 +175,8 @@ def fit():
                     bs[i] += abs(w * eh + (1.0 - w) * en)
             lead = r.get("lead_h")
             band = next((b for b, lo, hi in BANDS if lead is not None and lo <= lead < hi), None)
-            if f in E_VARS and ehist and lead is not None and r.get("observed") is not None:
-                fe = (ehist.get(vt[:13]) or {}).get(f)
+            if f in E_VARS and ehist and lead is not None and r.get("observed") is not None and len(vt) >= 13:
+                fe = (ehist.get(_ecmwf_key(vt)) or {}).get(f)
                 fe = fe[_ecmwf_day(lead)] if fe else None
                 if fe is not None:
                     ee = float(fe) - float(r["observed"])

@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.85 • November 1, 2026 (blend weights now fit to the ECMWF timing the app receives)</strong></summary>
+
+- The blend weights for temperature, humidity and wind were fit against ECMWF values one hour off from the ones the app actually uses. The fit now lines up with the live feed.
+- Tested the way it runs live, 20 days, fit on the prior 14 days: temperature error at 6–11h down 7%, 12–23h down 8%, 24–47h down 4%. Humidity and wind down 1–2%.
+- Solar radiation is unchanged: lining up the data removed its ECMWF gain, so it stays on the current blend.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.84 • October 26, 2026 (solar radiation: ECMWF logged, not yet used)</strong></summary>
 
 - The collector now records ECMWF's solar radiation forecast next to the other sources. Nothing shown in the app changes.
