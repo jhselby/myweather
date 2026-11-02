@@ -119,6 +119,8 @@ def _gather_current_observation(weather_data, current_hour_iso):
         "corrected_temp": hyp.get("corrected_temp"),
         "temp_stations": hyp.get("station_temp"),
         "humidity_stations": hyp.get("station_humidity"),
+        "wind_stations": cur.get("wind_speed_stations"),
+        "gust_stations": cur.get("wind_gusts_stations"),
         "model_t": hyp.get("model_temp"),
         "kalman_gain": hyp.get("kalman_gain"),
         "bias_std": hyp.get("bias_std"),

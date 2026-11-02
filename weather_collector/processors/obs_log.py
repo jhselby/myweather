@@ -53,6 +53,8 @@ def update_obs_temp_log(
     kalman_gain=None,
     bias_std=None,
     n_stations=None,
+    wind_stations=None,
+    gust_stations=None,
 ):
     """Append one 10-min observed snapshot. Returns the post-write log dict.
 
@@ -117,6 +119,10 @@ def update_obs_temp_log(
         entry["bias_std"] = round(bias_std, 2)
     if n_stations is not None:
         entry["n_stations"] = int(n_stations)
+    if wind_stations is not None:
+        entry["wind_mph_stations"] = round(wind_stations, 1)
+    if gust_stations is not None:
+        entry["gust_mph_stations"] = round(gust_stations, 1)
 
     entries.append(entry)
     entries.sort(key=lambda e: e.get("time", ""))

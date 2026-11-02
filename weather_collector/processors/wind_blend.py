@@ -230,6 +230,18 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data,
             selected_speed  = max_speed_entry["speed"]
             wind_aggregation = f"flat_max ({len(directional_octants)} octants - sparse)"
 
+        # Station-only truth candidate (logged, never served): same per-octant
+        # max -> median over the directional PWS octants, with the model, KBVY,
+        # sanity cap and airport floor left out. None when < 3 octants.
+        if len(directional_octants) >= 3:
+            current["wind_speed_stations"] = round(statistics.median(
+                [max(s["speed"] for s in oct_speed[o]) for o in directional_octants]), 1)
+            current["wind_gusts_stations"] = round(statistics.median(
+                [max(g["gust"] for g in oct_gust[o]) for o in directional_octants]), 1)
+        else:
+            current["wind_speed_stations"] = None
+            current["wind_gusts_stations"] = None
+
         # Sanity cap: if the WU sensor network strongly disagrees with the
         # chosen speed, the model is likely wrong-high — trust the network.
         wu_speed = wu_data.get("wind_speed_mph") if wu_data else None

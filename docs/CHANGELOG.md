@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.87 • November 2, 2026 (logging station-only wind and gusts)</strong></summary>
+
+- The "observed" wind and gust we score against include the model's own value and the two airports in the pool the app picks from, then a cap and an airport floor. That pulls the score toward the model and away from the cove's own stations.
+- Each reading now also logs a wind and gust value from the cove stations alone. Forecast-vs-observed rows for wind speed and gusts carry it as a second "observed" column.
+- Nothing served or scored changes yet.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.86 • November 2, 2026 (logging the station-only temperature and humidity next to the scored ones)</strong></summary>
 
 - The "observed" temperature and humidity we score against are the station network blended with the model's own value (40–90% station, depending on how many stations agree). That makes short-lead scores look better than they are.
