@@ -300,6 +300,9 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["weighted_bias"] = round(weighted_bias, 2)
             hyperlocal["kalman_gain"] = round(K, 2)
             hyperlocal["corrected_temp"] = round(corrected_temp, 1)
+            # K=1 station aggregate (same weights/trim/offsets, no model shrink):
+            # the model-free truth candidate logged beside the shrunk value.
+            hyperlocal["station_temp"] = round(model_t + weighted_bias, 1)
             hyperlocal["stations_used"] = stations_used
             hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
             hyperlocal["confidence"] = confidence
@@ -332,6 +335,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                     hyperlocal["kalman_gain_humidity"] = round(K_h, 2)
                     hyperlocal["stations_used_humidity"] = stations_used_humidity
                     hyperlocal["corrected_humidity"] = round(corrected_humidity, 1)
+                    hyperlocal["station_humidity"] = round(station_mean_h, 1)
                     hyperlocal["bias_humidity"] = round(corrected_humidity - model_h, 1)
                 else:
                     hyperlocal["corrected_humidity"] = round(station_mean_h, 1)

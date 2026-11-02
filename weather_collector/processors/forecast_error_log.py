@@ -262,6 +262,23 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 "observed": round(obs_f, 3),
                 "error": round(forecast - obs_f, 3),
             }
+            # Model-free truth candidate (K=1 station aggregate), t/h/dp only.
+            _os = None
+            if short == "t":
+                _os = obs_entry.get("temp_stations")
+            elif short == "h":
+                _os = obs_entry.get("humidity_stations")
+            elif short == "dp":
+                _ts, _hs = obs_entry.get("temp_stations"), obs_entry.get("humidity_stations")
+                if _ts is not None and _hs is not None:
+                    from ..utils import magnus_dew_point_f
+                    _os = magnus_dew_point_f(_ts, _hs)
+            if _os is not None:
+                pair["observed_stations"] = round(float(_os), 3)
+                pair["model_t_obs"] = obs_entry.get("model_t")
+                pair["obs_kalman_gain"] = obs_entry.get("kalman_gain")
+                pair["obs_bias_std"] = obs_entry.get("bias_std")
+                pair["obs_n_stations"] = obs_entry.get("n_stations")
             # v0.6.25: per-layer forecast values + errors when the snapshot
             # captured them (post-deploy snapshots only). Pre-v0.6.25 snapshots
             # only have the top-level short keys, no _lN suffixes — those pairs

@@ -117,6 +117,12 @@ def _gather_current_observation(weather_data, current_hour_iso):
     precip_amount_in = max(pr_rates) if pr_rates else None
     return {
         "corrected_temp": hyp.get("corrected_temp"),
+        "temp_stations": hyp.get("station_temp"),
+        "humidity_stations": hyp.get("station_humidity"),
+        "model_t": hyp.get("model_temp"),
+        "kalman_gain": hyp.get("kalman_gain"),
+        "bias_std": hyp.get("bias_std"),
+        "n_stations": hyp.get("stations_used"),
         "precip_in": _current_hour_precip_in(weather_data, current_hour_iso),
         "peak_gust_mph": hyp.get("corrected_wind_gusts") or cur.get("wind_gusts"),
         "wind_mph": hyp.get("corrected_wind_speed") or cur.get("wind_speed"),

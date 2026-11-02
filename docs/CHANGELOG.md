@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.86 • November 2, 2026 (logging the station-only temperature and humidity next to the scored ones)</strong></summary>
+
+- The "observed" temperature and humidity we score against are the station network blended with the model's own value (40–90% station, depending on how many stations agree). That makes short-lead scores look better than they are.
+- Each reading now also logs the pure station-network value, plus the model value and the blend weight used. Forecast-vs-observed rows for temperature, humidity and dew point carry it as a second "observed" column.
+- Nothing served or scored changes yet. After a few weeks we can score both ways and refit on the cleaner one.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.85 • November 1, 2026 (blend weights now fit to the ECMWF timing the app receives)</strong></summary>
 
 - The blend weights for temperature, humidity and wind were fit against ECMWF values one hour off from the ones the app actually uses. The fit now lines up with the live feed.

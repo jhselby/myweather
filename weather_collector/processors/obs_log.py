@@ -47,6 +47,12 @@ def update_obs_temp_log(
     cloud_mid=None,
     cloud_high=None,
     precip_today_in=None,
+    temp_stations=None,
+    humidity_stations=None,
+    model_t=None,
+    kalman_gain=None,
+    bias_std=None,
+    n_stations=None,
 ):
     """Append one 10-min observed snapshot. Returns the post-write log dict.
 
@@ -97,6 +103,20 @@ def update_obs_temp_log(
         entry["cloud_high"] = round(cloud_high)
     if precip_today_in is not None:
         entry["precip_today_in"] = round(precip_today_in, 3)
+
+    # Truth audit: K=1 station aggregates + the L2 shrink inputs.
+    if temp_stations is not None:
+        entry["temp_stations"] = round(temp_stations, 1)
+    if humidity_stations is not None:
+        entry["humidity_stations"] = round(humidity_stations, 1)
+    if model_t is not None:
+        entry["model_t"] = round(model_t, 1)
+    if kalman_gain is not None:
+        entry["kalman_gain"] = round(kalman_gain, 2)
+    if bias_std is not None:
+        entry["bias_std"] = round(bias_std, 2)
+    if n_stations is not None:
+        entry["n_stations"] = int(n_stations)
 
     entries.append(entry)
     entries.sort(key=lambda e: e.get("time", ""))
