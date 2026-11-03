@@ -176,7 +176,8 @@ def main():
             if c is None:
                 continue
             print(f"{field:<6} {band:<8} {c['stable_mae']:>10.4f} {c['transition_mae']:>12.4f} "
-                  f"{c['premium_abs']:>+10.4f} {c['premium_pct']:>+9.2f}%  "
+                  f"{c['premium_abs']:>+10.4f} "
+                  + (f"{c['premium_pct']:>+9.2f}%" if c['premium_pct'] is not None else f"{'n/a':>10}") + "  "
                   f"{c['n_stable']:>8,} / {c['n_transition']:>8,}")
         print()
 
