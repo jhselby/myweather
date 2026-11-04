@@ -225,6 +225,13 @@ def fetch_tempest():
 
     meta["status"] = "ok"
     meta["stations_fetched"] = len(results)
+    meta["stations_expected"] = len(TEMPEST_STATIONS)
+    meta["stations_valid"] = sum(1 for r in results if r["valid"])
     meta["best_station"] = results[0]["station_name"]
+    # Tempest is the only station feed (WU key throttled since ~10-07). Flag a
+    # thin run so the digest sentry and logs show it the same day.
+    if meta["stations_valid"] < 0.75 * len(TEMPEST_STATIONS):
+        meta["status"] = "degraded"
+        logging.error(f"  ⚠  Tempest degraded: {meta['stations_valid']}/{len(TEMPEST_STATIONS)} valid stations")
 
     return {"best": results[0], "stations": results}, meta

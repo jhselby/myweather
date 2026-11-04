@@ -856,6 +856,31 @@ def nbm_skip_add_summary():
     return confirmed, fresh, stale
 
 
+def tempest_health_summary():
+    """Alert line (or None) when the live Tempest feed is down or thin. Tempest
+    is the only station source (WU throttled since ~10-07) and L2 depends on it."""
+    import gzip
+    try:
+        from analysis._cache import cached_path
+        raw = open(cached_path("https://data.wymancove.com/weather_data.json", max_age_hours=0.5), "rb").read()
+        if raw[:2] == b"\x1f\x8b":
+            raw = gzip.decompress(raw)
+        doc = json.loads(raw)
+    except Exception as e:
+        return f"  ⚠ Tempest sentry: could not read live weather_data ({type(e).__name__})"
+    src = (doc.get("sources") or {}).get("tempest") or {}
+    stations = (doc.get("tempest") or {}).get("stations") or []
+    valid = sum(1 for s in stations if s.get("valid"))
+    expected = src.get("stations_expected") or 19
+    ages = sorted(s["age_minutes"] for s in stations if s.get("age_minutes") is not None)
+    med_age = ages[len(ages) // 2] if ages else None
+    if "tempest" in (doc.get("stale_sources") or []) or src.get("status") == "error":
+        return f"  ★ Tempest feed DOWN ({src.get('error') or 'stale fallback'}) — L2 has no station input"
+    if valid < 0.75 * expected or (med_age is not None and med_age > 30):
+        return f"  ⚠ Tempest feed thin: {valid}/{expected} valid, median age {med_age} min"
+    return None
+
+
 def marine_layer_anomaly_summary():
     """Return (line, suppression_entry_or_None). `line` is the alert text or None
     if no alert. If a suppression matches, the alert routes to the Suppressed
@@ -1812,6 +1837,11 @@ def main():
         for line in add_stale:
             out.append(line)
     out.append("")
+
+    tp_line = tempest_health_summary()
+    if tp_line:
+        out.append(tp_line)
+        out.append("")
 
     ml_line, ml_suppression = marine_layer_anomaly_summary()
     ml_suppressed_line = None

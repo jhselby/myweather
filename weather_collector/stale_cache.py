@@ -15,7 +15,7 @@ PREV_GCS_PATH = "weather_data.json"
 # source fetch failed. New top-level sources need to be added here.
 STALE_FALLBACK_KEYS = [
     "pirate_weather", "kbos", "kbvy", "wu_stations",
-    "nws_gridpoints", "tides", "buoy", "sunset_directional",
+    "nws_gridpoints", "tides", "buoy", "sunset_directional", "tempest",
 ]
 
 

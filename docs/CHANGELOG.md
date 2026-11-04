@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.88 • November 4, 2026 (Tempest is now the only station feed, so it gets a health check)</strong></summary>
+
+- The Weather Underground key has been throttled since about October 7, so every station reading now comes from the 19 Tempest stations. Ten weeks of forecast-vs-observed rows show the short-lead station correction (the "L2" mesonet layer) gained the same with and without WU, so WU is no longer needed.
+- Tempest now keeps its last good reading if a fetch fails, and a run with fewer than about three-quarters of the stations marks itself "degraded".
+- The daily digest has a Tempest line that flags a down or thin feed the same day.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.87 • November 2, 2026 (logging station-only wind and gusts)</strong></summary>
 
 - The "observed" wind and gust we score against include the model's own value and the two airports in the pool the app picks from, then a cap and an airport floor. That pulls the score toward the model and away from the cove's own stations.
