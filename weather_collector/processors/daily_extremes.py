@@ -22,6 +22,17 @@ from .obs_log import update_obs_temp_log
 TZ = pytz.timezone("America/New_York")
 
 
+def _tempest_precip_rates_in_hr(weather_data):
+    """Fresh valid Tempest stations' precip rate in in/hr (the Tempest field is a
+    1-minute accumulation, so x60). Empty list when none report."""
+    rates = []
+    for st in ((weather_data.get("tempest") or {}).get("stations") or []):
+        if (st.get("valid") is not False and st.get("precip_rate_in") is not None
+                and not ((st.get("age_minutes") or 0) > 10)):
+            rates.append(st["precip_rate_in"] * 60)
+    return rates
+
+
 def _current_hour_precip_in(weather_data, current_hour_iso):
     """Observed precip rate from WU rain gauges (real), falling back to
     the forecast hourly precipitation array (already in inches — OM_UNITS
@@ -30,6 +41,16 @@ def _current_hour_precip_in(weather_data, current_hour_iso):
     wu_rate = weather_data.get("wu_stations", {}).get("precip_rate_in")
     if wu_rate is not None:
         return wu_rate
+    # WU dead since 2026-10-21: use the Tempest network before the forecast
+    # fallback, otherwise the observed precip is the model's own forecast.
+    # Same wet rule as the app/briefing: >=3 wet stations and >=25% of those
+    # reporting, then the median wet rate; otherwise dry (0.0).
+    tp = _tempest_precip_rates_in_hr(weather_data)
+    if len(tp) >= 3:
+        pos = sorted(r for r in tp if r > 0)
+        if len(pos) >= 3 and len(pos) >= 0.25 * len(tp):
+            return pos[len(pos) // 2]
+        return 0.0
     times = weather_data["hourly"].get("times", [])
     precip_in = weather_data["hourly"].get("precipitation", [])
     if current_hour_iso in times:
@@ -114,6 +135,7 @@ def _gather_current_observation(weather_data, current_hour_iso):
     wu = weather_data.get("wu_stations") or {}
     pr_rates = [s.get("precip_rate_in") for s in (wu.get("stations") or [])
                 if s.get("precip_rate_in") is not None]
+    pr_rates = pr_rates + _tempest_precip_rates_in_hr(weather_data)
     precip_amount_in = max(pr_rates) if pr_rates else None
     return {
         "corrected_temp": hyp.get("corrected_temp"),

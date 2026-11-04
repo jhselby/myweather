@@ -235,6 +235,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         stamp_cluster_spread(weather_data, wu_data, _gcs, BUCKET)
     except Exception as e:
         logging.warning(f"  ⚠  cluster_spread skipped: {e}")
+    try:
+        from .processors.cluster_spread import stamp_and_log_tempest
+        stamp_and_log_tempest(weather_data, tempest_data, _gcs, BUCKET)
+    except Exception as e:
+        logging.warning(f"  ⚠  cluster_spread_tempest skipped: {e}")
 
     # v0.6.402: stamp_state MUST run before add_corrected_hourly_arrays because
     # the pr L2 regime gate (v0.6.401) reads derived.state.regime_synoptic to

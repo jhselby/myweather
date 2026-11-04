@@ -2178,7 +2178,7 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 only <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(APCP deferred pending unit audit)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> <strong style="color:#e07272;">No truth since the WU feed died (2026-10-21): the scoreboard shows n=0 for pa on 7d / 24h / 12h.</strong> The observed pa in <code>daily_extremes.py</code> reads <code>wu_stations</code> only, with no Tempest fallback. Open.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> <strong style="color:#e0a070;">No truth from 2026-10-21 to 11-04 (scoreboard n=0): observed pa read WU only.</strong> v0.7.90 adds Tempest (max fresh station rate, x60 to in/hr). pa rows score again as rain days accrue.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
@@ -2261,6 +2261,7 @@
         <li><strong>t 6–11h live read:</strong> the served 3-way blend loses to HRRR by 5–15% at 6–11h on the live rows (coin-flip by day; walk-forward 3-way 1.544 vs HRRR 1.646). v0.7.75 is on HOLD, not reverted; re-read 11-04 / 11-05.</li>
         <li><strong>~11-10 onward — holdout verdicts:</strong> <code>holdout_tracker.py</code> reports "not evaluable" until ≥ 8 holdout days (valid day ≥ 11-03); first possible ship window ~11-17.</li>
         <li><strong>~11-17 / 11-20 — truth audit rescore:</strong> score served / HRRR / NBM / ECMWF on both truths per band; ws ECMWF diurnal bias (the only per-model bias test that cleared lo&gt;0, +6.8%) on <code>wind_mph_stations</code>; apply the 2h-onward station-truth grading for L2 and the short-lead layers; refit blend/selector on <code>observed_stations</code> only if rankings or weights move.</li>
+        <li><strong>~11-19 — C1b revival:</strong> refit the cluster-spread cuts on <code>cluster_spread_tempest_log.json</code> (needs 14+ days from the v0.7.90 deploy), then point the confidence layer at it.</li>
         <li><strong>Watch — h L2 at 2–5h:</strong> daily gain swings −41% to +45% (14 days, 10-22 to 11-04); +14.9% pooled on the 13 Tempest-only days vs +25.8% with WU. Noise at this n; recheck with the station-truth rows.</li>
         <li><strong>Backups:</strong> 11-08 first weekly bucket copy (check <code>backup_last_ok</code> marker); 12-06 next pair-log archive snapshot.</li>
       </ul>
@@ -3110,7 +3111,7 @@
         <li><strong>t, dp, h, ws, wg, pr</strong>: station network within ~2.5 mi (Tempest only since the WU feed died 2026-10-21; 19 configured, ~18 valid), per-station Kalman offsets, then shrunk toward the model: <code>model_t + K × weighted bias</code>, so the scored value is partly the model (11-02 truth audit: 40–90% station). From 2026-11-02 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp, ws, wg; use it to grade layers that use the stations (L2) from lead 2h on.</li>
         <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
         <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
-        <li><strong>pa</strong>: max precip rate across stations (patchy-rain-aware). <code>daily_extremes.py</code> reads <code>wu_stations</code> for this; the scoreboard shows pa n=0 over 7d / 24h / 12h, so pa has had no truth since the WU feed died (2026-10-21); the code path has no Tempest fallback.</li>
+        <li><strong>pa</strong>: max precip rate across stations (patchy-rain-aware). <code>daily_extremes.py</code> reads <code>wu_stations</code> for this; pa had no truth from the WU outage (2026-10-21) until v0.7.90, which reads Tempest too. The observed current-hour precip (the pp truth) also fell back to the model's own forecast while WU was dark; v0.7.90 uses the Tempest network first (same wet rule as the app: at least 3 wet stations and 25% of those reporting).</li>
         <li><strong>pp</strong>: binary — any measurable rain this hour (0 or 100).</li>
         <li><strong>wd</strong>: station wind_direction, circular error.</li>
       </ul>
@@ -3250,7 +3251,7 @@
   <h4 style="color:#4ad29a;margin-top:16px;margin-bottom:6px;">Group A — C1 multi-axis confidence extension</h4>
   <div class="meta-line" style="margin-bottom:8px;">Individual axes. Five join the multi-axis Stage 4 calibration (C1a/b/c/f/e); C1h + C1d compose as marginal-premium tables (kept off the join to avoid cell-dilution). Stack-level status in C1 confidence stack card above.</div>
   <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
-    <li><strong>C1b</strong> Station-cluster disagreement — SHIPPED 2026-06-20 v0.6.149. <span style="color:#e0a070;">⚠ dark since the WU feed died (2026-10-21): <code>cluster_spread.py</code> builds the clusters from WU stations only, and <code>cluster_spread_log.json</code> has no entries after 10-21. Not yet rewired to Tempest.</span></li>
+    <li><strong>C1b</strong> Station-cluster disagreement — SHIPPED 2026-06-20 v0.6.149. <span style="color:#e0a070;">⚠ dark since the WU feed died (2026-10-21): the WU-cluster spread (<code>cluster_spread_log.json</code>) has no entries after 10-21, so the live axis is silent. v0.7.90 logs a Tempest-cluster spread (west / central / east by longitude) to <code>cluster_spread_tempest_log.json</code> and stamps <code>cluster_spread_tempest</code>. It is a different measure, so the confidence layer does NOT read it: its Q1/Q23/Q4 cuts must be refit on 14+ days of the new log (earliest ~11-19) before the axis comes back.</span></li>
     <li><strong>C1c</strong> Pressure-tendency regime — SHIPPED 2026-06-20.</li>
     <li><strong>C1f</strong> precip_fc&gt;0 — SHIPPED 2026-06-24 v0.6.215.</li>
     <li><strong>C1e</strong> Hours-since-front — SHIPPED 2026-07-01 v0.6.272 (post &lt;24h vs baseline ≥24h from <code>frontal_events_log.json</code>).</li>

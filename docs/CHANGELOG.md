@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.90 • November 4, 2026 (rain and station-spread readings no longer depend on Weather Underground)</strong></summary>
+
+- Precipitation amount had no observed value from October 21, when the Weather Underground feed stopped, because the app only read Weather Underground for it. It now also reads the Tempest stations (highest fresh reading), so precipitation amount scores again as rain days accrue.
+- The observed rain for the current hour (what the rain-chance score is graded against) fell back to the model's own forecast while Weather Underground was dark. It now uses the Tempest network first, with the same wet rule the app uses: at least 3 wet stations and 25% of those reporting.
+- The station-disagreement signal (C1b) was silent since October 21. A Tempest version (stations grouped west, central and east by longitude) now logs to its own file. It is a different measure, so the confidence layer does not read it yet; its cut points need 14 or more days of the new log first (about November 19).
+- Nothing served changes. Observed precipitation and the rain-chance grade change.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.89 • November 4, 2026 (debug page rebuilt to current)</strong></summary>
 
 - The debug page had not been brought current since October 9 and was missing every ship from v0.7.38 to v0.7.88. The Current state block, Recent activity, the per-field status table, the L1, L2, L3 and L4 text, the "Observed per field" definitions and the open-watch list were rewritten from the code, the changelog and the notes. The old October 9 Current state and Recent activity are kept in the Archive.
