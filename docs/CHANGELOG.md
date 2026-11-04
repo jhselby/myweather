@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.91 • November 4, 2026 (the same forecast scored on both truths)</strong></summary>
+
+- The score we grade the forecast against is the station reading pulled toward the model, which flatters any forecast that stays close to the model. A new hourly job, and a table on the debug page, now score the same served forecast against both that and the station-only reading, so the difference is visible every day.
+- First read (November 2 to 4, three days): temperature's lead over raw NBM is 16.8% on the old truth and 10.9% on the station truth, so about 5.9 points of it was the flattery. Wind speed goes the other way (−16.7% to −10.2%). Humidity, dew point and gusts barely move.
+- Leads 0 and 1 hour are split out: the station layer's apparent gain there (50% to 80%) is circular, because the correction and the truth are the same reading.
+- Nothing served changes. The scoreboard tiles still use the old truth until the station-only column has enough history.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.90 • November 4, 2026 (rain and station-spread readings no longer depend on Weather Underground)</strong></summary>
 
 - Precipitation amount had no observed value from October 21, when the Weather Underground feed stopped, because the app only read Weather Underground for it. It now also reads the Tempest stations (highest fresh reading), so precipitation amount scores again as rain days accrue.

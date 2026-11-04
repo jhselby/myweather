@@ -68,6 +68,10 @@ PUBLISHERS = [
     # is the blender's shadow forecast beating what the selector served?
     # Debug page reads the JSON for the L1 blender status tile.
     "l1_blender_shadow_verify",
+    # Dual-truth scoring (v0.7.91): the same served forecast graded on the shrunk
+    # `observed` and on model-free `observed_stations`, with the nowcast (0-1h)
+    # split out. Debug page reads truth_compare.json for the truth tile.
+    "truth_compare",
 ]
 
 

@@ -2210,11 +2210,39 @@
     <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
       <ul style="margin:0 0 0 16px;padding:0;">
         <li><strong>Scored truth is not model-free.</strong> The pair-log <code>observed</code> for t/h/dp/ws/wg is the station network shrunk toward the model: <code>model_t + K × weighted station bias</code> (K 0.4 / 0.65 / 0.9). The 11-02 audit put it at 40–90% station, the rest model. That flatters any layer that stays close to the model.</li>
-        <li><strong>Model-free truth now exists.</strong> Since 11-02 18:07 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp (v0.7.86) and ws, wg (v0.7.87). Nothing scored or served has switched to it yet.</li>
-        <li><strong>L2 is graded on the same stations that feed it.</strong> At lead 0–1h the correction and the answer key are the same reading, so L2's gain there is a tautology (95–100% on the old truth). Rule adopted 11-04, <em>not yet applied</em>: score L2 and the short-lead layers on <code>observed_stations</code> from lead 2h on and label 0–1h "nowcast". Apply when <code>observed_stations</code> has history (~11-17 / 11-20 rescore). See L2 below for what L2 is actually worth.</li>
+        <li><strong>Model-free truth now exists.</strong> Since 11-02 18:07 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp (v0.7.86) and ws, wg (v0.7.87). The scoreboard tiles above still grade on the shrunk truth; the table below grades the same rows on both so the gap is visible (v0.7.91).</li>
+        <li><strong>L2 is graded on the same stations that feed it.</strong> At lead 0–1h the correction and the answer key are the same reading, so L2's gain there is a tautology (95–100% on the old truth). The table below splits 0–1h (nowcast) from 2h+. Rule adopted 11-04: grade L2 and the short-lead layers on <code>observed_stations</code> from lead 2h on; the scoreboard tiles switch once <code>observed_stations</code> has enough history (~11-17 / 11-20 rescore). See L2 below for what L2 is actually worth.</li>
         <li><strong>Ship rule</strong> (<code>analysis/ship_rule.py</code>, 11-02): day-block bootstrap, 95% interval, holdout days = valid day ≥ 2026-11-03 (never tuned on), ≥ 8 holdout days before a verdict; ledger <code>analysis/runlog/ship_tests.jsonl</code>. <code>analysis/holdout_tracker.py</code> runs served vs raw NBM / HRRR by band through it. Every future ship call uses it.</li>
         <li><strong>Baseline = the normal source:</strong> NBM where NBM publishes the field, HRRR only where it does not. Never always-HRRR on an NBM field (the 10-24 tile was reverted for that).</li>
       </ul>
+      <div id="truth-compare-live" style="margin-top:10px;font-size:0.95em;"><span style="opacity:0.6;">loading truth_compare.json…</span></div>
+      <script>
+      (function () {
+        const el = document.getElementById("truth-compare-live");
+        const f = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(d) + "%");
+        fetch("https://data.wymancove.com/truth_compare.json?_=" + Date.now(), { cache: "no-store" })
+          .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+          .then(d => {
+            const rows = Object.entries(d.fields).map(([k, v]) => {
+              const two = v.lead_2h_plus, now = v.nowcast_0_1h;
+              if (!two) return "";
+              const gap = v.gap_pts_2h_plus;
+              const gc = gap == null ? "" : (Math.abs(gap) >= 3 ? "color:#e0a86b;font-weight:600;" : "opacity:0.8;");
+              return `<tr><td style="padding:3px 10px 3px 0;"><code>${k}</code></td>` +
+                `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_shrunk_pct)}</td>` +
+                `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_stations_pct)}</td>` +
+                `<td style="padding:3px 10px;text-align:right;${gc}">${gap == null ? "—" : (gap > 0 ? "+" : "") + gap.toFixed(1) + " pts"}</td>` +
+                `<td style="padding:3px 10px;text-align:right;">${f(two.l2_gain_shrunk_pct)} / ${f(two.l2_gain_stations_pct)}</td>` +
+                `<td style="padding:3px 10px;text-align:right;opacity:0.75;">${now ? f(now.l2_gain_shrunk_pct) + " / " + f(now.l2_gain_stations_pct) : "—"}</td>` +
+                `<td style="padding:3px 0 3px 10px;text-align:right;opacity:0.6;">${two.n}</td></tr>`;
+            }).join("");
+            el.innerHTML = `<div style="color:#e0d472;font-weight:600;margin-bottom:4px;">Same rows, two truths (served vs raw NBM, leads 2h+) <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· ${d.first_day} → ${d.last_day} · station truth only exists from 2026-11-02, so this is a thin window</span></div>` +
+              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2h+ (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
+              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>`;
+          })
+          .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it hourly.</span>`; });
+      })();
+      </script>
     </div>
   </div>
 
