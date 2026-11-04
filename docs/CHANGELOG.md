@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.89 • November 4, 2026 (debug page rebuilt to current)</strong></summary>
+
+- The debug page had not been brought current since October 9 and was missing every ship from v0.7.38 to v0.7.88. The Current state block, Recent activity, the per-field status table, the L1, L2, L3 and L4 text, the "Observed per field" definitions and the open-watch list were rewritten from the code, the changelog and the notes. The old October 9 Current state and Recent activity are kept in the Archive.
+- It now says how each field is actually served: t, h, ws, wg and sr as a blend of the corrected HRRR and NBM forecasts (with ECMWF as a third input for t, h and ws), dew point derived from the blended t and h, and the selector serving only the cloud, pressure, precipitation and wind-direction fields.
+- It says plainly what the scored numbers measure: the scored "observed" value is partly the model, the new station-only column exists, and the station layer's gain at the first hour is circular, so the plan is to grade it from the second hour on.
+- Weather Underground readings stopped on October 21, not October 7 as v0.7.88's note said (the access errors began October 7 and the data kept flowing). With the correct split, the station layer's gain at 2 to 5 hours is the same or better on the Tempest stations alone: t 9.9% to 11.8%, ws 6.1% to 7.3%, wg 11.5% to 14.2%, dew point 35.7% to 29.4%, h 25.8% to 14.9%.
+- Two things the rebuild found and left open: precipitation amount (pa) has had no observed value since the Weather Underground feed died, and the station-cluster disagreement signal (C1b) reads Weather Underground only, so its log stops on October 21.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.88 • November 4, 2026 (Tempest is now the only station feed, so it gets a health check)</strong></summary>
 
 - The Weather Underground key has been throttled since about October 7, so every station reading now comes from the 19 Tempest stations. Ten weeks of forecast-vs-observed rows show the short-lead station correction (the "L2" mesonet layer) gained the same with and without WU, so WU is no longer needed.
