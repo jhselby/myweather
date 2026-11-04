@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.92 • November 4, 2026 (station tables show only stations that can report)</strong></summary>
+
+- The "stations used" line read, for example, "18 of 60". The 60 included the 41 Weather Underground stations that have been dead since October 21. It now counts a source only while it is reporting, so it reads "18 of 19".
+- The per-station bias table, the map and the uptime table were still listing the 41 dead Weather Underground stations. The bias history only expired a station when it reported again, so the dead ones kept their last readings forever, and the uptime tracker kept adding a 0% miss for each of them every ten minutes. Dead stations now expire from the bias history after 48 hours, and the uptime tracker hides a Weather Underground station that has had no successes in 24 hours (it shows again the moment it reports). Bias history goes from 67 stations to 18, the uptime table from 86 to 19.
+- Nothing served or scored changes; these are display and bookkeeping fixes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.91 • November 4, 2026 (the same forecast scored on both truths)</strong></summary>
 
 - The score we grade the forecast against is the station reading pulled toward the model, which flatters any forecast that stays close to the model. A new hourly job, and a table on the debug page, now score the same served forecast against both that and the station-only reading, so the difference is visible every day.

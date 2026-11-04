@@ -175,7 +175,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
     kbos_p_in = round(kbos_p / 33.8639, 2) if kbos_p else None
     
     # Temperature - SMART BIAS CORRECTION using individual stations
-    wu_stations_attempted = wu_data.get("quality", {}).get("total_stations", 0) if wu_data else 0
+    # Denominator for "N of M stations used": WU counts only while it is actually
+    # reporting. The WU feed has been dead since 2026-10-21; its 41 configured
+    # stations used to inflate this to 60 (18 of 60 shown with 18 of 19 healthy).
+    _wuq = (wu_data.get("quality", {}) if wu_data else {})
+    wu_stations_attempted = (_wuq.get("total_stations", 0)
+                             if (_wuq.get("stations_used_temp", 0) or _wuq.get("stations_used_wind", 0)) else 0)
     tempest_stations_attempted = len(tempest_data.get("stations", [])) if tempest_data else 0
     stations = wu_data.get("stations", []) if wu_data else []
     # Inject all valid Tempest stations as additional high-quality inputs

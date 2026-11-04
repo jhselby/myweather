@@ -136,6 +136,15 @@ def update_history(history, wu_data, tempest_data):
     ts = datetime.now(timezone.utc).isoformat()
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=WINDOW_HOURS)).isoformat()
 
+    # Expire stations that stopped reporting. Entries used to be trimmed only
+    # when a station reported again, so the dead WU stations (silent since
+    # 2026-10-21) kept their last 48h forever and still showed in the bias
+    # table and the offsets dict.
+    for sid in list(history):
+        history[sid] = [r for r in history[sid] if r["ts"] >= cutoff]
+        if not history[sid]:
+            del history[sid]
+
     stations = _build_station_list(wu_data, tempest_data)
 
     eligible = []

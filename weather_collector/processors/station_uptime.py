@@ -62,7 +62,19 @@ def update_station_uptime(weather_data, attempted_wu_ids, attempted_tempest_ids)
         entries.append({"ts": ts, "ok": bool(ok)})
         stations[sid] = entries
 
+    # A station with no success in the last 24h that did not return this tick is
+    # dead: stop adding 0% attempts (they never aged out and kept every dead WU
+    # station in the table at 0%). It records again the tick it returns.
+    cut24 = (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
+
+    def _dead(sid):
+        entries = stations.get(str(sid)) or []
+        return bool(entries) and not any(e.get("ok") for e in entries if e.get("ts", "") >= cut24)
+
+    wu_ids = {str(x) for x in attempted_wu_ids}
     for sid in attempted_wu_ids:
+        if str(sid) not in wu_returned and _dead(sid):
+            continue
         _record(sid, str(sid) in wu_returned)
     for sid in attempted_tempest_ids:
         _record(sid, str(sid) in tp_returned)
@@ -71,6 +83,10 @@ def update_station_uptime(weather_data, attempted_wu_ids, attempted_tempest_ids)
     for sid, entries in stations.items():
         if sid in _CULLED:
             continue
+        if not entries or entries[-1].get("ts", "") < cut24:
+            continue  # nothing recorded in 24h: dead station aging out of the log
+        if sid in wu_ids and sid not in wu_returned and _dead(sid):
+            continue  # dead WU station: hidden at once, not after 24h of silence
         n = len(entries)
         if n == 0:
             continue
