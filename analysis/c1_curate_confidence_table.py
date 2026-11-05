@@ -160,8 +160,9 @@ def print_summary(curated):
             direction = entry["direction"] or "—"
             pct = entry["premium_pct"]
             rationale = entry["rationale"][:48]
+            pct_s = f"{pct:>+8.2f}%" if pct is not None else "     n/a "
             print(f"{field:<6} {band:<8} {status:<9} {direction:<8} "
-                  f"{pct:>+8.2f}% {rationale:<50}")
+                  f"{pct_s} {rationale:<50}")
         print()
     print("=" * 90)
     total = sum(counts.values())
