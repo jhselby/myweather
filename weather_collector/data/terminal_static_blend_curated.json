@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-10-30",
+ "generated_at": "2026-11-06",
  "window": [
-  "2026-09-30",
-  "2026-10-31"
+  "2026-10-07",
+  "2026-11-07"
  ],
- "halves_split": "2026-10-15",
+ "halves_split": "2026-10-22",
  "gate": {
   "min_n": 400,
   "min_cross_half_lift_pct": 5.0,
@@ -16,90 +16,60 @@
  "note": "served = w*HRRR_terminal + (1-w)*NBM_terminal per (field, regime_runtime, band). Lift is vs the served (applied-layer) error on the same rows.",
  "fields": {
   "t": {
-   "universal_w": 0.75,
-   "universal_lift_pct": 3.73,
+   "universal_w": 0.85,
+   "universal_lift_pct": 0.14,
    "cells": []
   },
   "sr": {
-   "universal_w": 0.4,
-   "universal_lift_pct": 6.74,
+   "universal_w": 0.35,
+   "universal_lift_pct": -0.15,
    "cells": []
   },
   "ws": {
-   "universal_w": 0.2,
-   "universal_lift_pct": -0.71,
+   "universal_w": 0.15,
+   "universal_lift_pct": -0.76,
    "cells": [
     {
      "regime": "se_flow",
      "band": "6-11",
      "w": 0.4,
-     "n": 535
+     "n": 430
     }
    ]
   },
   "wg": {
-   "universal_w": 0.4,
-   "universal_lift_pct": 2.0,
+   "universal_w": 0.35,
+   "universal_lift_pct": 1.24,
    "cells": [
-    {
-     "regime": "se_flow",
-     "band": "12-23",
-     "w": 0.6,
-     "n": 1427
-    },
     {
      "regime": "sw_flow",
      "band": "6-11",
-     "w": 0.6,
-     "n": 821
+     "w": 0.65,
+     "n": 1025
     }
    ]
   },
   "h": {
    "universal_w": 0.65,
-   "universal_lift_pct": 7.83,
+   "universal_lift_pct": 0.5,
    "cells": [
-    {
-     "regime": "frontal",
-     "band": "12-23",
-     "w": 0.7,
-     "n": 1005
-    },
     {
      "regime": "frontal",
      "band": "6-11",
      "w": 0.55,
-     "n": 510
-    },
-    {
-     "regime": "pre_frontal",
-     "band": "0-5",
-     "w": 0.5,
-     "n": 809
+     "n": 473
     },
     {
      "regime": "pre_frontal",
      "band": "12-23",
-     "w": 0.7,
-     "n": 1653
+     "w": 0.75,
+     "n": 1784
     },
     {
      "regime": "pre_frontal",
      "band": "24-47",
-     "w": 0.75,
-     "n": 2784
-    },
-    {
-     "regime": "pre_frontal",
-     "band": "6-11",
-     "w": 0.45,
-     "n": 826
-    },
-    {
-     "regime": "sw_flow",
-     "band": "0-5",
-     "w": 0.6,
-     "n": 640
+     "w": 0.85,
+     "n": 3068
     }
    ]
   }

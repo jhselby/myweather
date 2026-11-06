@@ -1,26 +1,47 @@
 {
-  "generated_at": "2026-10-30T10:30:56.258202+00:00",
+  "generated_at": "2026-11-06T11:29:59.548884+00:00",
   "source": "h_lc_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
   "gate_ratio": 0.5,
   "min_n_cell": 30,
   "promoted_fields": [
-    "ch"
+    "ch",
+    "cm"
   ],
   "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
     "cl": {
+      "20-50": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 11.7273,
+        "hist_bias": 11.244,
+        "hist_shift": -11.244,
+        "n_holdout": 384
+      },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 54.5938,
-        "hist_bias": 25.493,
-        "hist_shift": -25.493,
-        "n_holdout": 48
+        "recent_bias": 36.0909,
+        "hist_bias": 38.474,
+        "hist_shift": -38.474,
+        "n_holdout": 159
+      },
+      "80-95": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 35.167,
+        "hist_shift": -35.167,
+        "n_holdout": 67
       }
     },
     "cm": {
@@ -29,40 +50,40 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 22.6562,
-        "hist_bias": 17.965,
-        "hist_shift": -17.965,
-        "n_holdout": 107
+        "recent_bias": 8.7052,
+        "hist_bias": 16.677,
+        "hist_shift": -16.677,
+        "n_holdout": 120
       },
       "50-80": {
         "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 43.607,
-        "hist_shift": -43.607,
-        "n_holdout": 116
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 33.3448,
+        "hist_bias": 43.159,
+        "hist_shift": -43.159,
+        "n_holdout": 95
       },
       "80-95": {
         "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 61.664,
-        "hist_shift": -61.664,
-        "n_holdout": 44
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 59.7255,
+        "hist_bias": 63.463,
+        "hist_shift": -63.463,
+        "n_holdout": 65
       },
       "95-100": {
         "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 72.908,
-        "hist_shift": -72.908,
-        "n_holdout": 522
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 75.5689,
+        "hist_bias": 73.266,
+        "hist_shift": -73.266,
+        "n_holdout": 301
       }
     },
     "ch": {
@@ -71,30 +92,30 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 25.3372,
-        "hist_bias": 21.985,
-        "hist_shift": -21.985,
-        "n_holdout": 105
+        "recent_bias": 22.9,
+        "hist_bias": 23.343,
+        "hist_shift": -23.343,
+        "n_holdout": 208
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 60.6633,
-        "hist_bias": 45.77,
-        "hist_shift": -45.77,
-        "n_holdout": 466
+        "recent_bias": 54.8628,
+        "hist_bias": 48.664,
+        "hist_shift": -48.664,
+        "n_holdout": 1297
       },
       "80-95": {
         "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 50.009,
-        "hist_shift": -50.009,
-        "n_holdout": 162
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 66.4413,
+        "hist_bias": 61.364,
+        "hist_shift": -61.364,
+        "n_holdout": 108
       }
     }
   },

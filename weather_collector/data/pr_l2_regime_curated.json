@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T10:42:50.602231+00:00",
+  "generated_at": "2026-11-06T11:47:52.007296+00:00",
   "source": "pr_l2_regime_lead_retro.py",
   "shipped_cells": [
     [
@@ -9,47 +9,21 @@
   ],
   "both_win_today": [
     [
-      "frontal",
-      "0-5h"
-    ],
-    [
-      "frontal",
-      "6-11h"
-    ],
-    [
       "nw_flow",
       "0-5h"
     ],
     [
       "pre_frontal",
       "0-5h"
+    ],
+    [
+      "pre_frontal",
+      "12-23h"
     ]
   ],
-  "candidate_jaccard": 0.3,
+  "candidate_jaccard": 0.2,
   "cells": {
-    "pre_frontal": {
-      "0-5h": {
-        "verdict": "SHIP",
-        "shipped_live": false,
-        "both_win_today": true
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "sw_flow": {
+    "frontal": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -71,7 +45,7 @@
         "both_win_today": false
       }
     },
-    "se_flow": {
+    "ne_flow": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -115,16 +89,16 @@
         "both_win_today": false
       }
     },
-    "frontal": {
+    "stagnant_high": {
       "0-5h": {
-        "verdict": "SHIP",
+        "verdict": "SKIP",
         "shipped_live": false,
-        "both_win_today": true
+        "both_win_today": false
       },
       "6-11h": {
-        "verdict": "SHIP",
+        "verdict": "SKIP",
         "shipped_live": false,
-        "both_win_today": true
+        "both_win_today": false
       },
       "12-23h": {
         "verdict": "SKIP",
@@ -137,7 +111,51 @@
         "both_win_today": false
       }
     },
-    "nor_easter": {
+    "sea_breeze": {
+      "0-5h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "6-11h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "pre_frontal": {
+      "0-5h": {
+        "verdict": "SHIP",
+        "shipped_live": false,
+        "both_win_today": true
+      },
+      "6-11h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SHIP",
+        "shipped_live": false,
+        "both_win_today": true
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "se_flow": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -181,51 +199,7 @@
         "both_win_today": false
       }
     },
-    "sea_breeze": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "stagnant_high": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "ne_flow": {
+    "sw_flow": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
