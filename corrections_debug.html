@@ -1807,11 +1807,11 @@
   // the watch is surfaced in the staleness audit block above. Update this
   // list when a watch flips or a new watch opens.
   const OPEN_WATCHES = [
-    { name: "ECMWF ws gate — test dropping ECMWF from ws (pair log, scripts_11_02/)", closeDate: "2026-11-05", note: "11-02 preview: no gain; mark CLEAN/UNCLEAN and update Current state" },
     { name: "Backup — first weekly bucket copy (check backup_last_ok marker)", closeDate: "2026-11-09", note: "scheduled 11-08" },
     { name: "Holdout verdicts — holdout_tracker needs >= 8 holdout days (valid day >= 11-03)", closeDate: "2026-11-11", note: "run analysis/holdout_tracker.py; ship window ~11-17" },
     { name: "Truth audit rescore on observed_stations + apply 2h-onward L2 grading", closeDate: "2026-11-17", note: "both truths per band; ws ECMWF diurnal bias on wind_mph_stations; h L2 recheck" },
     { name: "Archive — monthly pair-log snapshot (backup_bucket.sh)", closeDate: "2026-12-06", note: "verify archive/ object exists" },
+    // ECMWF ws gate removed 2026-11-07 - CLOSED UNCLEAN: pair-log gate never run as scoped; folded into Holdout verdicts (11-11) + truth audit rescore (11-17).
     // Both entries removed 2026-08-25 — CLOSED CLEAN HOLD.
     // Lsr recent-bias gate: 7-day window closed 08-23; 8 distinct days, 0 promote / 8 hold, promoted set STABLE (empty). Never fired.
     // chp cell gate: walker at day 8/7; no cell cleared the 7-day all-lose gate. Hand-typed _CELL_SKIP continues to carry the work.

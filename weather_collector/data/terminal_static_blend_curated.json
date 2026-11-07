@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-11-06",
+ "generated_at": "2026-11-07",
  "window": [
-  "2026-10-07",
-  "2026-11-07"
+  "2026-10-08",
+  "2026-11-08"
  ],
- "halves_split": "2026-10-22",
+ "halves_split": "2026-10-23",
  "gate": {
   "min_n": 400,
   "min_cross_half_lift_pct": 5.0,
@@ -17,59 +17,65 @@
  "fields": {
   "t": {
    "universal_w": 0.85,
-   "universal_lift_pct": 0.14,
+   "universal_lift_pct": -0.4,
    "cells": []
   },
   "sr": {
-   "universal_w": 0.35,
-   "universal_lift_pct": -0.15,
+   "universal_w": 0.4,
+   "universal_lift_pct": -0.61,
    "cells": []
   },
   "ws": {
    "universal_w": 0.15,
-   "universal_lift_pct": -0.76,
+   "universal_lift_pct": -0.84,
    "cells": [
     {
      "regime": "se_flow",
      "band": "6-11",
-     "w": 0.4,
-     "n": 430
+     "w": 0.35,
+     "n": 446
     }
    ]
   },
   "wg": {
    "universal_w": 0.35,
-   "universal_lift_pct": 1.24,
+   "universal_lift_pct": 1.0,
    "cells": [
     {
      "regime": "sw_flow",
      "band": "6-11",
      "w": 0.65,
-     "n": 1025
+     "n": 1010
     }
    ]
   },
   "h": {
    "universal_w": 0.65,
-   "universal_lift_pct": 0.5,
+   "universal_lift_pct": 0.01,
    "cells": [
     {
      "regime": "frontal",
-     "band": "6-11",
+     "band": "12-23",
+     "w": 0.75,
+     "n": 936
+    },
+    {
+     "regime": "pre_frontal",
+     "band": "0-5",
      "w": 0.55,
-     "n": 473
+     "n": 831
     },
     {
      "regime": "pre_frontal",
      "band": "12-23",
      "w": 0.75,
-     "n": 1784
+     "n": 1782
     },
     {
      "regime": "pre_frontal",
      "band": "24-47",
      "w": 0.85,
-     "n": 3068
+     "n": 3085
     }
    ]
   }
