@@ -86,6 +86,9 @@ ECMWF_FROM_PAIR_LOG = False
 # drops rows without it; sr keeps `observed`. Flip once the 14-day window is all
 # station-truth rows (observed_stations starts 2026-11-02 18:07, so ~11-17).
 STATION_TRUTH = False
+# Joe 11-08: station truth for t and h (dp is derived from them); wind and gusts stay
+# on `observed` until the wind-truth question (backyard anemometers vs the water) is settled.
+STATION_TRUTH_FIT_FIELDS = frozenset({"t", "h"})
 
 
 def _ecmwf_day(lead):
@@ -167,7 +170,7 @@ def fit():
                 continue
             eh = _first(r, HRRR_KEYS.get(f, HRRR_DEFAULT))
             en = _first(r, NBM_KEYS)
-            shift = truth_shift(r, STATION_TRUTH)
+            shift = truth_shift(r, STATION_TRUTH and f in STATION_TRUTH_FIT_FIELDS)
             if eh is None or en is None or shift is None:
                 continue
             eh += shift
@@ -262,7 +265,8 @@ def fit():
                   f"by {E_KEY[f]}: {subs}")
 
     out = {"fitted_at": now.strftime("%Y-%m-%dT%H:%M"), "window_days": WINDOW_DAYS,
-           "truth": "observed_stations" if STATION_TRUTH else "observed",
+           "truth": ({f: "observed_stations" for f in sorted(STATION_TRUTH_FIT_FIELDS)} if STATION_TRUTH
+                     else "observed"),
            "n_rows_kept": n_rows, "fields": fields,
            "notes": "w = HRRR weight on the terminal blend, served on every row of the field "
                     "(weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). "
