@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.93 • November 8, 2026 (debug page brought current)</strong></summary>
+
+- The debug page's "Being evaluated next" list, the open-watch list and Recent activity still described November 4. They now cover November 5 to 8: the ECMWF gate closed unclean, the first weekly bucket copy ran, the cc "fresh fire" is an artifact of comparing against raw HRRR, wd.l3_nbm loss was a single day, and holdout is at 6 of 8 days.
+- New open item: served ws loses to raw NBM at 6 to 23 hours although the live blend is already almost pure NBM there, so dropping ECMWF would change almost nothing. The source of the loss is still to be found.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.92 • November 4, 2026 (station tables show only stations that can report)</strong></summary>
 
 - The "stations used" line read, for example, "18 of 60". The 60 included the 41 Weather Underground stations that have been dead since October 21. It now counts a source only while it is reporting, so it reads "18 of 19".

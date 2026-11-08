@@ -1,21 +1,21 @@
 {
-  "fitted_at": "2026-11-07T12:02",
+  "fitted_at": "2026-11-08T12:23",
   "window_days": 14,
-  "n_rows_kept": 71738,
+  "n_rows_kept": 71524,
   "fields": {
     "t": {
       "w": 0.85,
-      "n": 14849,
-      "mae_blend": 1.9183,
-      "mae_hrrr": 1.9539,
-      "mae_nbm": 2.6784,
+      "n": 14804,
+      "mae_blend": 1.9495,
+      "mae_hrrr": 1.9893,
+      "mae_nbm": 2.7737,
       "w_by_band": {
         "0-5": 1.0,
         "6-11": 0.95,
-        "12-23": 0.9,
+        "12-23": 0.85,
         "24-47": 0.75
       },
-      "mae_band": 1.9056,
+      "mae_band": 1.9352,
       "w3": [
         0.7,
         0.0,
@@ -38,106 +38,106 @@
           0.65
         ],
         "6-11": [
-          0.8,
+          0.85,
           0.0,
-          0.2
+          0.15
         ]
       },
-      "n3": 14849,
-      "mae_3way": 1.858
+      "n3": 14804,
+      "mae_3way": 1.8902
     },
     "h": {
-      "w": 0.7,
-      "n": 14762,
-      "mae_blend": 5.8037,
-      "mae_hrrr": 6.6691,
-      "mae_nbm": 9.2825,
+      "w": 0.75,
+      "n": 14717,
+      "mae_blend": 5.1645,
+      "mae_hrrr": 5.7684,
+      "mae_nbm": 8.8956,
       "w_by_block": {
         "0": 0.7,
-        "4": 0.5,
-        "8": 0.65,
+        "4": 0.55,
+        "8": 0.7,
         "12": 0.85,
         "16": 0.7,
         "20": 0.65
       },
       "block_hours": 4,
-      "mae_block": 5.6653,
+      "mae_block": 5.0702,
       "w3": [
-        0.5,
-        0.0,
-        0.5
+        0.6,
+        0.05,
+        0.35
       ],
       "w3_by_band": {
         "0-5": [
-          0.65,
-          0.35,
+          0.75,
+          0.25,
           0.0
         ],
         "12-23": [
-          0.5,
+          0.6,
           0.0,
-          0.5
+          0.4
         ],
         "24-47": [
-          0.5,
+          0.55,
           0.0,
-          0.5
+          0.45
         ],
         "6-11": [
-          0.45,
+          0.55,
           0.1,
-          0.45
+          0.35
         ]
       },
-      "n3": 14762,
-      "mae_3way": 5.0705
+      "n3": 14717,
+      "mae_3way": 4.7312
     },
     "sr": {
       "w": 0.25,
-      "n": 12427,
-      "mae_blend": 22.9866,
-      "mae_hrrr": 32.0577,
-      "mae_nbm": 24.3254,
+      "n": 12393,
+      "mae_blend": 22.1756,
+      "mae_hrrr": 31.9207,
+      "mae_nbm": 23.2146,
       "w_by_block": {
         "0": 0.0,
         "4": 0.0,
         "8": 0.0,
-        "12": 0.25,
-        "16": 0.95,
+        "12": 0.2,
+        "16": 0.9,
         "20": 1.0
       },
       "block_hours": 4,
-      "mae_block": 20.1649
+      "mae_block": 19.7078
     },
     "wg": {
-      "w": 0.25,
-      "n": 14850,
-      "mae_blend": 3.6869,
-      "mae_hrrr": 4.4881,
-      "mae_nbm": 3.7995
+      "w": 0.2,
+      "n": 14805,
+      "mae_blend": 3.7926,
+      "mae_hrrr": 4.7452,
+      "mae_nbm": 3.8935
     },
     "ws": {
-      "w": 0.05,
-      "n": 14850,
-      "mae_blend": 1.9325,
-      "mae_hrrr": 2.3884,
-      "mae_nbm": 1.9354,
+      "w": 0.1,
+      "n": 14805,
+      "mae_blend": 1.9818,
+      "mae_hrrr": 2.4367,
+      "mae_nbm": 1.9883,
       "w_by_band": {
-        "0-5": 0.25,
-        "6-11": 0.0,
+        "0-5": 0.4,
+        "6-11": 0.05,
         "12-23": 0.0,
-        "24-47": 0.1
+        "24-47": 0.15
       },
-      "mae_band": 1.9283,
+      "mae_band": 1.9759,
       "w3": [
-        0.05,
-        0.95,
+        0.1,
+        0.9,
         0.0
       ],
       "w3_by_band": {
         "0-5": [
-          0.25,
-          0.75,
+          0.4,
+          0.6,
           0.0
         ],
         "12-23": [
@@ -146,18 +146,18 @@
           0.0
         ],
         "24-47": [
-          0.1,
-          0.9,
-          0.0
+          0.15,
+          0.7,
+          0.15
         ],
         "6-11": [
-          0.0,
-          1.0,
+          0.05,
+          0.95,
           0.0
         ]
       },
-      "n3": 14850,
-      "mae_3way": 1.9325
+      "n3": 14805,
+      "mae_3way": 1.9818
     }
   },
   "notes": "w = HRRR weight on the terminal blend, served on every row of the field (weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). w_by_block (h, sr) = w per block of local valid hour, keyed by block start; missing blocks use w. w_by_band (t, ws) = w per lead band; missing bands use w. w3 (t, h, ws) = [hrrr, nbm, ecmwf] weights, w3_by_band (t, ws) / w3_by_block (h); served when the ECMWF hourly is present, else the 2-way w."
