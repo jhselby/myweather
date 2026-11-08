@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.94 • November 8, 2026 (station readings archived; station layer graded at 2 to 5 hours; fits can switch to station truth)</strong></summary>
+
+- Every Tempest station's reading is now saved on every run, one file per day in the bucket, kept permanently, together with the offsets and model values the station layer used. This makes possible the one clean test of the station layer: half the stations feed the correction, the other half grade it. Today the same stations do both, so a score cannot tell real skill at the Cove from the network agreeing with itself. The test can run after about two weeks of readings.
+- The dual-truth table on the debug page now grades the station layer at 2 to 5 hours. It fades to nothing by 6 to 8 hours, so the old 2-to-47-hour pool hid it (temperature showed 0.8% there against about 10% at 2 to 5 hours). On station-only truth at 2 to 5 hours: temperature +9.7%, dew point +19.6%, gusts +9.5%, humidity +1.5%, wind speed −0.1%. The wind-speed correction's large gain on the old truth (64% at 0 to 1 hours) is circular; against the stations alone it does nothing.
+- New test `analysis/l2_amplitude_wf.py`: does applying more of the station correction help? Gusts at 2 to 5 hours pass the ship rule (served +2.6%, interval +1.2 to +3.9, 5 of 6 held-out days); temperature does not yet (+1.1%, interval −0.3 to +3.3), because its strengths are still trained on the old truth. Recorded in the test ledger; nothing shipped.
+- The blend-weight fit can now score against station-only truth (`STATION_TRUTH` in `analysis/terminal_blend_field_fit.py`, off). It goes on once the 14-day fit window is all station-truth rows, around November 17.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.93 • November 8, 2026 (debug page brought current)</strong></summary>
 
 - The debug page's "Being evaluated next" list, the open-watch list and Recent activity still described November 4. They now cover November 5 to 8: the ECMWF gate closed unclean, the first weekly bucket copy ran, the cc "fresh fire" is an artifact of comparing against raw HRRR, wd.l3_nbm loss was a single day, and holdout is at 6 of 8 days.

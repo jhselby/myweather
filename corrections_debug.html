@@ -2226,7 +2226,7 @@
           .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
           .then(d => {
             const rows = Object.entries(d.fields).map(([k, v]) => {
-              const two = v.lead_2h_plus, now = v.nowcast_0_1h;
+              const two = v.lead_2h_plus, now = v.nowcast_0_1h, l2w = v.lead_2_5h || two;
               if (!two) return "";
               const gap = v.gap_pts_2h_plus;
               const gc = gap == null ? "" : (Math.abs(gap) >= 3 ? "color:#e0a86b;font-weight:600;" : "opacity:0.8;");
@@ -2234,13 +2234,13 @@
                 `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_shrunk_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_stations_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;${gc}">${gap == null ? "—" : (gap > 0 ? "+" : "") + gap.toFixed(1) + " pts"}</td>` +
-                `<td style="padding:3px 10px;text-align:right;">${f(two.l2_gain_shrunk_pct)} / ${f(two.l2_gain_stations_pct)}</td>` +
+                `<td style="padding:3px 10px;text-align:right;">${f(l2w.l2_gain_shrunk_pct)} / ${f(l2w.l2_gain_stations_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;opacity:0.75;">${now ? f(now.l2_gain_shrunk_pct) + " / " + f(now.l2_gain_stations_pct) : "—"}</td>` +
                 `<td style="padding:3px 0 3px 10px;text-align:right;opacity:0.6;">${two.n}</td></tr>`;
             }).join("");
             el.innerHTML = `<div style="color:#e0d472;font-weight:600;margin-bottom:4px;">Same rows, two truths (served vs raw NBM, leads 2h+) <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· ${d.first_day} → ${d.last_day} · station truth only exists from 2026-11-02, so this is a thin window</span></div>` +
-              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2h+ (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
-              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>`;
+              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2–5h (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
+              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. L2 is graded at 2–5h: it fades to nothing by 6–8h, so a 2–47h pool hides it. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>`;
           })
           .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it hourly.</span>`; });
       })();

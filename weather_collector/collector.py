@@ -227,6 +227,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     update_history(_station_history, wu_data, tempest_data)
     save_history(_station_history, _gcs, BUCKET)
 
+    # v0.7.94: permanent per-station reading archive (split-network L2 test).
+    from .processors.station_readings_log import append_station_readings
+    append_station_readings(weather_data, tempest_data, _station_offsets)
+
     # Per-tick inter-cluster spread (Marblehead/Salem/Swampscott PWS clusters).
     # Best-effort logger feeding the C1 confidence-layer axis evaluation.
     # Orthogonality to R6 confirmed 2026-06-20 (16/20 field-band combos).

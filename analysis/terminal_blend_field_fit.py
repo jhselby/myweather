@@ -57,6 +57,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from analysis._cache import cached_path, PAIR_LOG_URL  # noqa: E402
+from analysis._truth import truth_shift  # noqa: E402
 
 OUT_PATH = ROOT / "weather_collector" / "data" / "terminal_blend_field_curated.json"
 FIELDS = ("t", "h", "sr", "wg", "ws")
@@ -81,6 +82,10 @@ PREV_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 # 11-05 gate: True fits ECMWF on the pair log's live error_ecmwf (fresh runs) where a row has
 # one, archive otherwise. Stays False until the walk-forward on 14d of pair-log rows decides.
 ECMWF_FROM_PAIR_LOG = False
+# v0.7.94: True fits t/h/ws/wg on the model-free station truth (observed_stations) and
+# drops rows without it; sr keeps `observed`. Flip once the 14-day window is all
+# station-truth rows (observed_stations starts 2026-11-02 18:07, so ~11-17).
+STATION_TRUTH = False
 
 
 def _ecmwf_day(lead):
@@ -162,8 +167,11 @@ def fit():
                 continue
             eh = _first(r, HRRR_KEYS.get(f, HRRR_DEFAULT))
             en = _first(r, NBM_KEYS)
-            if eh is None or en is None:
+            shift = truth_shift(r, STATION_TRUTH)
+            if eh is None or en is None or shift is None:
                 continue
+            eh += shift
+            en += shift
             n[f] += 1
             n_rows += 1
             s = sums[f]
@@ -183,9 +191,9 @@ def fit():
                 fe = fe[_ecmwf_day(lead)] if fe else None
                 ee = None
                 if ECMWF_FROM_PAIR_LOG and r.get("error_ecmwf") is not None:
-                    ee = float(r["error_ecmwf"])
+                    ee = float(r["error_ecmwf"]) + shift
                 elif fe is not None:
-                    ee = float(fe) - float(r["observed"])
+                    ee = float(fe) - (float(r["observed"]) - shift)
                 if ee is not None:
                     sub = band if E_KEY[f] == "band" else (
                         str(int(vt[11:13]) // BLOCK_HOURS * BLOCK_HOURS) if len(vt) >= 13 else None)
@@ -254,6 +262,7 @@ def fit():
                   f"by {E_KEY[f]}: {subs}")
 
     out = {"fitted_at": now.strftime("%Y-%m-%dT%H:%M"), "window_days": WINDOW_DAYS,
+           "truth": "observed_stations" if STATION_TRUTH else "observed",
            "n_rows_kept": n_rows, "fields": fields,
            "notes": "w = HRRR weight on the terminal blend, served on every row of the field "
                     "(weather_collector/processors/terminal_static_blend.py FIELD_APPLIED). "

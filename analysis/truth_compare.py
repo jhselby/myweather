@@ -18,6 +18,8 @@ Per field (t, h, dp, ws, wg; all NBM-scope, so the public baseline is raw NBM):
     public = error_raw_nbm. Rows with both residuals present only.
   - split by lead: 0-1h (nowcast: station-truth overlaps L2's own input) vs 2h+.
   - L2 gain on each truth = (MAE_l1 - MAE_l2) / MAE_l1 * 100, same lead split.
+    L2 is graded at 2-5h (`lead_2_5h`, v0.7.94): it decays to ~0 by 6-8h, so the
+    2-47h pool hides it (t 0.8% pooled vs ~15% at 2-3h on 11-02..11-08).
   - per-day station-truth lift so a thin window is visible.
 
 Runtime:
@@ -36,6 +38,7 @@ PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_JSON = _out("truth_compare.json")
 FIELDS = ["t", "h", "dp", "ws", "wg"]
 NOWCAST_MAX_LEAD = 1  # leads 0..1 overlap L2's own station input
+L2_GRADE_MAX_LEAD = 5  # L2 is graded on leads 2..5
 
 
 def _prod_error(row):
@@ -74,7 +77,7 @@ def _summ(b):
 
 def build():
     path = cached_path(PAIR_LOG_URL, max_age_hours=0.5)
-    split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new()} for f in FIELDS}
+    split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new(), "lead_2_5h": _new()} for f in FIELDS}
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
     with open(path) as fin:
@@ -102,7 +105,8 @@ def build():
             first = day if first is None or day < first else first
             last = day if last is None or day > last else last
             for b in (split[f]["nowcast_0_1h" if lead <= NOWCAST_MAX_LEAD else "lead_2h_plus"],
-                      per_day[f][day] if lead > NOWCAST_MAX_LEAD else None):
+                      per_day[f][day] if lead > NOWCAST_MAX_LEAD else None,
+                      split[f]["lead_2_5h"] if NOWCAST_MAX_LEAD < lead <= L2_GRADE_MAX_LEAD else None):
                 if b is None:
                     continue
                 b["n"] += 1
@@ -119,6 +123,7 @@ def build():
         fields[f] = {
             "nowcast_0_1h": _summ(split[f]["nowcast_0_1h"]),
             "lead_2h_plus": two,
+            "lead_2_5h": _summ(split[f]["lead_2_5h"]),
             "gap_pts_2h_plus": (None if not two or two["total_lift_shrunk_pct"] is None
                                 or two["total_lift_stations_pct"] is None
                                 else round(two["total_lift_shrunk_pct"] - two["total_lift_stations_pct"], 2)),
@@ -146,11 +151,11 @@ def main():
     except Exception as e:
         print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
     for f, v in payload["fields"].items():
-        two, now = v["lead_2h_plus"], v["nowcast_0_1h"]
+        two, now, l2w = v["lead_2h_plus"], v["nowcast_0_1h"], v["lead_2_5h"]
         if not two:
             continue
         print(f"{f:2} 2h+  n={two['n']:5}  lift shrunk {two['total_lift_shrunk_pct']:>6}%  stations {two['total_lift_stations_pct']:>6}%  "
-              f"gap {v['gap_pts_2h_plus']:>6} pts | L2 gain shrunk {two['l2_gain_shrunk_pct']}% stations {two['l2_gain_stations_pct']}%"
+              f"gap {v['gap_pts_2h_plus']:>6} pts | L2 gain 2-5h shrunk {l2w['l2_gain_shrunk_pct'] if l2w else None}% stations {l2w['l2_gain_stations_pct'] if l2w else None}%"
               + (f" || 0-1h L2 gain shrunk {now['l2_gain_shrunk_pct']}% stations {now['l2_gain_stations_pct']}%" if now else ""))
 
 
