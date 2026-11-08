@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.95 • November 8, 2026 (Weather Underground calls stopped)</strong></summary>
+
+- The collector was still calling Weather Underground on every run: the 41-station feed and the single Castle Hill station, about 42 calls every ten minutes, all refused (the key has been rejected since October 7 and no reading has arrived since October 21). Both are now switched off and make no network call. Tempest is the station network.
+- Each switched-off fetcher returns exactly what it returned on every run since the feed died (an empty station list, and no Castle Hill reading), so the forecast, the scores and the Sources card are unchanged.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.94 • November 8, 2026 (station readings archived; station layer graded at 2 to 5 hours; fits can switch to station truth)</strong></summary>
 
 - Every Tempest station's reading is now saved on every run, one file per day in the bucket, kept permanently, together with the offsets and model values the station layer used. This makes possible the one clean test of the station layer: half the stations feed the correction, the other half grade it. Today the same stations do both, so a score cannot tell real skill at the Cove from the network agreeing with itself. The test can run after about two weeks of readings.

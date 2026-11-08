@@ -9,11 +9,23 @@ import logging
 
 
 
+# v0.7.95: Weather Underground retired. The key has been refused (401) since
+# 2026-10-07 and no station has reported since 2026-10-21; the scraper still made
+# ~41 refused calls per run. Tempest is the mesonet. Off = return the scraper's own
+# empty aggregate (what every run produced since 10-21) with no network call, so
+# hyperlocal, daily_extremes and the Sources card see exactly what they saw.
+WU_ENABLED = False
+
+
 def fetch_wu_stations():
     """
     Fetch multi-station WU data using the scraper module.
     This is optional and fails gracefully if the scraper is unavailable.
     """
+    if not WU_ENABLED:
+        return wu_scraper_realtime.filter_and_aggregate([]), {
+            "status": "ok", "updated_at": iso_utc_now(), "error": None,
+            "note": "Weather Underground retired 2026-11-08 (no readings since 2026-10-21); mesonet = Tempest"}
     logging.info("📡 Fetching WU stations (optional)...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 

@@ -14,6 +14,9 @@ import logging
 
 
 WU_API_URL = "https://api.weather.com/v2/pws/observations/current"
+# v0.7.95: off. Same Weather Underground key as the retired multi-station feed
+# (401 on every call); the stub below is what every run returned since 10-07.
+PWS_ENABLED = False
 
 
 def fetch_pws_current():
@@ -21,9 +24,12 @@ def fetch_pws_current():
     Fetch Castle Hill PWS current observation via the WU API.
     Falls back to cached value if the API call fails.
     """
-    logging.info("📡 Fetching Castle Hill PWS...")
-
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+    if not PWS_ENABLED:
+        meta["error"] = "retired 2026-11-08 (Weather Underground key refused since 2026-10-07)"
+        return {"station": PWS_STATION, "name": "Castle Hill", "updated": None,
+                "temperature": None, "stale": True}, meta
+    logging.info("📡 Fetching Castle Hill PWS...")
     cache_path = PWS_CACHE_FILE
     last = load_json(cache_path)
 
