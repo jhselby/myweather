@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T12:03:47.808639+00:00",
+  "generated_at": "2026-11-09T11:44:50.159558+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -14,68 +14,16 @@
   "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
-    "pre_frontal": {
-      "10": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -160.7879,
-        "hist_bias": -122.4,
-        "hist_shift": 122.4,
-        "n_holdout": 34
-      },
+    "nw_flow": {
       "11": {
         "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -116.3714,
-        "hist_bias": -110.2,
-        "hist_shift": 110.2,
-        "n_holdout": 33
-      }
-    },
-    "sw_flow": {
-      "9": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -128.3158,
-        "hist_bias": -138.9,
-        "hist_shift": 138.9,
-        "n_holdout": 31
-      },
-      "10": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -164.4286,
-        "hist_bias": -144.2,
-        "hist_shift": 144.2,
-        "n_holdout": 31
-      },
-      "11": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -142.525,
-        "hist_bias": -130.2,
-        "hist_shift": 130.2,
-        "n_holdout": 31
-      },
-      "13": {
-        "gate_apply": false,
-        "gate_reason": "sign",
-        "sign_ok": false,
-        "mag_ok": true,
-        "recent_bias": 53.0,
-        "hist_bias": -36.8,
-        "hist_shift": 36.8,
-        "n_holdout": 32
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -103.0,
+        "hist_shift": 103.0,
+        "n_holdout": 30
       }
     }
   },

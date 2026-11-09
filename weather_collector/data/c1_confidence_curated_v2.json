@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T11:55:24.215532+00:00",
+  "generated_at": "2026-11-09T11:36:25.770230+00:00",
   "source": "c1_confidence_premium_v2.json",
   "curation_rules": {
     "legacy_sample_floor": 1000,
@@ -74,82 +74,82 @@
     },
     "xr_edges_by_field": {
       "t": [
-        2.9,
+        3.0,
         3.6,
         4.5,
         5.5
       ],
       "ws": [
-        2.8,
+        2.7,
         3.5,
-        4.2,
-        5.3
+        4.3,
+        5.6
       ],
       "wg": [
-        6.5,
-        9.9,
-        13.5,
-        17.4
+        7.0,
+        10.5,
+        14.0,
+        18.0
       ],
       "h": [
         8.5,
         10.8,
         12.8,
-        16.1
+        16.3
       ],
       "dp": [
         3.8,
-        4.7,
-        5.7,
-        6.9
+        4.6,
+        5.4,
+        6.6
       ],
       "pr": [
-        0.054,
-        0.066,
-        0.079,
-        0.097
+        0.055,
+        0.068,
+        0.08,
+        0.098
       ],
       "cc": [
-        11.0,
-        24.0,
-        41.0,
-        65.0
+        12.0,
+        29.0,
+        48.0,
+        69.0
       ],
       "sr": [
         0.0,
         0.0,
-        16.0,
-        144.0
+        14.0,
+        154.0
       ],
       "cl": [
         0.0,
         5.0,
-        14.0,
-        66.0
+        23.0,
+        81.0
       ],
       "cm": [
         0.0,
-        3.0,
-        52.0,
+        5.0,
+        84.0,
         100.0
       ],
       "ch": [
         0.0,
-        8.0,
-        97.0,
+        5.0,
+        98.0,
         100.0
       ],
       "wd": [
-        35.0,
+        36.0,
         52.0,
-        88.0,
+        83.0,
         335.0
       ],
       "pp": [
         0.0,
-        1.0,
+        2.0,
         4.0,
-        13.0
+        17.0
       ]
     },
     "xr_ortho_fields": []
@@ -157,99 +157,99 @@
   "cells": {
     "t": {
       "24-47h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 2.4989,
-        "transition_mae": 2.2535,
-        "premium_abs": -0.2455,
-        "premium_pct": -9.82,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium -9.82% in 5-10% band",
+        "stable_mae": 2.5211,
+        "transition_mae": 2.2125,
+        "premium_abs": -0.3086,
+        "premium_pct": -12.24,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium -12.24%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q3": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.6008,
-            "n": 1464,
-            "rationale": "magnitude floor (|+4.08%| < 5.0%)"
-          },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.5928,
-            "n": 1632,
-            "rationale": "magnitude floor (|+3.76%| < 5.0%)"
+            "mae": 2.5709,
+            "n": 1608,
+            "rationale": "magnitude floor (|+1.98%| < 5.0%)"
           },
-          "Q1": {
+          "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.3799,
-            "n": 1536,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+            "mae": 2.5557,
+            "n": 1512,
+            "rationale": "magnitude floor (|+1.37%| < 5.0%)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.5501,
-            "n": 1680,
+            "mae": 3.5854,
+            "n": 1656,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.9377,
-            "n": 1632,
+            "mae": 1.9615,
+            "n": 1680,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.4366,
+            "n": 1488,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "12-23h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 2.0182,
-        "transition_mae": 1.8553,
-        "premium_abs": -0.1629,
-        "premium_pct": -8.07,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium -8.07% in 5-10% band",
+        "stable_mae": 2.0487,
+        "transition_mae": 1.8325,
+        "premium_abs": -0.2161,
+        "premium_pct": -10.55,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium -10.55%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q3": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.3331,
-            "n": 732,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.064,
-            "n": 816,
-            "rationale": "magnitude floor (|+2.27%| < 5.0%)"
+            "mae": 2.0468,
+            "n": 804,
+            "rationale": "magnitude floor (|-0.09%| < 5.0%)"
           },
-          "Q1": {
+          "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.391,
-            "n": 768,
+            "mae": 2.2602,
+            "n": 756,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.211,
-            "n": 840,
+            "mae": 2.2217,
+            "n": 828,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.8603,
-            "n": 816,
+            "mae": 1.9367,
+            "n": 840,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.4609,
+            "n": 744,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -257,48 +257,48 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 1.476,
-        "transition_mae": 1.5678,
-        "premium_abs": 0.0918,
-        "premium_pct": 6.22,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 1.4879,
+        "transition_mae": 1.6481,
+        "premium_abs": 0.1602,
+        "premium_pct": 10.77,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
-          "Q3": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 1.7962,
-            "n": 366,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5061,
-            "n": 408,
-            "rationale": "magnitude floor (|+2.04%| < 5.0%)"
+            "mae": 1.5241,
+            "n": 402,
+            "rationale": "magnitude floor (|+2.43%| < 5.0%)"
           },
-          "Q1": {
+          "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.1341,
-            "n": 384,
+            "mae": 1.796,
+            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5183,
-            "n": 420,
-            "rationale": "magnitude floor (|+2.87%| < 5.0%)"
+            "mae": 1.506,
+            "n": 414,
+            "rationale": "magnitude floor (|+1.22%| < 5.0%)"
           },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5605,
-            "n": 408,
+            "mae": 1.6286,
+            "n": 420,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.193,
+            "n": 372,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -306,48 +306,48 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.8477,
-        "transition_mae": 1.0871,
-        "premium_abs": 0.2394,
-        "premium_pct": 28.24,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 0.8794,
+        "transition_mae": 1.1194,
+        "premium_abs": 0.24,
+        "premium_pct": 27.29,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
-          "Q3": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.8986,
-            "n": 366,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.0051,
-            "n": 408,
+            "mae": 1.0547,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q1": {
+          "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.6997,
-            "n": 384,
+            "mae": 0.9844,
+            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.0769,
-            "n": 420,
+            "mae": 1.0609,
+            "n": 414,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.7924,
-            "n": 408,
+            "mae": 0.819,
+            "n": 420,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.7191,
+            "n": 372,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -357,48 +357,48 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.5154,
-        "transition_mae": 2.8019,
-        "premium_abs": 0.2865,
-        "premium_pct": 11.39,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium +11.39%, n\u22651000",
+        "stable_mae": 2.512,
+        "transition_mae": 2.7765,
+        "premium_abs": 0.2645,
+        "premium_pct": 10.53,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium +10.53%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0772,
+            "n": 1536,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5758,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.8136,
+            "mae": 1.5804,
             "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.4843,
-            "n": 1608,
-            "rationale": "magnitude floor (|-1.24%| < 5.0%)"
+            "mae": 2.3516,
+            "n": 1584,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q2": {
+          "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.1103,
-            "n": 1560,
+            "mae": 2.9277,
+            "n": 1608,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.9828,
-            "n": 1608,
+            "mae": 3.9179,
+            "n": 1632,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -406,48 +406,48 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.3713,
-        "transition_mae": 2.9362,
-        "premium_abs": 0.5649,
-        "premium_pct": 23.82,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium +23.82%, n\u22651000",
+        "stable_mae": 2.3651,
+        "transition_mae": 2.8842,
+        "premium_abs": 0.5191,
+        "premium_pct": 21.95,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium +21.95%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0565,
+            "n": 768,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5521,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.7475,
+            "mae": 1.5417,
             "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.5219,
-            "n": 804,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+            "mae": 2.3736,
+            "n": 792,
+            "rationale": "magnitude floor (|+0.36%| < 5.0%)"
           },
-          "Q2": {
+          "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.0117,
-            "n": 780,
+            "mae": 2.9438,
+            "n": 804,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.7858,
-            "n": 804,
+            "mae": 3.5525,
+            "n": 816,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -455,48 +455,48 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 2.171,
-        "transition_mae": 2.7953,
-        "premium_abs": 0.6243,
-        "premium_pct": 28.76,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 2.1371,
+        "transition_mae": 2.688,
+        "premium_abs": 0.5509,
+        "premium_pct": 25.78,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.8073,
+            "n": 384,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5086,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.6692,
+            "mae": 1.4689,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.3866,
-            "n": 402,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+            "mae": 2.2346,
+            "n": 396,
+            "rationale": "magnitude floor (|+4.56%| < 5.0%)"
           },
-          "Q2": {
+          "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.7526,
-            "n": 390,
+            "mae": 2.7848,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.3771,
-            "n": 402,
+            "mae": 3.1044,
+            "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -504,48 +504,48 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 1.4424,
-        "transition_mae": 2.3468,
-        "premium_abs": 0.9044,
-        "premium_pct": 62.7,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 1.4413,
+        "transition_mae": 2.2201,
+        "premium_abs": 0.7788,
+        "premium_pct": 54.04,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.3424,
+            "n": 384,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.0119,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 1.8124,
+            "mae": 0.9957,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5978,
-            "n": 402,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+            "mae": 1.5035,
+            "n": 396,
+            "rationale": "magnitude floor (|+4.32%| < 5.0%)"
           },
-          "Q2": {
+          "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.3103,
-            "n": 390,
+            "mae": 1.8858,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.4129,
-            "n": 402,
+            "mae": 2.2662,
+            "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -553,50 +553,50 @@
     },
     "wg": {
       "24-47h": {
-        "status": "SHIP",
+        "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 5.26,
-        "transition_mae": 4.5556,
-        "premium_abs": -0.7044,
-        "premium_pct": -13.39,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium -13.39%, n\u22651000",
+        "stable_mae": 5.3887,
+        "transition_mae": 4.9105,
+        "premium_abs": -0.4781,
+        "premium_pct": -8.87,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium -8.87% in 5-10% band",
         "by_axes": {},
         "by_xr_q": {
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.3815,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.8111,
+            "mae": 3.8477,
             "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.5143,
+            "mae": 5.8568,
             "n": 1584,
-            "rationale": "magnitude floor (|+4.83%| < 5.0%)"
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.9663,
+            "mae": 3.8786,
             "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.5953,
+            "mae": 5.7364,
             "n": 1608,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.9735,
+            "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -604,48 +604,48 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 4.5787,
-        "transition_mae": 3.7356,
-        "premium_abs": -0.8431,
-        "premium_pct": -18.41,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium -18.41%, n\u22651000",
+        "stable_mae": 4.7835,
+        "transition_mae": 4.0971,
+        "premium_abs": -0.6864,
+        "premium_pct": -14.35,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium -14.35%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.1319,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.4433,
+            "mae": 3.5848,
             "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.9254,
+            "mae": 5.4943,
             "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.2201,
+            "mae": 3.7769,
             "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.9999,
+            "mae": 4.2031,
             "n": 804,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.9458,
+            "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -653,48 +653,48 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 4.3494,
-        "transition_mae": 3.7071,
-        "premium_abs": -0.6424,
-        "premium_pct": -14.77,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 4.497,
+        "transition_mae": 3.9344,
+        "premium_abs": -0.5626,
+        "premium_pct": -12.51,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.125,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.4674,
+            "mae": 3.5227,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.6497,
+            "mae": 5.2598,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.6202,
+            "mae": 3.6369,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.998,
+            "mae": 4.149,
             "n": 402,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.1419,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -702,48 +702,48 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 3.9122,
-        "transition_mae": 3.4717,
-        "premium_abs": -0.4405,
-        "premium_pct": -11.26,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 4.1038,
+        "transition_mae": 3.6856,
+        "premium_abs": -0.4181,
+        "premium_pct": -10.19,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.4639,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.1288,
+            "mae": 2.7455,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.0311,
+            "mae": 4.4876,
             "n": 396,
-            "rationale": "magnitude floor (|+3.04%| < 5.0%)"
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.1722,
+            "mae": 3.3437,
             "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.2955,
+            "mae": 4.507,
             "n": 402,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.9876,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -751,43 +751,43 @@
     },
     "h": {
       "24-47h": {
-        "status": "MARGINAL",
-        "direction": "WIDEN",
-        "stable_mae": 6.321,
-        "transition_mae": 6.8087,
-        "premium_abs": 0.4877,
-        "premium_pct": 7.72,
-        "n_stable": 5588,
-        "n_transition": 2308,
-        "rationale": "premium +7.72% in 5-10% band",
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 6.3268,
+        "transition_mae": 6.4234,
+        "premium_abs": 0.0967,
+        "premium_pct": 1.53,
+        "n_stable": 5759,
+        "n_transition": 2137,
+        "rationale": "magnitude floor (|+1.53%| < 5.0%)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 11.8806,
-            "n": 1608,
+            "mae": 11.3054,
+            "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.7319,
+            "mae": 6.4658,
             "n": 1632,
+            "rationale": "magnitude floor (|+2.20%| < 5.0%)"
+          },
+          "Q3": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.5648,
+            "n": 1536,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.641,
+            "mae": 4.8518,
             "n": 1608,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q3": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 5.3767,
-            "n": 1512,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
@@ -802,42 +802,42 @@
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 5.8851,
-        "transition_mae": 5.8934,
-        "premium_abs": 0.0083,
-        "premium_pct": 0.14,
-        "n_stable": 2838,
-        "n_transition": 1110,
-        "rationale": "magnitude floor (|+0.14%| < 5.0%)",
+        "stable_mae": 5.802,
+        "transition_mae": 5.7566,
+        "premium_abs": -0.0454,
+        "premium_pct": -0.78,
+        "n_stable": 2885,
+        "n_transition": 1063,
+        "rationale": "magnitude floor (|-0.78%| < 5.0%)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 8.8459,
-            "n": 804,
+            "mae": 8.3631,
+            "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 7.0578,
+            "mae": 6.6089,
             "n": 816,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 4.3974,
-            "n": 804,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.6364,
-            "n": 756,
-            "rationale": "magnitude floor (|-4.23%| < 5.0%)"
+            "mae": 5.8509,
+            "n": 768,
+            "rationale": "magnitude floor (|+0.84%| < 5.0%)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.6922,
+            "n": 804,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
             "status": "SKIP",
@@ -851,41 +851,41 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 5.8142,
-        "transition_mae": 5.9475,
-        "premium_abs": 0.1333,
-        "premium_pct": 2.29,
-        "n_stable": 1424,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1424, n_tr=550)",
+        "stable_mae": 5.491,
+        "transition_mae": 5.8812,
+        "premium_abs": 0.3902,
+        "premium_pct": 7.11,
+        "n_stable": 1425,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1425, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 8.9654,
-            "n": 402,
+            "mae": 7.8482,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.8811,
+            "mae": 6.4843,
             "n": 408,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 4.451,
-            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.2825,
-            "n": 378,
+            "mae": 5.4206,
+            "n": 384,
+            "rationale": "magnitude floor (|-1.28%| < 5.0%)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.641,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
@@ -900,41 +900,41 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 3.1983,
-        "transition_mae": 3.6731,
-        "premium_abs": 0.4747,
-        "premium_pct": 14.84,
-        "n_stable": 1558,
-        "n_transition": 416,
-        "rationale": "sample floor (n_st=1558, n_tr=416)",
+        "stable_mae": 3.0708,
+        "transition_mae": 3.3211,
+        "premium_abs": 0.2503,
+        "premium_pct": 8.15,
+        "n_stable": 1557,
+        "n_transition": 417,
+        "rationale": "sample floor (n_st=1557, n_tr=417)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.7749,
-            "n": 402,
+            "mae": 4.0985,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.849,
+            "mae": 3.6765,
             "n": 408,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.8067,
-            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.9402,
-            "n": 378,
+            "mae": 2.9372,
+            "n": 384,
+            "rationale": "magnitude floor (|-4.35%| < 5.0%)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.8204,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
@@ -951,97 +951,97 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 2.7973,
-        "transition_mae": 2.6268,
-        "premium_abs": -0.1704,
-        "premium_pct": -6.09,
-        "n_stable": 5588,
-        "n_transition": 2308,
-        "rationale": "premium -6.09% in 5-10% band",
+        "stable_mae": 2.6663,
+        "transition_mae": 2.4438,
+        "premium_abs": -0.2225,
+        "premium_pct": -8.34,
+        "n_stable": 5759,
+        "n_transition": 2137,
+        "rationale": "premium -8.34% in 5-10% band",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.9925,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.0815,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.3203,
+            "mae": 3.7744,
             "n": 1608,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.5342,
-            "n": 1608,
+            "mae": 2.2605,
+            "n": 1584,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.0681,
+            "n": 1584,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0989,
+            "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.7742,
-            "n": 1512,
+            "mae": 1.7858,
+            "n": 1536,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "12-23h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 2.8466,
-        "transition_mae": 2.5717,
-        "premium_abs": -0.2749,
-        "premium_pct": -9.66,
-        "n_stable": 2838,
-        "n_transition": 1110,
-        "rationale": "premium -9.66% in 5-10% band",
+        "stable_mae": 2.6242,
+        "transition_mae": 2.3432,
+        "premium_abs": -0.281,
+        "premium_pct": -10.71,
+        "n_stable": 2885,
+        "n_transition": 1063,
+        "rationale": "premium -10.71%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.3773,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.0005,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.5249,
+            "mae": 2.9781,
             "n": 804,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.6086,
-            "n": 804,
+            "mae": 2.3225,
+            "n": 792,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.7221,
+            "n": 792,
+            "rationale": "magnitude floor (|+3.73%| < 5.0%)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3894,
+            "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.3212,
-            "n": 756,
+            "mae": 2.3171,
+            "n": 768,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1049,48 +1049,48 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 2.5041,
-        "transition_mae": 2.4091,
-        "premium_abs": -0.095,
-        "premium_pct": -3.79,
-        "n_stable": 1424,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1424, n_tr=550)",
+        "stable_mae": 2.2879,
+        "transition_mae": 2.1146,
+        "premium_abs": -0.1733,
+        "premium_pct": -7.57,
+        "n_stable": 1425,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1425, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.3313,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.6848,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.2933,
+            "mae": 2.7338,
             "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.2709,
-            "n": 402,
+            "mae": 2.0919,
+            "n": 396,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.4884,
+            "n": 396,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0801,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.782,
-            "n": 378,
+            "mae": 1.7828,
+            "n": 384,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1098,48 +1098,48 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 1.4278,
-        "transition_mae": 1.5916,
-        "premium_abs": 0.1638,
-        "premium_pct": 11.47,
-        "n_stable": 1558,
-        "n_transition": 416,
-        "rationale": "sample floor (n_st=1558, n_tr=416)",
+        "stable_mae": 1.3432,
+        "transition_mae": 1.3211,
+        "premium_abs": -0.0221,
+        "premium_pct": -1.64,
+        "n_stable": 1557,
+        "n_transition": 417,
+        "rationale": "sample floor (n_st=1557, n_tr=417)",
         "by_axes": {},
         "by_xr_q": {
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.9697,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 1.5285,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 1.2279,
+            "mae": 1.4848,
             "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.4286,
-            "n": 402,
-            "rationale": "magnitude floor (|+0.06%| < 5.0%)"
+            "mae": 1.3843,
+            "n": 396,
+            "rationale": "magnitude floor (|+3.06%| < 5.0%)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.503,
+            "n": 396,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.1755,
+            "n": 396,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.1466,
-            "n": 378,
+            "mae": 1.1365,
+            "n": 384,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1149,48 +1149,48 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 0.0394,
-        "transition_mae": 0.0371,
-        "premium_abs": -0.0023,
-        "premium_pct": -5.79,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium -5.79% in 5-10% band",
+        "stable_mae": 0.0391,
+        "transition_mae": 0.0369,
+        "premium_abs": -0.0022,
+        "premium_pct": -5.74,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium -5.74% in 5-10% band",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0255,
-            "n": 1560,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0308,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0384,
+            "mae": 0.0374,
             "n": 1608,
-            "rationale": "magnitude floor (|-2.54%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.35%| < 5.0%)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0457,
-            "n": 1536,
+            "mae": 0.0448,
+            "n": 1608,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0529,
-            "n": 1656,
+            "mae": 0.0546,
+            "n": 1608,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0294,
+            "n": 1536,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0257,
+            "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1198,146 +1198,146 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 0.0257,
-        "transition_mae": 0.0222,
-        "premium_abs": -0.0035,
-        "premium_pct": -13.59,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium -13.59%, n\u22651000",
+        "stable_mae": 0.0266,
+        "transition_mae": 0.0229,
+        "premium_abs": -0.0037,
+        "premium_pct": -13.94,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium -13.94%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0213,
-            "n": 780,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0225,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0238,
+            "mae": 0.026,
             "n": 804,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+            "rationale": "magnitude floor (|-2.26%| < 5.0%)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0293,
-            "n": 768,
+            "mae": 0.0309,
+            "n": 804,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0267,
-            "n": 828,
-            "rationale": "magnitude floor (|+3.89%| < 5.0%)"
+            "mae": 0.0279,
+            "n": 804,
+            "rationale": "magnitude floor (|+4.89%| < 5.0%)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.021,
+            "n": 768,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0218,
+            "n": 792,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.0193,
-        "transition_mae": 0.0157,
-        "premium_abs": -0.0036,
-        "premium_pct": -18.76,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 0.0195,
+        "transition_mae": 0.0167,
+        "premium_abs": -0.0028,
+        "premium_pct": -14.25,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0177,
-            "n": 390,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0164,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0189,
+            "mae": 0.0201,
             "n": 402,
-            "rationale": "magnitude floor (|-2.07%| < 5.0%)"
+            "rationale": "magnitude floor (|+3.08%| < 5.0%)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.022,
-            "n": 384,
+            "mae": 0.023,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0165,
-            "n": 414,
+            "mae": 0.017,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0148,
+            "n": 384,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0187,
+            "n": 396,
+            "rationale": "magnitude floor (|-4.10%| < 5.0%)"
           }
         }
       },
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.0154,
-        "transition_mae": 0.014,
-        "premium_abs": -0.0014,
-        "premium_pct": -9.26,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 0.0151,
+        "transition_mae": 0.0138,
+        "premium_abs": -0.0013,
+        "premium_pct": -8.38,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0137,
-            "n": 390,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0151,
-            "n": 396,
-            "rationale": "magnitude floor (|-1.95%| < 5.0%)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0164,
+            "mae": 0.0159,
             "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0159,
-            "n": 384,
-            "rationale": "magnitude floor (|+3.25%| < 5.0%)"
+            "mae": 0.0152,
+            "n": 402,
+            "rationale": "magnitude floor (|+0.66%| < 5.0%)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0144,
-            "n": 414,
+            "mae": 0.0143,
+            "n": 402,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0146,
+            "n": 384,
+            "rationale": "magnitude floor (|-3.31%| < 5.0%)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0143,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1347,48 +1347,48 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 22.6892,
-        "transition_mae": 20.7662,
-        "premium_abs": -1.923,
-        "premium_pct": -8.48,
-        "n_stable": 5612,
-        "n_transition": 2284,
-        "rationale": "premium -8.48% in 5-10% band",
+        "stable_mae": 24.6466,
+        "transition_mae": 22.8325,
+        "premium_abs": -1.8141,
+        "premium_pct": -7.36,
+        "n_stable": 5783,
+        "n_transition": 2113,
+        "rationale": "premium -7.36% in 5-10% band",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.1341,
-            "n": 1536,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 7.6548,
-            "n": 1512,
+            "mae": 10.1905,
+            "n": 1680,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 17.4252,
-            "n": 1632,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 27.1219,
+            "mae": 20.9075,
             "n": 1632,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 54.0865,
-            "n": 1584,
+            "mae": 54.1425,
+            "n": 1656,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.9464,
+            "n": 1512,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.2458,
+            "n": 1416,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1396,48 +1396,48 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 23.0291,
-        "transition_mae": 19.2823,
-        "premium_abs": -3.7468,
-        "premium_pct": -16.27,
-        "n_stable": 2850,
-        "n_transition": 1098,
-        "rationale": "premium -16.27%, n\u22651000",
+        "stable_mae": 24.7366,
+        "transition_mae": 20.5119,
+        "premium_abs": -4.2247,
+        "premium_pct": -17.08,
+        "n_stable": 2897,
+        "n_transition": 1051,
+        "rationale": "premium -17.08%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.8958,
-            "n": 768,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 8.209,
-            "n": 756,
+            "mae": 12.0869,
+            "n": 840,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 19.6434,
+            "mae": 23.6765,
             "n": 816,
+            "rationale": "magnitude floor (|-4.29%| < 5.0%)"
+          },
+          "Q5": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 45.2597,
+            "n": 828,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 28.5931,
-            "n": 816,
+            "mae": 31.377,
+            "n": 756,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q5": {
+          "Q1": {
             "status": "SKIP",
             "direction": null,
-            "mae": 48.2904,
-            "n": 792,
+            "mae": 3.6031,
+            "n": 708,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1445,48 +1445,48 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 18.8056,
-        "transition_mae": 15.693,
-        "premium_abs": -3.1126,
-        "premium_pct": -16.55,
-        "n_stable": 1430,
-        "n_transition": 544,
-        "rationale": "sample floor (n_st=1430, n_tr=544)",
+        "stable_mae": 20.7212,
+        "transition_mae": 18.0737,
+        "premium_abs": -2.6475,
+        "premium_pct": -12.78,
+        "n_stable": 1431,
+        "n_transition": 543,
+        "rationale": "sample floor (n_st=1431, n_tr=543)",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 3.5677,
-            "n": 384,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.3175,
-            "n": 378,
+            "mae": 7.3667,
+            "n": 420,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 12.9216,
-            "n": 408,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 23.9534,
+            "mae": 18.3015,
             "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 43.8939,
-            "n": 396,
+            "mae": 41.0072,
+            "n": 414,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 28.3307,
+            "n": 378,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.4435,
+            "n": 354,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1494,48 +1494,48 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 14.2382,
-        "transition_mae": 15.318,
-        "premium_abs": 1.0798,
-        "premium_pct": 7.58,
-        "n_stable": 1562,
-        "n_transition": 412,
-        "rationale": "sample floor (n_st=1562, n_tr=412)",
+        "stable_mae": 15.7675,
+        "transition_mae": 17.0533,
+        "premium_abs": 1.2858,
+        "premium_pct": 8.15,
+        "n_stable": 1561,
+        "n_transition": 413,
+        "rationale": "sample floor (n_st=1561, n_tr=413)",
         "by_axes": {},
         "by_xr_q": {
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 2.974,
-            "n": 384,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.8386,
-            "n": 378,
+            "mae": 7.231,
+            "n": 420,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 12.1667,
-            "n": 408,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 20.1029,
+            "mae": 14.8211,
             "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 32.303,
-            "n": 396,
+            "mae": 29.529,
+            "n": 414,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 24.6032,
+            "n": 378,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.9576,
+            "n": 354,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1545,33 +1545,33 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 35.9633,
-        "transition_mae": 43.7864,
-        "premium_abs": 7.8231,
-        "premium_pct": 21.75,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium +21.75%, n\u22651000",
+        "stable_mae": 36.5375,
+        "transition_mae": 46.2597,
+        "premium_abs": 9.7223,
+        "premium_pct": 26.61,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium +26.61%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 58.1616,
-            "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 129.4714,
-            "n": 1608,
+            "mae": 127.1654,
+            "n": 1632,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 64.2218,
+            "n": 1560,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.7218,
+            "mae": 0.6965,
             "n": 4752,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
@@ -1580,33 +1580,33 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 33.7844,
-        "transition_mae": 42.9,
-        "premium_abs": 9.1156,
-        "premium_pct": 26.98,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium +26.98%, n\u22651000",
+        "stable_mae": 33.6071,
+        "transition_mae": 42.4948,
+        "premium_abs": 8.8877,
+        "premium_pct": 26.45,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium +26.45%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 57.5795,
-            "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 120.5187,
-            "n": 804,
+            "mae": 114.1446,
+            "n": 816,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 61.6821,
+            "n": 780,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.7618,
+            "mae": 0.7075,
             "n": 2376,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
@@ -1615,33 +1615,33 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 29.4701,
-        "transition_mae": 36.0473,
-        "premium_abs": 6.5772,
-        "premium_pct": 22.32,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 29.7237,
+        "transition_mae": 35.5428,
+        "premium_abs": 5.8191,
+        "premium_pct": 19.58,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 49.8232,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 103.903,
-            "n": 402,
+            "mae": 101.2132,
+            "n": 408,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 52.0795,
+            "n": 390,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.5438,
+            "mae": 0.5219,
             "n": 1188,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
@@ -1650,33 +1650,33 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 29.9452,
-        "transition_mae": 27.94,
-        "premium_abs": -2.0051,
-        "premium_pct": -6.7,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 29.4656,
+        "transition_mae": 29.2608,
+        "premium_abs": -0.2048,
+        "premium_pct": -0.7,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
-          "Q4": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 47.9141,
-            "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 97.0597,
-            "n": 402,
+            "mae": 95.1716,
+            "n": 408,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 48.7436,
+            "n": 390,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.5412,
+            "mae": 0.4992,
             "n": 1188,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
@@ -1687,41 +1687,41 @@
       "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 8.2707,
-        "transition_mae": 8.5609,
-        "premium_abs": 0.2902,
-        "premium_pct": 3.51,
-        "n_stable": 5612,
-        "n_transition": 2284,
-        "rationale": "magnitude floor (|+3.51%| < 5.0%)",
+        "stable_mae": 9.996,
+        "transition_mae": 10.3171,
+        "premium_abs": 0.3211,
+        "premium_pct": 3.21,
+        "n_stable": 5783,
+        "n_transition": 2113,
+        "rationale": "magnitude floor (|+3.21%| < 5.0%)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.053,
-            "n": 2568,
+            "mae": 0.2008,
+            "n": 2112,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.8324,
-            "n": 2112,
+            "mae": 3.0748,
+            "n": 2592,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 10.2923,
-            "n": 1632,
+            "mae": 13.8737,
+            "n": 1584,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 27.1799,
-            "n": 1584,
+            "mae": 30.62,
+            "n": 1608,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1729,41 +1729,41 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 6.0842,
-        "transition_mae": 10.0701,
-        "premium_abs": 3.9859,
-        "premium_pct": 65.51,
-        "n_stable": 2850,
-        "n_transition": 1098,
-        "rationale": "premium +65.51%, n\u22651000",
+        "stable_mae": 8.263,
+        "transition_mae": 11.4291,
+        "premium_abs": 3.1661,
+        "premium_pct": 38.32,
+        "n_stable": 2897,
+        "n_transition": 1051,
+        "rationale": "premium +38.32%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.06,
-            "n": 1284,
+            "mae": 0.2074,
+            "n": 1056,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.1837,
-            "n": 1056,
+            "mae": 2.4236,
+            "n": 1296,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.9522,
-            "n": 816,
+            "mae": 9.3119,
+            "n": 792,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 25.6831,
-            "n": 792,
+            "mae": 31.3619,
+            "n": 804,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1771,41 +1771,41 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 6.5678,
-        "transition_mae": 9.9026,
-        "premium_abs": 3.3347,
-        "premium_pct": 50.77,
-        "n_stable": 1430,
-        "n_transition": 544,
-        "rationale": "sample floor (n_st=1430, n_tr=544)",
+        "stable_mae": 8.7009,
+        "transition_mae": 11.9061,
+        "premium_abs": 3.2052,
+        "premium_pct": 36.84,
+        "n_stable": 1431,
+        "n_transition": 543,
+        "rationale": "sample floor (n_st=1431, n_tr=543)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0654,
-            "n": 642,
+            "mae": 0.2083,
+            "n": 528,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.9848,
-            "n": 528,
+            "mae": 2.0494,
+            "n": 648,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.4657,
-            "n": 408,
-            "rationale": "magnitude floor (|-1.55%| < 5.0%)"
+            "mae": 9.0758,
+            "n": 396,
+            "rationale": "magnitude floor (|+4.31%| < 5.0%)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 27.9066,
-            "n": 396,
+            "mae": 34.5373,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1813,41 +1813,41 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 5.2177,
-        "transition_mae": 7.7767,
-        "premium_abs": 2.559,
-        "premium_pct": 49.05,
-        "n_stable": 1562,
-        "n_transition": 412,
-        "rationale": "sample floor (n_st=1562, n_tr=412)",
+        "stable_mae": 6.9001,
+        "transition_mae": 9.3148,
+        "premium_abs": 2.4147,
+        "premium_pct": 35.0,
+        "n_stable": 1561,
+        "n_transition": 413,
+        "rationale": "sample floor (n_st=1561, n_tr=413)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0966,
-            "n": 642,
+            "mae": 0.1989,
+            "n": 528,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.7652,
-            "n": 528,
+            "mae": 2.0278,
+            "n": 648,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 7.1495,
-            "n": 408,
+            "mae": 8.654,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 18.7955,
-            "n": 396,
+            "mae": 24.3085,
+            "n": 402,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1857,41 +1857,41 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 19.1964,
-        "transition_mae": 28.2106,
-        "premium_abs": 9.0142,
-        "premium_pct": 46.96,
-        "n_stable": 5612,
-        "n_transition": 2284,
-        "rationale": "premium +46.96%, n\u22651000",
+        "stable_mae": 21.8295,
+        "transition_mae": 30.885,
+        "premium_abs": 9.0555,
+        "premium_pct": 41.48,
+        "n_stable": 5783,
+        "n_transition": 2113,
+        "rationale": "premium +41.48%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0162,
-            "n": 3144,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 17.4621,
-            "n": 1584,
+            "mae": 20.1497,
+            "n": 1824,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 49.9942,
-            "n": 1368,
+            "mae": 0.1365,
+            "n": 2880,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 42.2556,
-            "n": 1800,
+            "mae": 41.6135,
+            "n": 2088,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 61.1096,
+            "n": 1104,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1899,41 +1899,41 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 20.753,
-        "transition_mae": 32.5255,
-        "premium_abs": 11.7725,
-        "premium_pct": 56.73,
-        "n_stable": 2850,
-        "n_transition": 1098,
-        "rationale": "premium +56.73%, n\u22651000",
+        "stable_mae": 23.739,
+        "transition_mae": 35.0285,
+        "premium_abs": 11.2895,
+        "premium_pct": 47.56,
+        "n_stable": 2897,
+        "n_transition": 1051,
+        "rationale": "premium +47.56%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0095,
-            "n": 1572,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 18.2765,
-            "n": 792,
+            "mae": 20.3399,
+            "n": 912,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 53.3699,
-            "n": 684,
+            "mae": 0.1181,
+            "n": 1440,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 48.7378,
-            "n": 900,
+            "mae": 48.5977,
+            "n": 1044,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 65.4547,
+            "n": 552,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1941,41 +1941,41 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 18.921,
-        "transition_mae": 27.8327,
-        "premium_abs": 8.9117,
-        "premium_pct": 47.1,
-        "n_stable": 1430,
-        "n_transition": 544,
-        "rationale": "sample floor (n_st=1430, n_tr=544)",
+        "stable_mae": 22.441,
+        "transition_mae": 30.2762,
+        "premium_abs": 7.8353,
+        "premium_pct": 34.92,
+        "n_stable": 1431,
+        "n_transition": 543,
+        "rationale": "sample floor (n_st=1431, n_tr=543)",
         "by_axes": {},
         "by_xr_q": {
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0,
-            "n": 786,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 17.3611,
-            "n": 396,
+            "mae": 19.3289,
+            "n": 456,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 51.3977,
-            "n": 342,
+            "mae": 0.1069,
+            "n": 720,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 39.4333,
-            "n": 450,
+            "mae": 41.7069,
+            "n": 522,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 64.8225,
+            "n": 276,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -1983,41 +1983,41 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 14.8713,
-        "transition_mae": 27.4587,
-        "premium_abs": 12.5874,
-        "premium_pct": 84.64,
-        "n_stable": 1562,
-        "n_transition": 412,
-        "rationale": "sample floor (n_st=1562, n_tr=412)",
+        "stable_mae": 17.4343,
+        "transition_mae": 29.1356,
+        "premium_abs": 11.7013,
+        "premium_pct": 67.12,
+        "n_stable": 1561,
+        "n_transition": 413,
+        "rationale": "sample floor (n_st=1561, n_tr=413)",
         "by_axes": {},
         "by_xr_q": {
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 0.0,
-            "n": 786,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 15.4975,
-            "n": 396,
-            "rationale": "magnitude floor (|+4.21%| < 5.0%)"
+            "mae": 17.114,
+            "n": 456,
+            "rationale": "magnitude floor (|-1.84%| < 5.0%)"
           },
-          "Q4": {
+          "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 43.4415,
-            "n": 342,
+            "mae": 0.0917,
+            "n": 720,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 30.1067,
-            "n": 450,
+            "mae": 31.3142,
+            "n": 522,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q4": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 54.4638,
+            "n": 276,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2027,41 +2027,41 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 19.3261,
-        "transition_mae": 24.7299,
-        "premium_abs": 5.4038,
-        "premium_pct": 27.96,
-        "n_stable": 5612,
-        "n_transition": 2284,
-        "rationale": "premium +27.96%, n\u22651000",
+        "stable_mae": 18.9668,
+        "transition_mae": 26.9915,
+        "premium_abs": 8.0247,
+        "premium_pct": 42.31,
+        "n_stable": 5783,
+        "n_transition": 2113,
+        "rationale": "premium +42.31%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.4558,
-            "n": 3120,
+            "mae": 0.0829,
+            "n": 2400,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 16.3895,
-            "n": 1584,
+            "mae": 14.2452,
+            "n": 2304,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 41.7738,
-            "n": 2904,
+            "mae": 41.3489,
+            "n": 2952,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 45.5799,
-            "n": 288,
+            "mae": 48.4833,
+            "n": 240,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2069,169 +2069,162 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 19.8207,
-        "transition_mae": 29.5756,
-        "premium_abs": 9.7549,
-        "premium_pct": 49.22,
-        "n_stable": 2850,
-        "n_transition": 1098,
-        "rationale": "premium +49.22%, n\u22651000",
+        "stable_mae": 19.6779,
+        "transition_mae": 31.3397,
+        "premium_abs": 11.6617,
+        "premium_pct": 59.26,
+        "n_stable": 2897,
+        "n_transition": 1051,
+        "rationale": "premium +59.26%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.4788,
-            "n": 1560,
+            "mae": 0.0875,
+            "n": 1200,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 18.6553,
-            "n": 792,
+            "mae": 16.2101,
+            "n": 1152,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 44.7135,
-            "n": 1452,
+            "mae": 44.1897,
+            "n": 1476,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 48.3125,
-            "n": 144,
-            "rationale": "sample floor (n=144)"
+            "mae": 49.5167,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
           }
         }
       },
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 16.3287,
-        "transition_mae": 28.9982,
-        "premium_abs": 12.6695,
-        "premium_pct": 77.59,
-        "n_stable": 1430,
-        "n_transition": 544,
-        "rationale": "sample floor (n_st=1430, n_tr=544)",
+        "stable_mae": 16.4361,
+        "transition_mae": 29.6924,
+        "premium_abs": 13.2564,
+        "premium_pct": 80.65,
+        "n_stable": 1431,
+        "n_transition": 543,
+        "rationale": "sample floor (n_st=1431, n_tr=543)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.4769,
-            "n": 780,
+            "mae": 0.06,
+            "n": 600,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 16.553,
-            "n": 396,
-            "rationale": "magnitude floor (|+1.37%| < 5.0%)"
+            "mae": 14.8576,
+            "n": 576,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 38.5124,
-            "n": 726,
+            "mae": 38.0894,
+            "n": 738,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 48.0278,
-            "n": 72,
-            "rationale": "sample floor (n=72)"
+            "mae": 48.9833,
+            "n": 60,
+            "rationale": "sample floor (n=60)"
           }
         }
       },
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 13.5474,
-        "transition_mae": 24.1893,
-        "premium_abs": 10.6419,
-        "premium_pct": 78.55,
-        "n_stable": 1562,
-        "n_transition": 412,
-        "rationale": "sample floor (n_st=1562, n_tr=412)",
+        "stable_mae": 13.713,
+        "transition_mae": 24.54,
+        "premium_abs": 10.8269,
+        "premium_pct": 78.95,
+        "n_stable": 1561,
+        "n_transition": 413,
+        "rationale": "sample floor (n_st=1561, n_tr=413)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.3218,
-            "n": 780,
+            "mae": 0.0567,
+            "n": 600,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 13.4141,
-            "n": 396,
-            "rationale": "magnitude floor (|-0.98%| < 5.0%)"
+            "mae": 12.3281,
+            "n": 576,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 30.6598,
-            "n": 726,
+            "mae": 30.3428,
+            "n": 738,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 35.0694,
-            "n": 72,
-            "rationale": "sample floor (n=72)"
+            "mae": 33.55,
+            "n": 60,
+            "rationale": "sample floor (n=60)"
           }
         }
       }
     },
     "wd": {
       "24-47h": {
-        "status": "MARGINAL",
-        "direction": "NARROW",
-        "stable_mae": 81.483,
-        "transition_mae": 76.4497,
-        "premium_abs": -5.0332,
-        "premium_pct": -6.18,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium -6.18% in 5-10% band",
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 80.674,
+        "transition_mae": 78.3954,
+        "premium_abs": -2.2786,
+        "premium_pct": -2.82,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "magnitude floor (|-2.82%| < 5.0%)",
         "by_axes": {},
         "by_xr_q": {
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 98.4532,
-            "n": 1560,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 17.4722,
+            "mae": 95.298,
             "n": 1584,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 23.1726,
-            "n": 1512,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 38.1413,
-            "n": 1656,
+            "mae": 39.8557,
+            "n": 1608,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.9635,
+            "n": 1536,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
@@ -2240,47 +2233,47 @@
             "mae": 218.2733,
             "n": 1632,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.6357,
+            "n": 1584,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 83.5514,
-        "transition_mae": 69.373,
-        "premium_abs": -14.1784,
-        "premium_pct": -16.97,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium -16.97%, n\u22651000",
+        "stable_mae": 83.1392,
+        "transition_mae": 70.539,
+        "premium_abs": -12.6002,
+        "premium_pct": -15.16,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium -15.16%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 96.7744,
-            "n": 780,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 18.9874,
+            "mae": 92.7955,
             "n": 792,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 20.4114,
-            "n": 756,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 34.7621,
-            "n": 828,
+            "mae": 37.5547,
+            "n": 804,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 21.6953,
+            "n": 768,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
@@ -2289,47 +2282,47 @@
             "mae": 222.2941,
             "n": 816,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.0568,
+            "n": 792,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 80.633,
-        "transition_mae": 81.1345,
-        "premium_abs": 0.5015,
-        "premium_pct": 0.62,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 80.421,
+        "transition_mae": 81.643,
+        "premium_abs": 1.222,
+        "premium_pct": 1.52,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 91.3282,
-            "n": 390,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 16.9167,
+            "mae": 87.7323,
             "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 19.8519,
-            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 35.587,
-            "n": 414,
+            "mae": 36.6741,
+            "n": 402,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 21.7656,
+            "n": 384,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
@@ -2338,47 +2331,47 @@
             "mae": 234.9485,
             "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 16.8813,
+            "n": 396,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
       },
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 60.5226,
-        "transition_mae": 69.0408,
-        "premium_abs": 8.5181,
-        "premium_pct": 14.07,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 59.949,
+        "transition_mae": 68.6459,
+        "premium_abs": 8.697,
+        "premium_pct": 14.51,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 75.5205,
-            "n": 390,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q1": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 11.5783,
+            "mae": 71.9419,
             "n": 396,
-            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
-          },
-          "Q2": {
-            "status": "SKIP",
-            "direction": null,
-            "mae": 15.8333,
-            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 31.6884,
-            "n": 414,
+            "mae": 30.9478,
+            "n": 402,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q2": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 16.9141,
+            "n": 384,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
@@ -2386,6 +2379,13 @@
             "direction": null,
             "mae": 173.0588,
             "n": 408,
+            "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
+          },
+          "Q1": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.7702,
+            "n": 396,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2395,41 +2395,41 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 6.5956,
-        "transition_mae": 12.8544,
-        "premium_abs": 6.2588,
-        "premium_pct": 94.89,
-        "n_stable": 5636,
-        "n_transition": 2308,
-        "rationale": "premium +94.89%, n\u22651000",
+        "stable_mae": 6.8774,
+        "transition_mae": 14.3182,
+        "premium_abs": 7.4408,
+        "premium_pct": 108.19,
+        "n_stable": 5807,
+        "n_transition": 2137,
+        "rationale": "premium +108.19%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 2472,
+            "mae": 0.1243,
+            "n": 2736,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.8469,
-            "n": 2064,
+            "mae": 1.0933,
+            "n": 1512,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.61,
-            "n": 1800,
+            "mae": 2.9729,
+            "n": 2064,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 37.5591,
-            "n": 1608,
+            "mae": 38.239,
+            "n": 1632,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2437,41 +2437,41 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 6.5584,
-        "transition_mae": 13.1342,
-        "premium_abs": 6.5759,
-        "premium_pct": 100.27,
-        "n_stable": 2862,
-        "n_transition": 1110,
-        "rationale": "premium +100.27%, n\u22651000",
+        "stable_mae": 6.6576,
+        "transition_mae": 13.8824,
+        "premium_abs": 7.2248,
+        "premium_pct": 108.52,
+        "n_stable": 2909,
+        "n_transition": 1063,
+        "rationale": "premium +108.52%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 1236,
+            "mae": 0.163,
+            "n": 1368,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.22,
-            "n": 1032,
+            "mae": 1.6653,
+            "n": 756,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.7844,
-            "n": 900,
+            "mae": 3.9331,
+            "n": 1032,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 35.6766,
-            "n": 804,
+            "mae": 35.0282,
+            "n": 816,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2479,41 +2479,41 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 5.5968,
-        "transition_mae": 13.1655,
-        "premium_abs": 7.5687,
-        "premium_pct": 135.23,
-        "n_stable": 1436,
-        "n_transition": 550,
-        "rationale": "sample floor (n_st=1436, n_tr=550)",
+        "stable_mae": 5.73,
+        "transition_mae": 13.3133,
+        "premium_abs": 7.5833,
+        "premium_pct": 132.34,
+        "n_stable": 1437,
+        "n_transition": 549,
+        "rationale": "sample floor (n_st=1437, n_tr=549)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 618,
+            "mae": 0.0556,
+            "n": 684,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.6085,
-            "n": 516,
+            "mae": 0.8915,
+            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.06,
-            "n": 450,
+            "mae": 2.1202,
+            "n": 516,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 34.9179,
-            "n": 402,
+            "mae": 34.4951,
+            "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2521,41 +2521,41 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 5.9146,
-        "transition_mae": 12.1007,
-        "premium_abs": 6.1861,
-        "premium_pct": 104.59,
-        "n_stable": 1569,
-        "n_transition": 417,
-        "rationale": "sample floor (n_st=1569, n_tr=417)",
+        "stable_mae": 6.0083,
+        "transition_mae": 12.2536,
+        "premium_abs": 6.2453,
+        "premium_pct": 103.94,
+        "n_stable": 1568,
+        "n_transition": 418,
+        "rationale": "sample floor (n_st=1568, n_tr=418)",
         "by_axes": {},
         "by_xr_q": {
           "Q2": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 618,
+            "mae": 0.0117,
+            "n": 684,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q3": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.3798,
-            "n": 516,
+            "mae": 0.619,
+            "n": 378,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q4": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.5778,
-            "n": 450,
+            "mae": 1.655,
+            "n": 516,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           },
           "Q5": {
             "status": "SKIP",
             "direction": null,
-            "mae": 33.3831,
-            "n": 402,
+            "mae": 32.9583,
+            "n": 408,
             "rationale": "xr Stage 2 gate: field not in ortho-promoted set (empty)"
           }
         }
@@ -2563,54 +2563,54 @@
     },
     "pa": {
       "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 0.1003,
-        "transition_mae": 0.1148,
-        "premium_abs": 0.0145,
-        "premium_pct": 14.47,
-        "n_stable": 1321,
-        "n_transition": 887,
-        "rationale": "sample floor (n_st=1321, n_tr=887)",
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 0.0744,
+        "transition_mae": 0.1017,
+        "premium_abs": 0.0273,
+        "premium_pct": 36.64,
+        "n_stable": 1782,
+        "n_transition": 1002,
+        "rationale": "premium +36.64%, n\u22651000",
         "by_axes": {},
         "by_xr_q": {}
       },
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.0904,
-        "transition_mae": 0.1347,
-        "premium_abs": 0.0443,
-        "premium_pct": 49.06,
-        "n_stable": 637,
-        "n_transition": 467,
-        "rationale": "sample floor (n_st=637, n_tr=467)",
+        "stable_mae": 0.067,
+        "transition_mae": 0.1184,
+        "premium_abs": 0.0514,
+        "premium_pct": 76.69,
+        "n_stable": 860,
+        "n_transition": 532,
+        "rationale": "sample floor (n_st=860, n_tr=532)",
         "by_axes": {},
         "by_xr_q": {}
       },
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.0796,
-        "transition_mae": 0.13,
-        "premium_abs": 0.0504,
-        "premium_pct": 63.3,
-        "n_stable": 307,
-        "n_transition": 245,
-        "rationale": "sample floor (n_st=307, n_tr=245)",
+        "stable_mae": 0.0608,
+        "transition_mae": 0.1084,
+        "premium_abs": 0.0475,
+        "premium_pct": 78.19,
+        "n_stable": 402,
+        "n_transition": 294,
+        "rationale": "sample floor (n_st=402, n_tr=294)",
         "by_axes": {},
         "by_xr_q": {}
       },
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 0.0786,
-        "transition_mae": 0.1459,
-        "premium_abs": 0.0673,
-        "premium_pct": 85.59,
-        "n_stable": 380,
-        "n_transition": 172,
-        "rationale": "sample floor (n_st=380, n_tr=172)",
+        "stable_mae": 0.0607,
+        "transition_mae": 0.123,
+        "premium_abs": 0.0623,
+        "premium_pct": 102.59,
+        "n_stable": 492,
+        "n_transition": 204,
+        "rationale": "sample floor (n_st=492, n_tr=204)",
         "by_axes": {},
         "by_xr_q": {}
       }
