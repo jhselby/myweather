@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T12:05:39.088402+00:00",
+  "generated_at": "2026-11-10T13:10:43.821031+00:00",
   "source": "pr_l2_regime_lead_retro.py",
   "shipped_cells": [
     [
@@ -23,7 +23,7 @@
   ],
   "candidate_jaccard": 0.2,
   "cells": {
-    "calm": {
+    "stagnant_high": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -67,28 +67,6 @@
         "both_win_today": false
       }
     },
-    "pre_frontal": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SHIP",
-        "shipped_live": false,
-        "both_win_today": true
-      },
-      "12-23h": {
-        "verdict": "SHIP",
-        "shipped_live": false,
-        "both_win_today": true
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
     "se_flow": {
       "0-5h": {
         "verdict": "SKIP",
@@ -111,7 +89,7 @@
         "both_win_today": false
       }
     },
-    "sw_flow": {
+    "calm": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -133,7 +111,29 @@
         "both_win_today": false
       }
     },
-    "sea_breeze": {
+    "pre_frontal": {
+      "0-5h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "6-11h": {
+        "verdict": "SHIP",
+        "shipped_live": false,
+        "both_win_today": true
+      },
+      "12-23h": {
+        "verdict": "SHIP",
+        "shipped_live": false,
+        "both_win_today": true
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "sw_flow": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -177,7 +177,7 @@
         "both_win_today": false
       }
     },
-    "stagnant_high": {
+    "sea_breeze": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T11:44:50.159558+00:00",
+  "generated_at": "2026-11-10T12:49:40.561661+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -21,8 +21,28 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -103.0,
-        "hist_shift": 103.0,
+        "hist_bias": -98.2,
+        "hist_shift": 98.2,
+        "n_holdout": 32
+      },
+      "12": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 0.5,
+        "hist_shift": -0.5,
+        "n_holdout": 33
+      },
+      "15": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 63.1,
+        "hist_shift": -63.1,
         "n_holdout": 30
       }
     }

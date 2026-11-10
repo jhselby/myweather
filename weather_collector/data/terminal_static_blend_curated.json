@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-11-09",
+ "generated_at": "2026-11-10",
  "window": [
-  "2026-10-10",
-  "2026-11-10"
+  "2026-10-11",
+  "2026-11-11"
  ],
- "halves_split": "2026-10-25",
+ "halves_split": "2026-10-26",
  "gate": {
   "min_n": 400,
   "min_cross_half_lift_pct": 5.0,
@@ -16,35 +16,28 @@
  "note": "served = w*HRRR_terminal + (1-w)*NBM_terminal per (field, regime_runtime, band). Lift is vs the served (applied-layer) error on the same rows.",
  "fields": {
   "t": {
-   "universal_w": 0.8,
-   "universal_lift_pct": -2.35,
+   "universal_w": 0.85,
+   "universal_lift_pct": -4.27,
    "cells": []
   },
   "sr": {
    "universal_w": 0.35,
-   "universal_lift_pct": -2.13,
+   "universal_lift_pct": -2.27,
    "cells": []
   },
   "ws": {
-   "universal_w": 0.1,
-   "universal_lift_pct": -1.07,
+   "universal_w": 0.05,
+   "universal_lift_pct": -1.09,
    "cells": []
   },
   "wg": {
-   "universal_w": 0.3,
-   "universal_lift_pct": 0.75,
-   "cells": [
-    {
-     "regime": "calm",
-     "band": "24-47",
-     "w": 0.4,
-     "n": 421
-    }
-   ]
+   "universal_w": 0.35,
+   "universal_lift_pct": 0.81,
+   "cells": []
   },
   "h": {
    "universal_w": 0.65,
-   "universal_lift_pct": -3.01,
+   "universal_lift_pct": -4.02,
    "cells": [
     {
      "regime": "frontal",
@@ -54,15 +47,9 @@
     },
     {
      "regime": "pre_frontal",
-     "band": "0-5",
-     "w": 0.55,
-     "n": 859
-    },
-    {
-     "regime": "pre_frontal",
      "band": "24-47",
      "w": 0.85,
-     "n": 3099
+     "n": 3163
     }
    ]
   }
