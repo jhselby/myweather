@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.96 • November 10, 2026 (debug page brought current)</strong></summary>
+
+- The debug page's "Being evaluated next" list, the open-watch list and Recent activity still described November 8. They now cover November 9 and 10: the first 8-day holdout verdicts, the ws 6 to 23 hour loss to raw NBM traced to the pre-November 6 refit and closed, the stronger-L2 passes held for station truth, and the two new NBM sentry flags.
+- Three watches past their close date (wd.l3_nbm re-read, ws vs raw NBM, holdout verdicts) are closed and removed. The per-station reading archive moved out of "Not built" since v0.7.94 built it.
+- Nothing served or scored changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.95 • November 8, 2026 (Weather Underground calls stopped)</strong></summary>
 
 - The collector was still calling Weather Underground on every run: the 41-station feed and the single Castle Hill station, about 42 calls every ten minutes, all refused (the key has been rejected since October 7 and no reading has arrived since October 21). Both are now switched off and make no network call. Tempest is the station network.

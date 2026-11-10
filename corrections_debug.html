@@ -1807,10 +1807,10 @@
   // the watch is surfaced in the staleness audit block above. Update this
   // list when a watch flips or a new watch opens.
   const OPEN_WATCHES = [
+    // wd.l3_nbm per-day re-read removed 2026-11-10 - CLOSED CLEAN: only 11-05 lost, alert gone 11-09.
+    // ws vs raw NBM removed 2026-11-10 - CLOSED CLEAN: loss was pre-11-06-refit weights (-7.6% to 11-05, -0.9% since).
+    // Holdout verdicts removed 2026-11-10 - CLOSED: first 8-day verdicts run 11-10 (ledger rows written); tracker keeps running.
     // Backup first weekly bucket copy removed 2026-11-08 - CLOSED CLEAN: backup_last_ok touched 11-08 05:30.
-    { name: "wd.l3_nbm per-day re-read (11-06/11-07 complete); 11-05 s-flow day was the only real loss", closeDate: "2026-11-09", note: "if another s-flow day loses, test wd L3 skip in s vs 50d window" },
-    { name: "ws: served loses raw NBM 6-7% at 6-23h although live blend weights are ~pure NBM (ECMWF 0 below 24h) - find the source before any ws->NBM change", closeDate: "2026-11-10", note: "check NBM input to blend vs raw NBM, l2/l3/l4_nbm layers, selector write-back, tracker column" },
-    { name: "Holdout verdicts — holdout_tracker needs >= 8 holdout days (valid day >= 11-03)", closeDate: "2026-11-11", note: "run analysis/holdout_tracker.py; ship window ~11-17" },
     { name: "Truth audit rescore on observed_stations + apply 2h-onward L2 grading", closeDate: "2026-11-17", note: "both truths per band; ws ECMWF diurnal bias on wind_mph_stations; h L2 recheck" },
     { name: "Archive — monthly pair-log snapshot (backup_bucket.sh)", closeDate: "2026-12-06", note: "verify archive/ object exists" },
     // ECMWF ws gate removed 2026-11-07 - CLOSED UNCLEAN: pair-log gate never run as scoped; folded into Holdout verdicts (11-11) + truth audit rescore (11-17).
@@ -2203,7 +2203,7 @@
 
 
 <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-state-now">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Where things stand — 2026-11-08 (v0.7.93) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· rebuilt 11-04, evaluation list swept 11-08; the 10-09 version is in the Archive</span></summary>
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Where things stand — 2026-11-10 (v0.7.96) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· rebuilt 11-04, evaluation list swept 11-10; the 10-09 version is in the Archive</span></summary>
 <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
 
   <!-- Measurement -->
@@ -2288,18 +2288,19 @@
     <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
       <ul style="margin:0 0 8px 16px;padding:0;">
         <li><strong>ECMWF gate (was 11-05) — CLOSED UNCLEAN 11-07:</strong> the pair-log gate never ran as scoped; folded into the holdout verdicts and the 11-17 rescore. Preview 11-02 showed no gain; ws ECMWF aligned gain is +3% (not the +9% first read).</li>
-        <li><strong>ws vs raw NBM — open, found 11-08:</strong> served ws loses raw NBM 6–7% at 6–23h (exploratory, 11 days) although the live table (fit 11-08) is ~pure NBM there (6–11h HRRR 0.05 / NBM 0.95 / ECMWF 0; 12–23h pure NBM). Dropping ECMWF would change almost nothing, so the loss is elsewhere (NBM input to the blend vs the tracker's raw NBM, l2/l3/l4_nbm layers, selector write-back). Pin down what the tracker's "raw NBM" measures first.</li>
-        <li><strong>t 6–11h live read:</strong> the served 3-way blend loses to HRRR at 6–11h on the live rows (coin-flip by day: −0.5%, 6/11 days exploratory through 11-08; was −5 to −15% in late October). v0.7.75 is on HOLD, not reverted.</li>
-        <li><strong>wd.l3_nbm HOT (3d −1.3%):</strong> one day (11-05 s-flow, −40.8%); 11-06/11-07 not repeating. Per-day re-read 11-09. sr.l3_nbm also HOT (+17.2% → +1.5%), watch.</li>
-        <li><strong>~11-10/11-11 — holdout verdicts:</strong> <code>holdout_tracker.py</code> had 6 holdout days on 11-08 (valid day ≥ 11-03); reports "not evaluable" until 8; first possible ship window ~11-17.</li>
-        <li><strong>~11-17 / 11-20 — truth audit rescore:</strong> score served / HRRR / NBM / ECMWF on both truths per band; ws ECMWF diurnal bias (the only per-model bias test that cleared lo&gt;0, +6.8%) on <code>wind_mph_stations</code>; apply the 2h-onward station-truth grading for L2 and the short-lead layers; refit blend/selector on <code>observed_stations</code> only if rankings or weights move.</li>
+        <li><strong>ws vs raw NBM — CLOSED 11-10:</strong> the 6–23h loss was the pre-11-06 refit weights (HRRR 0.04–0.50 at 6–11h): −7.6% on valid days to 11-05, −0.9% since (11-07/08/09 ties). Served ws is ~NBM now; watch only if the refit gives HRRR/ECMWF weight at 6–47h again.</li>
+        <li><strong>t 6–11h:</strong> the 8-day holdout (valid day ≥ 11-03) now has served beating HRRR +7.3% [+3.0, +11.5]; the late-October loss is gone. v0.7.75 stays, off HOLD for this band.</li>
+        <li><strong>NBM sentry 11-10:</strong> ch.l4_nbm HOT (+3.8% → −3.2%) and wg.l3_nbm HOT (+18.2% → +0.8%), 3-day windows; watch only. wd.l3_nbm cleared 11-09 (11-05 was the only loss). sr.l3_nbm +16.6% → +5.7%, decaying.</li>
+        <li><strong>Holdout verdicts — first run 11-10 (8 days):</strong> served beats HRRR on t 6–47h (+7.3 / +16.3 / +26.3%), h 0–11h (+11.2 / +20.6%), ws 12–47h (+26 / +23%); beats NBM on t/h every band and ws 0–5h. ws 6–23h vs NBM loses on holdout (pre-refit days). Nothing to ship: these are already served. Tracker keeps running.</li>
+        <li><strong>Stronger L2 (<code>l2_amplitude_wf</code>) — held:</strong> t 2–5h +6.9% [+1.2, +14.7], t 6–11h +3.2% [+0.4, +6.8], wg 2–5h +2.4% [+1.6, +3.4] all PASS on 8 holdout days, but the alphas were trained on the shrunk truth. t re-runs after the ~11-17 station-truth flip; wg waits for the ~11-22 wind-on-water truth.</li>
+        <li><strong>~11-17 / 11-20 — STATION_TRUTH flip (t/h) and truth audit rescore:</strong> walk-forward + ship_rule first, then deploy the refitter; score served / HRRR / NBM / ECMWF on both truths per band; ws ECMWF diurnal bias (the only per-model bias test that cleared lo&gt;0, +6.8%) on <code>wind_mph_stations</code>; apply the 2h-onward station-truth grading for L2 and the short-lead layers; refit blend/selector on <code>observed_stations</code> only if rankings or weights move.</li>
         <li><strong>~11-19 — C1b revival:</strong> refit the cluster-spread cuts on <code>cluster_spread_tempest_log.json</code> (needs 14+ days from the v0.7.90 deploy), then point the confidence layer at it.</li>
         <li><strong>Watch — h L2 at 2–5h:</strong> daily gain swings −41% to +45% (14 days, 10-22 to 11-04); +14.9% pooled on the 13 Tempest-only days vs +25.8% with WU. Noise at this n; recheck with the station-truth rows.</li>
+        <li><strong>~11-22 — wind-on-water truth:</strong> rank stations against the waterfront Tempest over two weeks of <code>station_readings</code>, pick the exposed set, re-check the airport floor, then the split-network L2 test and wg stronger L2.</li>
         <li><strong>Backups:</strong> first weekly bucket copy ran 11-08 (<code>backup_last_ok</code> touched 05:30); 12-06 next pair-log archive snapshot.</li>
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Not built</div>
       <ul style="margin:0 0 8px 16px;padding:0;">
-        <li>Per-station reading archive (the pair log keeps only aggregates; <code>station_history.json</code> keeps offsets from consensus, 48h rolling). Needed for a held-out truth/correction split and for leave-one-station-out. Not required for the 2h-onward rule above.</li>
         <li>A backup station source for Tempest outages. CWOP checked 11-04: about one station near the Cove, not useful.</li>
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Killed or rejected (do not reopen)</div>
@@ -2328,11 +2329,15 @@
 
 
 
-      <li><strong style="color:#7fb3ff;">2026-11-08 (Sun) — today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. <strong style="color:#e0a070;">DISCOVERY</strong> — the cc "fresh fire" (3d +613%) is a baseline artifact: the sentry compares served cc (NBM terminal) with raw HRRR, which scores 0.8–5 on clear days against NBM's 12–19; served cc beats raw NBM. The planned ws→NBM change would be a near no-op: the live ws blend is already ~pure NBM below 24h, so the 6–7% loss to raw NBM comes from somewhere else (open). First weekly bucket copy ran (marker 05:30). Holdout: 6 of 8 days.</li>
+      <li><strong style="color:#7fb3ff;">2026-11-10 (Tue) — today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 220/220. First 8-day holdout verdicts: served beats HRRR on t/h/ws where it should and NBM on t/h everywhere. ws 6–23h loss to raw NBM traced to pre-11-06 refit weights (−7.6% → −0.9%); closed. Stronger L2 passes on holdout for t 2–5/6–11h and wg 2–5h but is held for station truth. New HOT: ch.l4_nbm, wg.l3_nbm (3d, watch). Pushed <code>979c47e9</code>; debug page brought current (v0.7.96).</li>
 
-      <li><strong style="opacity:0.85;">2026-11-07 (Sat) — 1 day ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd.l3_nbm loss traced per valid day: only 11-05 (s-flow, −40.8%) lost, no repeat; hold. ECMWF ws gate closed unclean and folded into the holdout verdicts. Pushed <code>9dfa0b2c</code>.</li>
+      <li><strong style="opacity:0.85;">2026-11-09 (Mon) — 1 day ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 220/220. cc fresh fire = same HRRR-raw baseline artifact; wd.l3_nbm alert gone (11-05 one day, no skip); sr.l3_nbm decaying. Selector room is blend vs fixed, not served gain: served already beats the blend rule on t/dp/h. Pushed <code>e658cbe3</code>.</li>
 
-      <li><strong style="opacity:0.85;">2026-11-06 (Fri) — 2 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd fresh fire and wd.l3_nbm HOT diagnosed as one day (11-05 s-flow regime shift 16°→30°). ws loses raw NBM at 6–47h on exploratory rows; t 6–11h vs HRRR −1.4%.</li>
+      <li><strong style="opacity:0.85;">2026-11-08 (Sun) — 2 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. <strong style="color:#e0a070;">DISCOVERY</strong> — the cc "fresh fire" (3d +613%) is a baseline artifact: the sentry compares served cc (NBM terminal) with raw HRRR, which scores 0.8–5 on clear days against NBM's 12–19; served cc beats raw NBM. The planned ws→NBM change would be a near no-op: the live ws blend is already ~pure NBM below 24h, so the 6–7% loss to raw NBM comes from somewhere else (open). First weekly bucket copy ran (marker 05:30). Holdout: 6 of 8 days.</li>
+
+      <li><strong style="opacity:0.85;">2026-11-07 (Sat) — 3 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd.l3_nbm loss traced per valid day: only 11-05 (s-flow, −40.8%) lost, no repeat; hold. ECMWF ws gate closed unclean and folded into the holdout verdicts. Pushed <code>9dfa0b2c</code>.</li>
+
+      <li><strong style="opacity:0.85;">2026-11-06 (Fri) — 4 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd fresh fire and wd.l3_nbm HOT diagnosed as one day (11-05 s-flow regime shift 16°→30°). ws loses raw NBM at 6–47h on exploratory rows; t 6–11h vs HRRR −1.4%.</li>
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-11-05 and earlier</strong> <span style="opacity:0.6;font-size:0.85em;">— in <code>docs/CHANGELOG.md</code> (v0.7.88–v0.7.92 station feed, dual-truth scoring and Tempest fixes 11-04; v0.7.86/87 observed_stations logging 11-02; v0.7.85 ECMWF timing fix, …).</span></li>
 
