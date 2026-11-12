@@ -41,14 +41,37 @@ def _idw_f(nb):
     return ((sum(wi * x[3] for wi, x in zip(w, nb)) / w.sum()) - 273.15) * 9 / 5 + 32
 
 
+GCS_STORE = "urma_truth_t.json"   # cloud mode: {"YYYY-MM-DDTHH": [[lat, lon, km, K] x4]}, ~50 KB for 14 days
+KEEP_DAYS = 25
+
+
+def _cloud():
+    import os
+    return os.environ.get("MYWEATHER_CACHE_MODE") == "gcs"
+
+
 def load_truth():
     out = {}
-    if URMA_FILE.exists():
+    if _cloud():
+        from weather_collector.gcs_io import load_json
+        for k, nb in (load_json(GCS_STORE) or {}).items():
+            out[k] = _idw_f(nb)
+    elif URMA_FILE.exists():
         for line in open(URMA_FILE):
             r = json.loads(line)
             if r.get("var") == "TMP":
                 out[r["valid"][:13]] = _idw_f(r["nb"])
     return out
+
+
+def _save_cloud(new):
+    """Merge newly fetched hours into the GCS store (trimmed to KEEP_DAYS)."""
+    from weather_collector.gcs_io import load_json, upload_json
+    store = load_json(GCS_STORE) or {}
+    store.update(new)
+    cut = (datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%dT%H")
+    store = {k: v for k, v in store.items() if k >= cut}
+    upload_json(store, GCS_STORE, "urma truth store")
 
 
 def update_truth(truth):
@@ -60,18 +83,24 @@ def update_truth(truth):
         return
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     last = datetime.strptime(max(truth) + ":00", "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc) if truth else now - timedelta(days=WIN + 2)
-    t, n = last + timedelta(hours=1), 0
-    URMA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    t, n, new = last + timedelta(hours=1), 0, {}
+    if not _cloud():
+        URMA_FILE.parent.mkdir(parents=True, exist_ok=True)
     while t <= now - timedelta(hours=URMA_LAG_H) and n < MAX_FETCH_H:
         k = t.strftime("%Y-%m-%dT%H")
         if k not in truth:
             nb = fetch(t, "TMP")
             if nb is not None:
-                with open(URMA_FILE, "a") as f:
-                    f.write(json.dumps({"valid": t.strftime("%Y-%m-%dT%H:00Z"), "var": "TMP", "nb": nb}) + "\n")
+                if _cloud():
+                    new[k] = nb
+                else:
+                    with open(URMA_FILE, "a") as f:
+                        f.write(json.dumps({"valid": t.strftime("%Y-%m-%dT%H:00Z"), "var": "TMP", "nb": nb}) + "\n")
                 truth[k] = _idw_f(nb)
                 n += 1
         t += timedelta(hours=1)
+    if new:
+        _save_cloud(new)
     print(f"  URMA: fetched {n} new hours")
 
 
