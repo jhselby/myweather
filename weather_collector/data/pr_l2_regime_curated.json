@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T13:10:43.821031+00:00",
+  "generated_at": "2026-11-12T11:44:20.917793+00:00",
   "source": "pr_l2_regime_lead_retro.py",
   "shipped_cells": [
     [
@@ -11,19 +11,11 @@
     [
       "nw_flow",
       "0-5h"
-    ],
-    [
-      "pre_frontal",
-      "12-23h"
-    ],
-    [
-      "pre_frontal",
-      "6-11h"
     ]
   ],
-  "candidate_jaccard": 0.2,
+  "candidate_jaccard": 0.0,
   "cells": {
-    "stagnant_high": {
+    "sea_breeze": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -67,6 +59,28 @@
         "both_win_today": false
       }
     },
+    "ne_flow": {
+      "0-5h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "6-11h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
     "se_flow": {
       "0-5h": {
         "verdict": "SKIP",
@@ -82,50 +96,6 @@
         "verdict": "SKIP",
         "shipped_live": false,
         "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "calm": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "pre_frontal": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SHIP",
-        "shipped_live": false,
-        "both_win_today": true
-      },
-      "12-23h": {
-        "verdict": "SHIP",
-        "shipped_live": false,
-        "both_win_today": true
       },
       "24-47h": {
         "verdict": "SKIP",
@@ -177,7 +147,7 @@
         "both_win_today": false
       }
     },
-    "sea_breeze": {
+    "pre_frontal": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -199,7 +169,29 @@
         "both_win_today": false
       }
     },
-    "ne_flow": {
+    "stagnant_high": {
+      "0-5h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "6-11h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "calm": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,

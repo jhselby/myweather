@@ -1,797 +1,6 @@
 {
   "entries": [
     {
-      "date": "2026-10-11",
-      "fitted_at": "2026-10-11T10:49",
-      "positive": [
-        "ch|sw_flow|6-11",
-        "h|ne_flow|12-23",
-        "h|ne_flow|24-47",
-        "h|nor_easter|24-47",
-        "t|ne_flow|6-11",
-        "t|stagnant_high|0-5"
-      ],
-      "payload": {
-        "h|nor_easter|24-47": {
-          "field": "h",
-          "regime": "nor_easter",
-          "band": "24-47",
-          "lift_pct": 59.96,
-          "n": 215,
-          "n_today": 0,
-          "half1_lift_pct": 19.44,
-          "half2_lift_pct": 58.4
-        },
-        "h|ne_flow|24-47": {
-          "field": "h",
-          "regime": "ne_flow",
-          "band": "24-47",
-          "lift_pct": 33.49,
-          "n": 1987,
-          "n_today": 0,
-          "half1_lift_pct": 33.15,
-          "half2_lift_pct": 34.57
-        },
-        "t|stagnant_high|0-5": {
-          "field": "t",
-          "regime": "stagnant_high",
-          "band": "0-5",
-          "lift_pct": 29.97,
-          "n": 93,
-          "n_today": 4,
-          "half1_lift_pct": 30.51,
-          "half2_lift_pct": 27.27
-        },
-        "h|ne_flow|12-23": {
-          "field": "h",
-          "regime": "ne_flow",
-          "band": "12-23",
-          "lift_pct": 22.94,
-          "n": 1233,
-          "n_today": 0,
-          "half1_lift_pct": 17.88,
-          "half2_lift_pct": 44.69
-        },
-        "t|ne_flow|6-11": {
-          "field": "t",
-          "regime": "ne_flow",
-          "band": "6-11",
-          "lift_pct": 13.81,
-          "n": 552,
-          "n_today": 2,
-          "half1_lift_pct": 6.83,
-          "half2_lift_pct": 37.81
-        },
-        "ch|sw_flow|6-11": {
-          "field": "ch",
-          "regime": "sw_flow",
-          "band": "6-11",
-          "lift_pct": 5.3,
-          "n": 671,
-          "n_today": 0,
-          "half1_lift_pct": 1.21,
-          "half2_lift_pct": 7.64
-        }
-      },
-      "positive_hrrr": [
-        "cc|calm|12-23",
-        "dp|calm|12-23",
-        "dp|frontal|0-5",
-        "dp|se_flow|0-5",
-        "dp|se_flow|12-23",
-        "dp|sea_breeze|12-23",
-        "sr|pre_frontal|6-11",
-        "sr|se_flow|0-5",
-        "sr|stagnant_high|24-47",
-        "wg|sw_flow|12-23",
-        "ws|frontal|6-11",
-        "ws|sw_flow|12-23"
-      ],
-      "payload_hrrr": {
-        "cc|calm|12-23": {
-          "field": "cc",
-          "regime": "calm",
-          "band": "12-23",
-          "lift_pct": -192.56,
-          "n": 270,
-          "n_today": 3,
-          "half1_lift_pct": -43.94,
-          "half2_lift_pct": -275.43
-        },
-        "dp|frontal|0-5": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "0-5",
-          "lift_pct": -40.99,
-          "n": 130,
-          "n_today": 0,
-          "half1_lift_pct": -55.72,
-          "half2_lift_pct": -36.12
-        },
-        "sr|stagnant_high|24-47": {
-          "field": "sr",
-          "regime": "stagnant_high",
-          "band": "24-47",
-          "lift_pct": -36.03,
-          "n": 78,
-          "n_today": 1,
-          "half1_lift_pct": -156.35,
-          "half2_lift_pct": -5.12
-        },
-        "dp|calm|12-23": {
-          "field": "dp",
-          "regime": "calm",
-          "band": "12-23",
-          "lift_pct": -25.3,
-          "n": 256,
-          "n_today": 3,
-          "half1_lift_pct": -31.82,
-          "half2_lift_pct": -20.09
-        },
-        "dp|se_flow|12-23": {
-          "field": "dp",
-          "regime": "se_flow",
-          "band": "12-23",
-          "lift_pct": -18.13,
-          "n": 1280,
-          "n_today": 2,
-          "half1_lift_pct": -23.87,
-          "half2_lift_pct": -6.88
-        },
-        "sr|se_flow|0-5": {
-          "field": "sr",
-          "regime": "se_flow",
-          "band": "0-5",
-          "lift_pct": -17.1,
-          "n": 391,
-          "n_today": 0,
-          "half1_lift_pct": -17.46,
-          "half2_lift_pct": -16.42
-        },
-        "ws|frontal|6-11": {
-          "field": "ws",
-          "regime": "frontal",
-          "band": "6-11",
-          "lift_pct": -16.81,
-          "n": 139,
-          "n_today": 0,
-          "half1_lift_pct": -27.41,
-          "half2_lift_pct": -9.9
-        },
-        "dp|sea_breeze|12-23": {
-          "field": "dp",
-          "regime": "sea_breeze",
-          "band": "12-23",
-          "lift_pct": -15.86,
-          "n": 158,
-          "n_today": 0,
-          "half1_lift_pct": -9.39,
-          "half2_lift_pct": -230.86
-        },
-        "ws|sw_flow|12-23": {
-          "field": "ws",
-          "regime": "sw_flow",
-          "band": "12-23",
-          "lift_pct": -12.15,
-          "n": 1292,
-          "n_today": 0,
-          "half1_lift_pct": -57.01,
-          "half2_lift_pct": -1.79
-        },
-        "dp|se_flow|0-5": {
-          "field": "dp",
-          "regime": "se_flow",
-          "band": "0-5",
-          "lift_pct": -11.29,
-          "n": 391,
-          "n_today": 0,
-          "half1_lift_pct": -11.38,
-          "half2_lift_pct": -11.04
-        },
-        "wg|sw_flow|12-23": {
-          "field": "wg",
-          "regime": "sw_flow",
-          "band": "12-23",
-          "lift_pct": -5.81,
-          "n": 1292,
-          "n_today": 0,
-          "half1_lift_pct": -3.43,
-          "half2_lift_pct": -5.37
-        },
-        "sr|pre_frontal|6-11": {
-          "field": "sr",
-          "regime": "pre_frontal",
-          "band": "6-11",
-          "lift_pct": -4.55,
-          "n": 884,
-          "n_today": 0,
-          "half1_lift_pct": -3.47,
-          "half2_lift_pct": -5.57
-        }
-      },
-      "positive_nws": [
-        "dp|frontal|24-47",
-        "dp|frontal|6-11",
-        "dp|pre_frontal|0-5",
-        "dp|pre_frontal|6-11",
-        "dp|stagnant_high|24-47",
-        "dp|sw_flow|12-23",
-        "pp|ne_flow|0-5",
-        "pp|ne_flow|12-23",
-        "pp|nor_easter|12-23",
-        "pp|pre_frontal|12-23",
-        "pp|pre_frontal|6-11",
-        "ws|nor_easter|12-23"
-      ],
-      "payload_nws": {
-        "dp|frontal|24-47": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "24-47",
-          "lift_pct": 8.58,
-          "n": 534,
-          "n_today": 0,
-          "half1_lift_pct": 7.0,
-          "half2_lift_pct": 9.31
-        },
-        "dp|pre_frontal|0-5": {
-          "field": "dp",
-          "regime": "pre_frontal",
-          "band": "0-5",
-          "lift_pct": 9.4,
-          "n": 888,
-          "n_today": 0,
-          "half1_lift_pct": 6.86,
-          "half2_lift_pct": 12.24
-        },
-        "dp|sw_flow|12-23": {
-          "field": "dp",
-          "regime": "sw_flow",
-          "band": "12-23",
-          "lift_pct": 21.44,
-          "n": 1276,
-          "n_today": 0,
-          "half1_lift_pct": 5.06,
-          "half2_lift_pct": 23.85
-        },
-        "dp|pre_frontal|6-11": {
-          "field": "dp",
-          "regime": "pre_frontal",
-          "band": "6-11",
-          "lift_pct": 13.43,
-          "n": 884,
-          "n_today": 0,
-          "half1_lift_pct": 8.45,
-          "half2_lift_pct": 18.73
-        },
-        "dp|stagnant_high|24-47": {
-          "field": "dp",
-          "regime": "stagnant_high",
-          "band": "24-47",
-          "lift_pct": 14.37,
-          "n": 135,
-          "n_today": 1,
-          "half1_lift_pct": 15.25,
-          "half2_lift_pct": 11.6
-        },
-        "pp|pre_frontal|6-11": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "6-11",
-          "lift_pct": 9.55,
-          "n": 711,
-          "n_today": 0,
-          "half1_lift_pct": 7.07,
-          "half2_lift_pct": 15.28
-        },
-        "pp|pre_frontal|12-23": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "12-23",
-          "lift_pct": 19.91,
-          "n": 1367,
-          "n_today": 0,
-          "half1_lift_pct": 7.45,
-          "half2_lift_pct": 38.3
-        },
-        "pp|ne_flow|12-23": {
-          "field": "pp",
-          "regime": "ne_flow",
-          "band": "12-23",
-          "lift_pct": 14.66,
-          "n": 567,
-          "n_today": 0,
-          "half1_lift_pct": 9.23,
-          "half2_lift_pct": 21.32
-        },
-        "ws|nor_easter|12-23": {
-          "field": "ws",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 20.7,
-          "n": 178,
-          "n_today": 0,
-          "half1_lift_pct": 41.38,
-          "half2_lift_pct": 20.58
-        },
-        "pp|nor_easter|12-23": {
-          "field": "pp",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 68.58,
-          "n": 166,
-          "n_today": 0,
-          "half1_lift_pct": 17.5,
-          "half2_lift_pct": 68.83
-        },
-        "dp|frontal|6-11": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "6-11",
-          "lift_pct": 41.71,
-          "n": 139,
-          "n_today": 0,
-          "half1_lift_pct": 9.52,
-          "half2_lift_pct": 48.59
-        },
-        "pp|ne_flow|0-5": {
-          "field": "pp",
-          "regime": "ne_flow",
-          "band": "0-5",
-          "lift_pct": 54.69,
-          "n": 299,
-          "n_today": 0,
-          "half1_lift_pct": 40.75,
-          "half2_lift_pct": 64.78
-        }
-      }
-    },
-    {
-      "date": "2026-10-12",
-      "fitted_at": "2026-10-12T09:55",
-      "positive": [
-        "h|ne_flow|12-23",
-        "h|ne_flow|24-47",
-        "h|nor_easter|12-23",
-        "h|nor_easter|24-47",
-        "t|ne_flow|6-11",
-        "t|nor_easter|12-23",
-        "t|se_flow|12-23",
-        "t|stagnant_high|0-5"
-      ],
-      "payload": {
-        "h|nor_easter|12-23": {
-          "field": "h",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 42.1,
-          "n": 181,
-          "n_today": 3,
-          "half1_lift_pct": 48.33,
-          "half2_lift_pct": 37.74
-        },
-        "h|ne_flow|24-47": {
-          "field": "h",
-          "regime": "ne_flow",
-          "band": "24-47",
-          "lift_pct": 31.69,
-          "n": 2024,
-          "n_today": 34,
-          "half1_lift_pct": 33.29,
-          "half2_lift_pct": 21.79
-        },
-        "t|stagnant_high|0-5": {
-          "field": "t",
-          "regime": "stagnant_high",
-          "band": "0-5",
-          "lift_pct": 28.13,
-          "n": 95,
-          "n_today": 0,
-          "half1_lift_pct": 30.51,
-          "half2_lift_pct": 16.59
-        },
-        "h|ne_flow|12-23": {
-          "field": "h",
-          "regime": "ne_flow",
-          "band": "12-23",
-          "lift_pct": 22.37,
-          "n": 1226,
-          "n_today": 4,
-          "half1_lift_pct": 17.21,
-          "half2_lift_pct": 44.11
-        },
-        "h|nor_easter|24-47": {
-          "field": "h",
-          "regime": "nor_easter",
-          "band": "24-47",
-          "lift_pct": 16.14,
-          "n": 261,
-          "n_today": 46,
-          "half1_lift_pct": 21.82,
-          "half2_lift_pct": 3.6
-        },
-        "t|ne_flow|6-11": {
-          "field": "t",
-          "regime": "ne_flow",
-          "band": "6-11",
-          "lift_pct": 13.32,
-          "n": 547,
-          "n_today": 0,
-          "half1_lift_pct": 6.02,
-          "half2_lift_pct": 37.81
-        },
-        "t|se_flow|12-23": {
-          "field": "t",
-          "regime": "se_flow",
-          "band": "12-23",
-          "lift_pct": 11.81,
-          "n": 1499,
-          "n_today": 117,
-          "half1_lift_pct": 8.97,
-          "half2_lift_pct": 14.21
-        },
-        "t|nor_easter|12-23": {
-          "field": "t",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 11.53,
-          "n": 181,
-          "n_today": 3,
-          "half1_lift_pct": 43.8,
-          "half2_lift_pct": 2.04
-        }
-      },
-      "positive_hrrr": [
-        "cc|calm|12-23",
-        "dp|calm|12-23",
-        "dp|frontal|0-5",
-        "dp|nw_flow|12-23",
-        "dp|sea_breeze|12-23",
-        "dp|sw_flow|12-23",
-        "sr|se_flow|0-5",
-        "sr|se_flow|12-23",
-        "sr|se_flow|24-47",
-        "sr|stagnant_high|24-47",
-        "wd|ne_flow|0-5",
-        "ws|nor_easter|6-11"
-      ],
-      "payload_hrrr": {
-        "cc|calm|12-23": {
-          "field": "cc",
-          "regime": "calm",
-          "band": "12-23",
-          "lift_pct": -174.35,
-          "n": 268,
-          "n_today": 0,
-          "half1_lift_pct": -43.49,
-          "half2_lift_pct": -238.81
-        },
-        "dp|calm|12-23": {
-          "field": "dp",
-          "regime": "calm",
-          "band": "12-23",
-          "lift_pct": -24.01,
-          "n": 253,
-          "n_today": 0,
-          "half1_lift_pct": -31.39,
-          "half2_lift_pct": -19.57
-        },
-        "dp|sw_flow|12-23": {
-          "field": "dp",
-          "regime": "sw_flow",
-          "band": "12-23",
-          "lift_pct": -23.62,
-          "n": 1262,
-          "n_today": 0,
-          "half1_lift_pct": -45.58,
-          "half2_lift_pct": -22.29
-        },
-        "dp|frontal|0-5": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "0-5",
-          "lift_pct": -21.03,
-          "n": 237,
-          "n_today": 105,
-          "half1_lift_pct": -55.72,
-          "half2_lift_pct": -15.71
-        },
-        "sr|se_flow|0-5": {
-          "field": "sr",
-          "regime": "se_flow",
-          "band": "0-5",
-          "lift_pct": -16.77,
-          "n": 400,
-          "n_today": 0,
-          "half1_lift_pct": -18.86,
-          "half2_lift_pct": -12.96
-        },
-        "dp|sea_breeze|12-23": {
-          "field": "dp",
-          "regime": "sea_breeze",
-          "band": "12-23",
-          "lift_pct": -15.86,
-          "n": 158,
-          "n_today": 0,
-          "half1_lift_pct": -9.39,
-          "half2_lift_pct": -230.86
-        },
-        "sr|se_flow|12-23": {
-          "field": "sr",
-          "regime": "se_flow",
-          "band": "12-23",
-          "lift_pct": -13.28,
-          "n": 1499,
-          "n_today": 117,
-          "half1_lift_pct": -13.0,
-          "half2_lift_pct": -11.47
-        },
-        "sr|stagnant_high|24-47": {
-          "field": "sr",
-          "regime": "stagnant_high",
-          "band": "24-47",
-          "lift_pct": -9.75,
-          "n": 70,
-          "n_today": 0,
-          "half1_lift_pct": -62.13,
-          "half2_lift_pct": -12.99
-        },
-        "dp|nw_flow|12-23": {
-          "field": "dp",
-          "regime": "nw_flow",
-          "band": "12-23",
-          "lift_pct": -5.98,
-          "n": 1650,
-          "n_today": 2,
-          "half1_lift_pct": -12.32,
-          "half2_lift_pct": -0.7
-        },
-        "sr|se_flow|24-47": {
-          "field": "sr",
-          "regime": "se_flow",
-          "band": "24-47",
-          "lift_pct": -5.63,
-          "n": 1791,
-          "n_today": 191,
-          "half1_lift_pct": -15.18,
-          "half2_lift_pct": -9.39
-        },
-        "ws|nor_easter|6-11": {
-          "field": "ws",
-          "regime": "nor_easter",
-          "band": "6-11",
-          "lift_pct": -3.91,
-          "n": 104,
-          "n_today": 0,
-          "half1_lift_pct": -5.08,
-          "half2_lift_pct": -3.4
-        },
-        "wd|ne_flow|0-5": {
-          "field": "wd",
-          "regime": "ne_flow",
-          "band": "0-5",
-          "lift_pct": -3.13,
-          "n": 433,
-          "n_today": 0,
-          "half1_lift_pct": -2.79,
-          "half2_lift_pct": -4.26
-        }
-      },
-      "positive_nws": [
-        "dp|calm|6-11",
-        "dp|frontal|24-47",
-        "dp|frontal|6-11",
-        "dp|pre_frontal|0-5",
-        "dp|pre_frontal|6-11",
-        "pp|ne_flow|0-5",
-        "pp|ne_flow|12-23",
-        "pp|nor_easter|0-5",
-        "pp|nor_easter|12-23",
-        "pp|nor_easter|6-11",
-        "pp|nw_flow|0-5",
-        "pp|nw_flow|12-23",
-        "pp|nw_flow|6-11",
-        "pp|pre_frontal|0-5",
-        "pp|pre_frontal|12-23",
-        "pp|pre_frontal|24-47",
-        "pp|pre_frontal|6-11",
-        "ws|nor_easter|12-23",
-        "ws|nor_easter|6-11"
-      ],
-      "payload_nws": {
-        "dp|pre_frontal|0-5": {
-          "field": "dp",
-          "regime": "pre_frontal",
-          "band": "0-5",
-          "lift_pct": 9.0,
-          "n": 895,
-          "n_today": 8,
-          "half1_lift_pct": 11.57,
-          "half2_lift_pct": 5.55
-        },
-        "pp|pre_frontal|24-47": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "24-47",
-          "lift_pct": 17.35,
-          "n": 1681,
-          "n_today": 6,
-          "half1_lift_pct": 9.53,
-          "half2_lift_pct": 34.36
-        },
-        "dp|pre_frontal|6-11": {
-          "field": "dp",
-          "regime": "pre_frontal",
-          "band": "6-11",
-          "lift_pct": 11.7,
-          "n": 901,
-          "n_today": 21,
-          "half1_lift_pct": 9.06,
-          "half2_lift_pct": 15.16
-        },
-        "pp|pre_frontal|0-5": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "0-5",
-          "lift_pct": 19.57,
-          "n": 764,
-          "n_today": 8,
-          "half1_lift_pct": 10.59,
-          "half2_lift_pct": 39.59
-        },
-        "pp|pre_frontal|6-11": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "6-11",
-          "lift_pct": 9.86,
-          "n": 734,
-          "n_today": 21,
-          "half1_lift_pct": 11.36,
-          "half2_lift_pct": 6.05
-        },
-        "pp|pre_frontal|12-23": {
-          "field": "pp",
-          "regime": "pre_frontal",
-          "band": "12-23",
-          "lift_pct": 20.14,
-          "n": 1414,
-          "n_today": 47,
-          "half1_lift_pct": 20.26,
-          "half2_lift_pct": 19.86
-        },
-        "pp|ne_flow|12-23": {
-          "field": "pp",
-          "regime": "ne_flow",
-          "band": "12-23",
-          "lift_pct": 15.2,
-          "n": 571,
-          "n_today": 4,
-          "half1_lift_pct": 9.23,
-          "half2_lift_pct": 22.49
-        },
-        "ws|nor_easter|12-23": {
-          "field": "ws",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 20.15,
-          "n": 181,
-          "n_today": 3,
-          "half1_lift_pct": 21.69,
-          "half2_lift_pct": 19.36
-        },
-        "pp|nor_easter|12-23": {
-          "field": "pp",
-          "regime": "nor_easter",
-          "band": "12-23",
-          "lift_pct": 68.28,
-          "n": 169,
-          "n_today": 3,
-          "half1_lift_pct": 73.67,
-          "half2_lift_pct": 66.59
-        },
-        "dp|calm|6-11": {
-          "field": "dp",
-          "regime": "calm",
-          "band": "6-11",
-          "lift_pct": 11.06,
-          "n": 125,
-          "n_today": 0,
-          "half1_lift_pct": 10.72,
-          "half2_lift_pct": 11.21
-        },
-        "pp|nw_flow|12-23": {
-          "field": "pp",
-          "regime": "nw_flow",
-          "band": "12-23",
-          "lift_pct": 31.13,
-          "n": 797,
-          "n_today": 2,
-          "half1_lift_pct": 18.33,
-          "half2_lift_pct": 36.81
-        },
-        "dp|frontal|6-11": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "6-11",
-          "lift_pct": 9.32,
-          "n": 220,
-          "n_today": 81,
-          "half1_lift_pct": 9.52,
-          "half2_lift_pct": 9.3
-        },
-        "pp|nw_flow|0-5": {
-          "field": "pp",
-          "regime": "nw_flow",
-          "band": "0-5",
-          "lift_pct": 5.16,
-          "n": 598,
-          "n_today": 2,
-          "half1_lift_pct": 6.5,
-          "half2_lift_pct": 3.89
-        },
-        "pp|nw_flow|6-11": {
-          "field": "pp",
-          "regime": "nw_flow",
-          "band": "6-11",
-          "lift_pct": 17.01,
-          "n": 458,
-          "n_today": 0,
-          "half1_lift_pct": 10.36,
-          "half2_lift_pct": 20.46
-        },
-        "dp|frontal|24-47": {
-          "field": "dp",
-          "regime": "frontal",
-          "band": "24-47",
-          "lift_pct": 9.94,
-          "n": 504,
-          "n_today": 0,
-          "half1_lift_pct": 5.73,
-          "half2_lift_pct": 11.85
-        },
-        "pp|ne_flow|0-5": {
-          "field": "pp",
-          "regime": "ne_flow",
-          "band": "0-5",
-          "lift_pct": 54.69,
-          "n": 299,
-          "n_today": 0,
-          "half1_lift_pct": 46.65,
-          "half2_lift_pct": 62.12
-        },
-        "pp|nor_easter|0-5": {
-          "field": "pp",
-          "regime": "nor_easter",
-          "band": "0-5",
-          "lift_pct": 76.38,
-          "n": 128,
-          "n_today": 0,
-          "half1_lift_pct": 91.65,
-          "half2_lift_pct": 71.3
-        },
-        "ws|nor_easter|6-11": {
-          "field": "ws",
-          "regime": "nor_easter",
-          "band": "6-11",
-          "lift_pct": 22.17,
-          "n": 104,
-          "n_today": 0,
-          "half1_lift_pct": 11.07,
-          "half2_lift_pct": 27.01
-        },
-        "pp|nor_easter|6-11": {
-          "field": "pp",
-          "regime": "nor_easter",
-          "band": "6-11",
-          "lift_pct": 68.3,
-          "n": 103,
-          "n_today": 0,
-          "half1_lift_pct": 91.03,
-          "half2_lift_pct": 66.26
-        }
-      }
-    },
-    {
       "date": "2026-10-13",
       "fitted_at": "2026-10-13T11:41",
       "positive": [
@@ -9324,6 +8533,242 @@
           "n_today": 0,
           "half1_lift_pct": 4.18,
           "half2_lift_pct": 10.33
+        }
+      }
+    },
+    {
+      "date": "2026-11-12",
+      "fitted_at": "2026-11-12T11:30",
+      "positive": [
+        "ch|calm|6-11",
+        "dp|calm|24-47",
+        "dp|calm|6-11",
+        "dp|se_flow|6-11",
+        "t|calm|12-23",
+        "t|calm|24-47",
+        "t|calm|6-11"
+      ],
+      "payload": {
+        "t|calm|12-23": {
+          "field": "t",
+          "regime": "calm",
+          "band": "12-23",
+          "lift_pct": 47.99,
+          "n": 173,
+          "n_today": 1,
+          "half1_lift_pct": 51.29,
+          "half2_lift_pct": 40.56
+        },
+        "t|calm|24-47": {
+          "field": "t",
+          "regime": "calm",
+          "band": "24-47",
+          "lift_pct": 38.27,
+          "n": 369,
+          "n_today": 0,
+          "half1_lift_pct": 39.07,
+          "half2_lift_pct": 41.13
+        },
+        "dp|calm|6-11": {
+          "field": "dp",
+          "regime": "calm",
+          "band": "6-11",
+          "lift_pct": 36.18,
+          "n": 109,
+          "n_today": 4,
+          "half1_lift_pct": 41.35,
+          "half2_lift_pct": 21.52
+        },
+        "ch|calm|6-11": {
+          "field": "ch",
+          "regime": "calm",
+          "band": "6-11",
+          "lift_pct": 33.58,
+          "n": 109,
+          "n_today": 4,
+          "half1_lift_pct": 10.96,
+          "half2_lift_pct": 56.69
+        },
+        "t|calm|6-11": {
+          "field": "t",
+          "regime": "calm",
+          "band": "6-11",
+          "lift_pct": 27.77,
+          "n": 109,
+          "n_today": 4,
+          "half1_lift_pct": 26.06,
+          "half2_lift_pct": 29.33
+        },
+        "dp|calm|24-47": {
+          "field": "dp",
+          "regime": "calm",
+          "band": "24-47",
+          "lift_pct": 16.98,
+          "n": 369,
+          "n_today": 0,
+          "half1_lift_pct": 11.88,
+          "half2_lift_pct": 13.31
+        },
+        "dp|se_flow|6-11": {
+          "field": "dp",
+          "regime": "se_flow",
+          "band": "6-11",
+          "lift_pct": 14.56,
+          "n": 357,
+          "n_today": 3,
+          "half1_lift_pct": 10.96,
+          "half2_lift_pct": 24.26
+        }
+      },
+      "positive_hrrr": [
+        "wd|frontal|0-5",
+        "wg|frontal|12-23"
+      ],
+      "payload_hrrr": {
+        "wg|frontal|12-23": {
+          "field": "wg",
+          "regime": "frontal",
+          "band": "12-23",
+          "lift_pct": -8.47,
+          "n": 658,
+          "n_today": 0,
+          "half1_lift_pct": -3.33,
+          "half2_lift_pct": -34.05
+        },
+        "wd|frontal|0-5": {
+          "field": "wd",
+          "regime": "frontal",
+          "band": "0-5",
+          "lift_pct": -3.01,
+          "n": 313,
+          "n_today": 0,
+          "half1_lift_pct": -0.66,
+          "half2_lift_pct": -14.2
+        }
+      },
+      "positive_nws": [
+        "dp|calm|0-5",
+        "dp|frontal|12-23",
+        "dp|frontal|24-47",
+        "dp|nw_flow|12-23",
+        "dp|pre_frontal|24-47",
+        "dp|sw_flow|12-23",
+        "pp|calm|0-5",
+        "pp|se_flow|12-23",
+        "t|frontal|12-23",
+        "t|frontal|24-47",
+        "t|pre_frontal|24-47"
+      ],
+      "payload_nws": {
+        "t|frontal|24-47": {
+          "field": "t",
+          "regime": "frontal",
+          "band": "24-47",
+          "lift_pct": 23.25,
+          "n": 1244,
+          "n_today": 18,
+          "half1_lift_pct": 18.98,
+          "half2_lift_pct": 37.33
+        },
+        "dp|frontal|24-47": {
+          "field": "dp",
+          "regime": "frontal",
+          "band": "24-47",
+          "lift_pct": 3.22,
+          "n": 1238,
+          "n_today": 18,
+          "half1_lift_pct": 3.23,
+          "half2_lift_pct": 3.18
+        },
+        "t|pre_frontal|24-47": {
+          "field": "t",
+          "regime": "pre_frontal",
+          "band": "24-47",
+          "lift_pct": 20.71,
+          "n": 3199,
+          "n_today": 83,
+          "half1_lift_pct": 24.29,
+          "half2_lift_pct": 16.86
+        },
+        "dp|pre_frontal|24-47": {
+          "field": "dp",
+          "regime": "pre_frontal",
+          "band": "24-47",
+          "lift_pct": 9.95,
+          "n": 3175,
+          "n_today": 83,
+          "half1_lift_pct": 11.5,
+          "half2_lift_pct": 8.32
+        },
+        "pp|se_flow|12-23": {
+          "field": "pp",
+          "regime": "se_flow",
+          "band": "12-23",
+          "lift_pct": 7.2,
+          "n": 515,
+          "n_today": 3,
+          "half1_lift_pct": 3.73,
+          "half2_lift_pct": 10.6
+        },
+        "dp|calm|0-5": {
+          "field": "dp",
+          "regime": "calm",
+          "band": "0-5",
+          "lift_pct": 22.2,
+          "n": 135,
+          "n_today": 13,
+          "half1_lift_pct": 10.67,
+          "half2_lift_pct": 16.28
+        },
+        "pp|calm|0-5": {
+          "field": "pp",
+          "regime": "calm",
+          "band": "0-5",
+          "lift_pct": 9.97,
+          "n": 70,
+          "n_today": 13,
+          "half1_lift_pct": 20.12,
+          "half2_lift_pct": 3.91
+        },
+        "dp|sw_flow|12-23": {
+          "field": "dp",
+          "regime": "sw_flow",
+          "band": "12-23",
+          "lift_pct": 13.32,
+          "n": 2372,
+          "n_today": 30,
+          "half1_lift_pct": 5.94,
+          "half2_lift_pct": 15.92
+        },
+        "t|frontal|12-23": {
+          "field": "t",
+          "regime": "frontal",
+          "band": "12-23",
+          "lift_pct": 14.12,
+          "n": 646,
+          "n_today": 0,
+          "half1_lift_pct": 9.61,
+          "half2_lift_pct": 28.75
+        },
+        "dp|frontal|12-23": {
+          "field": "dp",
+          "regime": "frontal",
+          "band": "12-23",
+          "lift_pct": 7.64,
+          "n": 646,
+          "n_today": 0,
+          "half1_lift_pct": 5.61,
+          "half2_lift_pct": 16.8
+        },
+        "dp|nw_flow|12-23": {
+          "field": "dp",
+          "regime": "nw_flow",
+          "band": "12-23",
+          "lift_pct": 8.27,
+          "n": 1916,
+          "n_today": 114,
+          "half1_lift_pct": 12.29,
+          "half2_lift_pct": 3.54
         }
       }
     }
