@@ -30,6 +30,7 @@ from weather_collector.processors.l4_nbm import validate_table as _l4_nbm_struct
 from weather_collector.processors.solar_correction import validate_table as _lsr_structure
 from weather_collector.processors.sr_sea_breeze_lsr_override import validate_table as _sb_structure
 from weather_collector.processors.terminal_static_blend import validate_field_table as _fblend_structure
+from weather_collector.processors.urma_blend_shadow import validate_table as _urma_structure
 
 MIN_ROWS_RATIO = 0.5   # refuse a fit that saw < half the rows of the previous one
 
@@ -259,5 +260,15 @@ TABLES = [
             f"{f} w={v['w']:.2f}" + (f" (was {prev['fields'][f]['w']:.2f})"
                                      if prev and f in (prev.get("fields") or {}) else "")
             for f, v in (new.get("fields") or {}).items()),
+    },
+    {   # URMA-truth bias-then-blend for t, SHADOW only (stamps t_urmab; changes nothing served).
+        # Needs eccodes + network to the AWS noaa-urma-pds bucket in the function image: check before deploy.
+        "name": "urma_blend_shadow_curated.json",
+        "out": "weather_collector/data/urma_blend_shadow_curated.json",
+        "steps": [{"module": "analysis.urma_blend_table_fit", "call": "fit"}],
+        "guard": _rows_guard(_urma_structure, "n_rows_kept", 5_000),
+        "summary": lambda new, prev: ", ".join(
+            f"{b} w={c['w']} bias={c['bias']}" for b, c in
+            ((new.get("fields") or {}).get("t", {}).get("bands") or {}).items()),
     },
 ]

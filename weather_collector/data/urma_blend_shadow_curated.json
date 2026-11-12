@@ -1,0 +1,59 @@
+{
+  "fitted_at": "2026-11-12T23:24",
+  "window_days": 14,
+  "truth": "urma_idw_4cell",
+  "days": [
+    "2026-10-29",
+    "2026-11-11"
+  ],
+  "n_rows_kept": 13020,
+  "fields": {
+    "t": {
+      "bands": {
+        "6-11": {
+          "bias": [
+            -1.128,
+            -2.483,
+            -1.119
+          ],
+          "w": [
+            0.65,
+            0.15,
+            0.2
+          ],
+          "n": 2010,
+          "mae_corrected_blend": 1.352
+        },
+        "12-23": {
+          "bias": [
+            -1.402,
+            -2.515,
+            -1.294
+          ],
+          "w": [
+            0.5,
+            0.2,
+            0.3
+          ],
+          "n": 4020,
+          "mae_corrected_blend": 1.463
+        },
+        "24-47": {
+          "bias": [
+            -1.887,
+            -2.55,
+            -1.539
+          ],
+          "w": [
+            0.3,
+            0.35,
+            0.35
+          ],
+          "n": 6990,
+          "mae_corrected_blend": 1.5
+        }
+      }
+    }
+  },
+  "notes": "SHADOW: stamps t_urmab only. Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."
+}

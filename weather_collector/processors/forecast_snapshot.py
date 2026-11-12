@@ -15,7 +15,7 @@ import pytz
 
 from ..gcs_io import load_json, upload_json
 from ..utils import magnus_dew_point_f
-from . import cl_persistence_gate, ch_persistence_gate, wd_persistence_gate
+from . import cl_persistence_gate, ch_persistence_gate, wd_persistence_gate, urma_blend_shadow
 from .ch_persistence_gate import (
     _cell_fires as _chp_cell_fires,
     _diurnal_skip as _chp_diurnal_skip,
@@ -1342,6 +1342,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 entry["dp"] = _dpv
                 entry["dp_applied"] = "tblend"
                 entry["dp_selector_source"] = "tblend"
+        # Rebuild branch — URMA-truth bias-then-blend t, shadow only (stamps t_urmab).
+        try:
+            urma_blend_shadow.stamp(entry, i)
+        except Exception as _e:  # noqa: BLE001
+            logging.warning(f"  ⚠  urma_blend_shadow stamp failed ({_e})")
         hours.append(entry)
 
     # F4 (2026-08-21) — emit gate-firing records per NBM operator so
