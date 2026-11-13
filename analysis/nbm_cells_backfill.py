@@ -114,4 +114,7 @@ def run(start, end):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:   # the digest runs every analysis/*.py: no args = usage, clean exit
+        print(__doc__)
+        sys.exit(0)
     run(sys.argv[1], sys.argv[2])

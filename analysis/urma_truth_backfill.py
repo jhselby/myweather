@@ -109,5 +109,8 @@ def run(start, end, vars_, step_h=1):
 
 if __name__ == "__main__":
     import os
+    if len(sys.argv) < 3:   # the digest imports every analysis/*.py: no args = usage, clean exit
+        print(__doc__)
+        sys.exit(0)
     s, e = sys.argv[1], sys.argv[2]
     run(s, e, sys.argv[3:] or ["TMP"], int(os.environ.get("URMA_STEP_H", "1")))

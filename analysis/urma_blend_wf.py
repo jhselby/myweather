@@ -13,6 +13,7 @@ Results go through analysis/ship_rule.py (day-block bootstrap, holdout days >= 2
 """
 import collections
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -116,8 +117,9 @@ def run():
             gh = day_block_gain({d: v for d, v in pd.items() if d >= HOLDOUT_START})
             print(f"  {name:<15} ALL    {verdict(g)}")
             print(f"  {'':<15} HOLDOUT {verdict(gh)}")
-            record("urma_blend_wf", f"t {b}h {name} vs served (URMA truth)", gh,
-                   note="walk-forward 14d, truth=URMA idw, rows with hrrr+nbm+ecmwf")
+            if os.environ.get("URMA_WF_RECORD") == "1":   # digest re-runs must not inflate the ledger's look count
+                record("urma_blend_wf", f"t {b}h {name} vs served (URMA truth)", gh,
+                       note="walk-forward 14d, truth=URMA idw, rows with hrrr+nbm+ecmwf")
 
 
 if __name__ == "__main__":
