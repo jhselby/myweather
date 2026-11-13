@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.97 • November 13, 2026 (URMA-truth shadow blend for temperature)</strong></summary>
+
+- New shadow temperature forecast for 6 to 47 h. Each source's recent bias against URMA (NOAA's hourly analysis, independent of our forecast) is removed, then HRRR, NBM and ECMWF are blended with weights fitted on the corrected errors. It is stamped as t_urmab and the pair log gains forecast_urmab / error_urmab. Nothing served changes.
+- A daily fit (analysis/urma_blend_table_fit.py) builds its table and is registered with the refitter. URMA hours come from NOAA's public AWS bucket, about 24 a day, kept in a small GCS store.
+- Why shadow: scored on URMA over 67 walk-forward days it beats the served temperature by 11 to 18% at 6 to 47 h, positive every month, but only 9 holdout days exist and their intervals span zero, so it fails the ship rule. Shadow gives forward days. Ship tiers: 5 of 7 forward days with a positive median, 6 to 47 h only, automatic revert, then the ship rule at 14 or more holdout days.
+- Also added: URMA truth backfill, a four-cell NBM backfill, and the walk-forward tests, all under analysis/.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.96 • November 10, 2026 (debug page brought current)</strong></summary>
 
 - The debug page's "Being evaluated next" list, the open-watch list and Recent activity still described November 8. They now cover November 9 and 10: the first 8-day holdout verdicts, the ws 6 to 23 hour loss to raw NBM traced to the pre-November 6 refit and closed, the stronger-L2 passes held for station truth, and the two new NBM sentry flags.
