@@ -231,6 +231,12 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     from .processors.station_readings_log import append_station_readings
     append_station_readings(weather_data, tempest_data, _station_offsets)
 
+    # Dormant (WU_ARCHIVE_ENABLED False): ~160 calls/day WU archive once a working key exists.
+    from .processors import wu_archive
+    if wu_archive.WU_ARCHIVE_ENABLED:
+        from .fetchers.wu_scraper_realtime import STATIONS as _WU_IDS
+        wu_archive.append_wu_archive(_WU_IDS)
+
     # Per-tick inter-cluster spread (Marblehead/Salem/Swampscott PWS clusters).
     # Best-effort logger feeding the C1 confidence-layer axis evaluation.
     # Orthogonality to R6 confirmed 2026-06-20 (16/20 field-band combos).
