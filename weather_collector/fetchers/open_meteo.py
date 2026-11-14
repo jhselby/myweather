@@ -136,6 +136,15 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                 else:
                     logging.error(f"    ✗ {dist}mi - no data")
                     return f"{dist}mi", None
+            except requests.exceptions.HTTPError as e:
+                # v0.7.101: the 3 ring points fire in parallel and Open-Meteo answers 429
+                # (per-minute burst limit) a few dozen times a day; one paced retry clears it.
+                if getattr(e.response, "status_code", None) == 429 and attempt == 0 and not skip_retry:
+                    logging.warning(f"    ⚠️ {dist}mi - 429, retrying in {2 + dist / 25:.0f}s...")
+                    time.sleep(2 + dist / 25)
+                    continue
+                logging.error(f"    ✗ {dist}mi - {redact_secrets(e)}")
+                return f"{dist}mi", None
             except requests.exceptions.Timeout:
                 if attempt == 0 and not skip_retry:
                     logging.warning(f"    ⚠️ {dist}mi - timeout, retrying in 1s...")

@@ -2,7 +2,8 @@
 
 Truth: URMA 2.5 km analysis, inverse-distance mean of the 4 cells around the Cove
 (analysis/output/urma_truth/urma_cell.jsonl, vars TMP/DPT/WIND from urma_truth_backfill).
-h = RH from URMA T and Td (Magnus); ws = URMA 10 m WIND, m/s -> mph.
+h = RH from URMA T and Td (Magnus); ws = URMA 10 m WIND, m/s -> mph; cc = URMA TCDC (total cloud
+cover %, GOES satellite + surface obs, sees high cloud the airport ceilometers cannot; added 11-14).
 Columns per field x lead band, identical rows: served (forecast_{applied_layer}), raw HRRR
 (forecast_l1), raw NBM (forecast_raw_nbm = the normal source for these fields), and the
 scored `observed` (the pair log's own truth) read as if it were a forecast, to show how far the
@@ -32,7 +33,7 @@ from analysis.urma_blend_wf import LOG, URMA  # noqa: E402
 
 ET = ZoneInfo("America/New_York")
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
-FIELDS = ("h", "dp", "ws")
+FIELDS = ("h", "dp", "ws", "cc")
 
 
 def _idw(nb):
@@ -59,13 +60,15 @@ def urma_truth():
                 d["h"] = min(100.0, _rh(v["TMP"] - 273.15, v["DPT"] - 273.15))
         if "WIND" in v:
             d["ws"] = v["WIND"] * 2.23694
+        if "TCDC" in v:
+            d["cc"] = v["TCDC"]
         out[k] = d
     return out
 
 
 def load():
     U = urma_truth()
-    rx = re.compile(r'"field": ?"(h|dp|ws)"')
+    rx = re.compile(r'"field": ?"(h|dp|ws|cc)"')
     rows = collections.defaultdict(list)
     with open(LOG) as fh:
         for line in fh:

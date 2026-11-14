@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.101 • November 14, 2026 (debug page brought current; Open-Meteo rate-limit retry)</strong></summary>
+
+- "Where things stand" on the debug page now reads as of November 14: the URMA shadow as the live candidate, the refitter outage and fix, the early t station-truth result (fails; rerun about November 17 before any flip), the moisture-truth question that gates h, the cloud-truth work, and today's rejected ideas (h URMA blend, sr field weight, extra t inputs, the sr learned selector).
+- The collector's sunset-direction cloud ring (3 points fetched at once) was hitting Open-Meteo's per-minute limit a few dozen times a day, losing that point for the tick. It now waits 2 to 4 seconds and retries once.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.100 • November 14, 2026 (daily refit was running out of memory; dew point joins the cloud URMA store)</strong></summary>
 
 - The daily 04:30 refit has run out of memory (8 GB) on November 13 and 14, partway through. The tables after that point were not refit: the learned selector and the served blend weights (terminal blend) were last refit November 12, and the URMA shadow table had never been refit in the cloud since it was added on November 13. The refitter now has 16 GB, and each table is fitted in its own process so memory no longer piles up across tables.
