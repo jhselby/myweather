@@ -74,17 +74,17 @@ def load():
                 except Exception:  # noqa: BLE001
                     sfc = {}
             rows.append((vt[:10], int(r["lead_h"]), vt, float(sv), float(r["forecast_l1"]),
-                         float(r["forecast_raw_nbm"]), U[k], (sfc or {}).get("regime_flow") or "?"))
+                         float(r["forecast_raw_nbm"]), U[k], (sfc or {}).get("regime_flow") or "?", r.get("forecast_nws")))
     days = sorted({r[0] for r in rows})
     eh = tb.ecmwf_history(days[0], days[-1])
     out = []
-    for day, lead, vt, sv, hr, nb, tr, flow in rows:
+    for day, lead, vt, sv, hr, nb, tr, flow, nws in rows:
         fe = (eh.get(tb._ecmwf_key(vt)) or {}).get("t")
         fe = fe[tb._ecmwf_day(lead)] if fe else None
         band = next((b for b, lo, hi in tb.BANDS if lo <= lead < hi), None)
         if fe is None or band is None:
             continue
-        out.append((day, band, sv - tr, hr - tr, nb - tr, float(fe) - tr, int(vt[11:13]), flow))  # errors vs URMA, valid hour (ET), forecast flow regime
+        out.append((day, band, sv - tr, hr - tr, nb - tr, float(fe) - tr, int(vt[11:13]), flow, None if nws is None else float(nws) - tr))  # errors vs URMA, valid hour (ET), forecast flow regime
     return out
 
 
