@@ -1048,6 +1048,57 @@
   <a href="#sec-archive">Archive</a>
 </nav>
 
+<!-- ───────────────────── Architecture now (v0.7.99) ─────────────────────
+     Rendered from architecture.json, written by build.py on every release:
+     component status read from the code flags, plus every CHANGELOG entry
+     with an "- Architecture:" line. Nothing here is hand-written prose. -->
+<details open id="sec-architecture" style="margin:0 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;font-size:0.95em;">Architecture now <span id="arch-badge" style="font-weight:normal;opacity:0.75;font-size:0.9em;"></span></summary>
+  <div id="arch-body" style="margin-top:8px;font-size:0.86em;line-height:1.5;color:#cfd8e3;"><span style="opacity:0.6;">loading architecture.json…</span></div>
+</details>
+<script>
+(function () {
+  const body = document.getElementById("arch-body"), badge = document.getElementById("arch-badge");
+  const KEY = "debug_arch_seen_version";
+  const vnum = v => (v || "").replace(/^v/, "").split(/[–-]/).pop().split(".").map(Number);
+  const newer = (a, b) => { const x = vnum(a), y = vnum(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const chip = s => {
+    const c = { served: "#3fa36b", shadow: "#d9a441", on: "#3fa36b", off: "#6b7380" }[s] || "#6b7380";
+    return `<span style="display:inline-block;min-width:52px;text-align:center;padding:1px 6px;border-radius:9px;border:1px solid ${c};color:${c};font-size:0.85em;">${esc(s)}</span>`;
+  };
+  fetch("architecture.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(d => {
+      let seen = null;
+      try { seen = localStorage.getItem(KEY); } catch (e) {}
+      const fresh = d.changes.filter(c => !seen || newer(c.version, seen));
+      badge.textContent = `· ${d.version}` + (seen && fresh.length ? ` · ${fresh.length} change${fresh.length > 1 ? "s" : ""} since you last looked (${seen})` : "");
+      if (seen && fresh.length) badge.style.cssText += "color:#e0a86b;opacity:1;font-weight:600;";
+      const comps = d.components.map(c =>
+        `<tr><td style="padding:3px 10px 3px 0;vertical-align:top;">${chip(c.status)}</td>` +
+        `<td style="padding:3px 10px 3px 0;vertical-align:top;white-space:nowrap;font-weight:600;">${esc(c.name)}</td>` +
+        `<td style="padding:3px 0;vertical-align:top;">${esc(c.what)}${c.flag ? ` <span style="opacity:0.5;font-size:0.9em;">(<code>${esc(c.flag)}</code>)</span>` : ""}</td></tr>`).join("");
+      const ch = (c, i) => {
+        const isNew = seen && newer(c.version, seen);
+        return `<li style="margin:2px 0;${i >= 6 ? "display:none;" : ""}" class="${i >= 6 ? "arch-more" : ""}">` +
+          `<span style="opacity:0.7;">${esc(c.date)}</span> <code>${esc(c.version)}</code> ` +
+          (isNew ? `<span style="color:#e0a86b;font-weight:600;">NEW</span> ` : "") + esc(c.change) + `</li>`;
+      };
+      body.innerHTML =
+        `<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;">${comps}</table></div>` +
+        `<div style="color:#e0d472;font-weight:600;margin:10px 0 4px 0;">Architecture changes</div>` +
+        `<ul style="margin:0 0 0 16px;padding:0;">${d.changes.map(ch).join("")}</ul>` +
+        (d.changes.length > 6 ? `<a href="#" id="arch-more-btn" style="color:#7fb3ff;font-size:0.9em;">show all ${d.changes.length}</a>` : "") +
+        `<div style="margin-top:6px;font-size:0.85em;opacity:0.6;">Status is read from the code flags at build time; changes are the CHANGELOG entries tagged "Architecture:". Daily refit tables: ${d.refit_tables.length}.</div>`;
+      const btn = document.getElementById("arch-more-btn");
+      if (btn) btn.onclick = e => { e.preventDefault(); body.querySelectorAll(".arch-more").forEach(x => x.style.display = ""); btn.remove(); };
+      try { localStorage.setItem(KEY, d.version); } catch (e) {}
+    })
+    .catch(e => { body.innerHTML = `<span style="color:#e08a70;">architecture.json not available (${esc(e)}).</span>`; });
+})();
+</script>
+
 <!-- ───────────────────── Scorecard banner ─────────────────────
      One-line headline computed from time_series_diagnostic.json:
      stack-vs-raw MAE delta averaged across fields, net-positive count,
@@ -2233,14 +2284,15 @@
               return `<tr><td style="padding:3px 10px 3px 0;"><code>${k}</code></td>` +
                 `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_shrunk_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_stations_pct)}</td>` +
+                `<td style="padding:3px 10px;text-align:right;">${two.total_lift_urma_pct == null ? '<span style="opacity:0.5;">—</span>' : f(two.total_lift_urma_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;${gc}">${gap == null ? "—" : (gap > 0 ? "+" : "") + gap.toFixed(1) + " pts"}</td>` +
                 `<td style="padding:3px 10px;text-align:right;">${f(l2w.l2_gain_shrunk_pct)} / ${f(l2w.l2_gain_stations_pct)}</td>` +
                 `<td style="padding:3px 10px;text-align:right;opacity:0.75;">${now ? f(now.l2_gain_shrunk_pct) + " / " + f(now.l2_gain_stations_pct) : "—"}</td>` +
                 `<td style="padding:3px 0 3px 10px;text-align:right;opacity:0.6;">${two.n}</td></tr>`;
             }).join("");
-            el.innerHTML = `<div style="color:#e0d472;font-weight:600;margin-bottom:4px;">Same rows, two truths (served vs raw NBM, leads 2h+) <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· ${d.first_day} → ${d.last_day} · station truth only exists from 2026-11-02, so this is a thin window</span></div>` +
-              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2–5h (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
-              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. L2 is graded at 2–5h: it fades to nothing by 6–8h, so a 2–47h pool hides it. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>`;
+            el.innerHTML = `<div style="color:#e0d472;font-weight:600;margin-bottom:4px;">Same rows, three truths (served vs raw NBM, leads 2h+) <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· ${d.first_day} → ${d.last_day} · station truth only exists from 2026-11-02, so this is a thin window</span></div>` +
+              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">lift, URMA</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2–5h (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
+              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. URMA = NOAA's hourly analysis, independent of our stations and of L2 (t only until dew point is in the cloud URMA store; ${d.urma_hours ?? 0} URMA hours, ~8 h publish lag). L2 is graded at 2–5h: it fades to nothing by 6–8h, so a 2–47h pool hides it. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>`;
           })
           .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it hourly.</span>`; });
       })();

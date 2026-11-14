@@ -1,0 +1,123 @@
+{
+ "version": "v0.7.99",
+ "components": [
+  {
+   "name": "HRRR cascade",
+   "status": "served",
+   "what": "L1 raw HRRR, L2 station bias, L3 decay, L4 diurnal, specialists.",
+   "flag": null
+  },
+  {
+   "name": "NBM cascade",
+   "status": "served",
+   "what": "raw NBM, L2_nbm, L3_nbm, L4_nbm, wdp_nbm; runs beside the HRRR cascade.",
+   "flag": null
+  },
+  {
+   "name": "Terminal blend",
+   "status": "served",
+   "what": "HRRR / NBM / ECMWF weights per field and lead band (t, h, ws 3-way), refit daily at 04:30 by the refitter. Fit truth: shrunk observed (station bias toward the model).",
+   "flag": "analysis/terminal_blend_field_fit.py STATION_TRUTH"
+  },
+  {
+   "name": "Selector",
+   "status": "served",
+   "what": "Picks HRRR side, NBM side or blend per field x regime x lead band and writes it into the served arrays.",
+   "flag": null
+  },
+  {
+   "name": "t_urmab (URMA-truth blend)",
+   "status": "shadow",
+   "what": "Per-source bias vs URMA removed, then HRRR/NBM/ECMWF blended, 6 to 47 h. Logged as forecast_urmab; never served. Refit table registered with the refitter.",
+   "flag": "weather_collector/processors/urma_blend_shadow.py ENABLED"
+  },
+  {
+   "name": "Scoreboard truth",
+   "status": "served",
+   "what": "Tiles grade on the pair-log observed: the station network shrunk toward the model, which is L2's own output. The truth table grades the same rows on station readings and (t) on URMA.",
+   "flag": null
+  },
+  {
+   "name": "Weather Underground",
+   "status": "off",
+   "what": "Key throttled since October; Tempest is the only station feed.",
+   "flag": "weather_collector/fetchers/wu.py WU_ENABLED"
+  },
+  {
+   "name": "WU archive poller",
+   "status": "off",
+   "what": "Dormant until a working key exists.",
+   "flag": "weather_collector/processors/wu_archive.py WU_ARCHIVE_ENABLED"
+  }
+ ],
+ "refit_tables": [
+  "l1_selector_table_curated.json",
+  "l3_nbm_curated.json",
+  "l4_nbm_curated.json",
+  "lc_correction_table.json",
+  "lc_recent_bias_gate.json",
+  "lsr_bias_table_curated.json",
+  "sr_sea_breeze_lsr_curated.json",
+  "chp_cell_gate.json",
+  "l1_selector_by_regime_walker.json",
+  "l1_learned_selector_curated.json",
+  "terminal_blend_field_curated.json",
+  "urma_blend_shadow_curated.json"
+ ],
+ "changes": [
+  {
+   "version": "v0.7.99",
+   "date": "November 14, 2026",
+   "title": "debug page shows the architecture and a third truth",
+   "change": "the debug page opens with \"Architecture now\": each pipeline piece marked served, shadow or off, read from the code flags at build time, plus every release tagged as an architecture change. URMA joins the truth table for t."
+  },
+  {
+   "version": "v0.7.97",
+   "date": "November 13, 2026",
+   "title": "URMA-truth shadow blend for temperature",
+   "change": "Third truth, URMA (NOAA analysis), enters: t_urmab shadow blend logged every tick and refit daily by the refitter; nothing served changes."
+  },
+  {
+   "version": "v0.7.95",
+   "date": "November 8, 2026",
+   "title": "Weather Underground calls stopped",
+   "change": "Weather Underground calls switched off."
+  },
+  {
+   "version": "v0.7.91",
+   "date": "November 4, 2026",
+   "title": "the same forecast scored on both truths",
+   "change": "Scoring on two truths side by side (truth_compare.json, hourly by the publisher)."
+  },
+  {
+   "version": "v0.7.88",
+   "date": "November 4, 2026",
+   "title": "Tempest is now the only station feed, so it gets a health check",
+   "change": "Tempest becomes the only station feed (Weather Underground dead since 10-21)."
+  },
+  {
+   "version": "v0.7.86",
+   "date": "November 2, 2026",
+   "title": "logging the station-only temperature and humidity next to the scored ones",
+   "change": "Second truth logged: observed_stations (station readings only) next to the model-shrunk observed for t, h, dp."
+  },
+  {
+   "version": "v0.7.85",
+   "date": "November 1, 2026",
+   "title": "blend weights now fit to the ECMWF timing the app receives",
+   "change": "Blend fit aligned to the ECMWF hour the app actually receives (1 h live lag)."
+  },
+  {
+   "version": "v0.7.81",
+   "date": "October 24, 2026",
+   "title": "ECMWF joins the wind speed blend",
+   "change": "ECMWF added to the ws blend."
+  },
+  {
+   "version": "v0.7.75",
+   "date": "October 22, 2026",
+   "title": "ECMWF joins the temperature and humidity blend",
+   "change": "ECMWF IFS added as a third blend input for t and h (HRRR / NBM / ECMWF)."
+  }
+ ]
+}

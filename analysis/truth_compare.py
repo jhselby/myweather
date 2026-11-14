@@ -21,6 +21,10 @@ Per field (t, h, dp, ws, wg; all NBM-scope, so the public baseline is raw NBM):
     L2 is graded at 2-5h (`lead_2_5h`, v0.7.94): it decays to ~0 by 6-8h, so the
     2-47h pool hides it (t 0.8% pooled vs ~15% at 2-3h on 11-02..11-08).
   - per-day station-truth lift so a thin window is visible.
+  - t only (v0.7.99): a third truth, URMA (NOAA's hourly analysis, independent of
+    our stations and of L2), from the refitter's GCS store urma_truth_t.json (TMP
+    only; h/dp need DPT in that store first). URMA publishes ~8h late, so the
+    newest hours have no URMA row.
 
 Runtime:
     python3 -m analysis.truth_compare
@@ -52,7 +56,40 @@ def _prod_error(row):
 
 def _new():
     return {"n": 0, "pub_o": 0.0, "pub_s": 0.0, "srv_o": 0.0, "srv_s": 0.0,
-            "l1_o": 0.0, "l1_s": 0.0, "l2_o": 0.0, "l2_s": 0.0, "n_l2": 0}
+            "l1_o": 0.0, "l1_s": 0.0, "l2_o": 0.0, "l2_s": 0.0, "n_l2": 0,
+            "n_u": 0, "pub_u": 0.0, "srv_u": 0.0}
+
+
+def _urma_t():
+    """{UTC 'YYYY-MM-DDTHH': URMA t (F)}: inverse-distance mean of the 4 cells around the Cove."""
+    def idw(nb):
+        w = [1 / max(x[2], 0.1) ** 2 for x in nb]
+        return (sum(wi * x[3] for wi, x in zip(w, nb)) / sum(w) - 273.15) * 9 / 5 + 32
+    try:
+        if os.environ.get("MYWEATHER_CACHE_MODE") == "gcs":
+            from weather_collector.gcs_io import load_json
+            return {k: idw(nb) for k, nb in (load_json("urma_truth_t.json") or {}).items()}
+        out = {}
+        local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "urma_truth", "urma_cell.jsonl")
+        if os.path.exists(local):
+            for line in open(local):
+                r = json.loads(line)
+                if r.get("var") == "TMP":
+                    out[r["valid"][:13]] = idw(r["nb"])
+        return out
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠ URMA truth unavailable ({type(e).__name__}: {e})")
+        return {}
+
+
+def _utc_hour(valid_time):
+    from datetime import datetime, timezone
+    from zoneinfo import ZoneInfo
+    try:
+        d = datetime.strptime(valid_time[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=ZoneInfo("America/New_York"))
+    except ValueError:
+        return None
+    return d.astimezone(timezone.utc).strftime("%Y-%m-%dT%H")
 
 
 def _lift(pub, srv):
@@ -72,6 +109,10 @@ def _summ(b):
         "l2_gain_shrunk_pct": _lift(b["l1_o"], b["l2_o"]) if b["n_l2"] else None,
         "l2_gain_stations_pct": _lift(b["l1_s"], b["l2_s"]) if b["n_l2"] else None,
         "n_l2": b["n_l2"],
+        "n_urma": b["n_u"],
+        "public_mae_urma": round(b["pub_u"] / b["n_u"], 4) if b["n_u"] else None,
+        "served_mae_urma": round(b["srv_u"] / b["n_u"], 4) if b["n_u"] else None,
+        "total_lift_urma_pct": _lift(b["pub_u"], b["srv_u"]) if b["n_u"] else None,
     }
 
 
@@ -80,6 +121,7 @@ def build():
     split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new(), "lead_2_5h": _new()} for f in FIELDS}
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
+    urma = _urma_t()
     with open(path) as fin:
         for line in fin:
             if '"observed_stations"' not in line:
@@ -101,6 +143,7 @@ def build():
             if lead is None:
                 continue
             shift = obs - obs_s
+            tu = urma.get(_utc_hour(r.get("valid_time") or "")) if f == "t" else None
             day = (r.get("valid_time") or "")[:10]
             first = day if first is None or day < first else first
             last = day if last is None or day > last else last
@@ -112,6 +155,9 @@ def build():
                 b["n"] += 1
                 b["pub_o"] += abs(pub); b["pub_s"] += abs(pub + shift)
                 b["srv_o"] += abs(srv); b["srv_s"] += abs(srv + shift)
+                if tu is not None:   # error vs URMA = error + (observed - urma)
+                    b["n_u"] += 1
+                    b["pub_u"] += abs(pub + obs - tu); b["srv_u"] += abs(srv + obs - tu)
                 e1, e2 = r.get("error_l1"), r.get("error_l2")
                 if e1 is not None and e2 is not None:
                     b["n_l2"] += 1
@@ -134,7 +180,9 @@ def build():
         "first_day": first, "last_day": last,
         "definition": ("Total Lift = (public_MAE - served_MAE)/public_MAE; served = error_{applied_layer}, "
                        "public = error_raw_nbm; same rows on both truths; station truth = "
-                       "observed_stations (model-free). gap = shrunk lift - station lift (the flattery)."),
+                       "observed_stations (model-free). gap = shrunk lift - station lift (the flattery). "
+                       "t also on URMA (total_lift_urma_pct), independent of stations and L2."),
+        "urma_hours": len(urma),
         "fields": fields,
     }
 

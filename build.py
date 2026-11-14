@@ -206,6 +206,11 @@ def main():
             json.dump({"version": v_match.group(1)}, vf)
         print(f"  ✓ version.json → {v_match.group(1)}")
 
+        # architecture.json for the debug page's "Architecture now" block (v0.7.99):
+        # component status from the code flags + CHANGELOG "Architecture:" lines.
+        import subprocess, sys as _sys
+        subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'architecture_state.py')], check=False)
+
         # Bump sw.js CACHE_VERSION to match — without this, the service worker
         # keeps serving the previous version's app shell (index.html, app.css,
         # briefing.css, app-main.js, briefing.js) until the user reloads twice.

@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.99 • November 14, 2026 (debug page shows the architecture and a third truth)</strong></summary>
+
+- Architecture: the debug page opens with "Architecture now": each pipeline piece marked served, shadow or off, read from the code flags at build time, plus every release tagged as an architecture change. URMA joins the truth table for t.
+- The truth table now grades t on three truths: the shrunk observed, the station readings and URMA. On 11-02 to 11-14 at 2 h and beyond, served t beats raw NBM by 43% on the shrunk truth, 36% on the stations and 27% on URMA. h and dp get a URMA column once dew point is in the cloud URMA store.
+- The one failed digest script (wind_station_rank, a manual tool run with no folder) now skips cleanly.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.98 • November 14, 2026 (KBVY readings in the backtest snapshot fixed; humidity and wind scored on URMA)</strong></summary>
 
 - The backtest snapshot has recorded KBVY dew point, humidity, wind, gust and pressure as empty since June: it looked up field names the airport fetcher never writes. It now reads the real ones and converts units. Gives an airport dew point next to the Tempest network and URMA, a tie-breaker for the moisture-truth question below.
@@ -10,6 +19,7 @@
 <details open>
 <summary><strong>v0.7.97 • November 13, 2026 (URMA-truth shadow blend for temperature)</strong></summary>
 
+- Architecture: Third truth, URMA (NOAA analysis), enters: t_urmab shadow blend logged every tick and refit daily by the refitter; nothing served changes.
 - New shadow temperature forecast for 6 to 47 h. Each source's recent bias against URMA (NOAA's hourly analysis, independent of our forecast) is removed, then HRRR, NBM and ECMWF are blended with weights fitted on the corrected errors. It is stamped as t_urmab and the pair log gains forecast_urmab / error_urmab. Nothing served changes.
 - A daily fit (analysis/urma_blend_table_fit.py) builds its table and is registered with the refitter. URMA hours come from NOAA's public AWS bucket, about 24 a day, kept in a small GCS store.
 - Why shadow: scored on URMA over 67 walk-forward days it beats the served temperature by 11 to 18% at 6 to 47 h, positive every month, but only 9 holdout days exist and their intervals span zero, so it fails the ship rule. Shadow gives forward days. Ship tiers: 5 of 7 forward days with a positive median, 6 to 47 h only, automatic revert, then the ship rule at 14 or more holdout days.
@@ -29,6 +39,7 @@
 <details open>
 <summary><strong>v0.7.95 • November 8, 2026 (Weather Underground calls stopped)</strong></summary>
 
+- Architecture: Weather Underground calls switched off.
 - The collector was still calling Weather Underground on every run: the 41-station feed and the single Castle Hill station, about 42 calls every ten minutes, all refused (the key has been rejected since October 7 and no reading has arrived since October 21). Both are now switched off and make no network call. Tempest is the station network.
 - Each switched-off fetcher returns exactly what it returned on every run since the feed died (an empty station list, and no Castle Hill reading), so the forecast, the scores and the Sources card are unchanged.
 - Nothing served or scored changes.
@@ -67,6 +78,7 @@
 <details open>
 <summary><strong>v0.7.91 • November 4, 2026 (the same forecast scored on both truths)</strong></summary>
 
+- Architecture: Scoring on two truths side by side (truth_compare.json, hourly by the publisher).
 - The score we grade the forecast against is the station reading pulled toward the model, which flatters any forecast that stays close to the model. A new hourly job, and a table on the debug page, now score the same served forecast against both that and the station-only reading, so the difference is visible every day.
 - First read (November 2 to 4, three days): temperature's lead over raw NBM is 16.8% on the old truth and 10.9% on the station truth, so about 5.9 points of it was the flattery. Wind speed goes the other way (−16.7% to −10.2%). Humidity, dew point and gusts barely move.
 - Leads 0 and 1 hour are split out: the station layer's apparent gain there (50% to 80%) is circular, because the correction and the truth are the same reading.
@@ -99,6 +111,7 @@
 <details open>
 <summary><strong>v0.7.88 • November 4, 2026 (Tempest is now the only station feed, so it gets a health check)</strong></summary>
 
+- Architecture: Tempest becomes the only station feed (Weather Underground dead since 10-21).
 - The Weather Underground key has been throttled since about October 7, so every station reading now comes from the 19 Tempest stations. Ten weeks of forecast-vs-observed rows show the short-lead station correction (the "L2" mesonet layer) gained the same with and without WU, so WU is no longer needed.
 - Tempest now keeps its last good reading if a fetch fails, and a run with fewer than about three-quarters of the stations marks itself "degraded".
 - The daily digest has a Tempest line that flags a down or thin feed the same day.
@@ -118,6 +131,7 @@
 <details open>
 <summary><strong>v0.7.86 • November 2, 2026 (logging the station-only temperature and humidity next to the scored ones)</strong></summary>
 
+- Architecture: Second truth logged: observed_stations (station readings only) next to the model-shrunk observed for t, h, dp.
 - The "observed" temperature and humidity we score against are the station network blended with the model's own value (40–90% station, depending on how many stations agree). That makes short-lead scores look better than they are.
 - Each reading now also logs the pure station-network value, plus the model value and the blend weight used. Forecast-vs-observed rows for temperature, humidity and dew point carry it as a second "observed" column.
 - Nothing served or scored changes yet. After a few weeks we can score both ways and refit on the cleaner one.
@@ -127,6 +141,7 @@
 <details open>
 <summary><strong>v0.7.85 • November 1, 2026 (blend weights now fit to the ECMWF timing the app receives)</strong></summary>
 
+- Architecture: Blend fit aligned to the ECMWF hour the app actually receives (1 h live lag).
 - The blend weights for temperature, humidity and wind were fit against ECMWF values one hour off from the ones the app actually uses. The fit now lines up with the live feed.
 - Tested the way it runs live, 20 days, fit on the prior 14 days: temperature error at 6–11h down 7%, 12–23h down 8%, 24–47h down 4%. Humidity and wind down 1–2%.
 - Solar radiation is unchanged: lining up the data removed its ECMWF gain, so it stays on the current blend.
@@ -159,6 +174,7 @@
 <details open>
 <summary><strong>v0.7.81 • October 24, 2026 (ECMWF joins the wind speed blend)</strong></summary>
 
+- Architecture: ECMWF added to the ws blend.
 - Wind speed is now a blend of HRRR, NBM and ECMWF, with the mix set by how far ahead the forecast is, refit daily. Before this, wind speed from 6 hours out was just NBM, so it was no better than what a normal weather app shows.
 - Why: on the last 17 days, tested the way it would run live, the blend cut wind speed error by 6.4% against what we were serving and by 9.3% against NBM alone. It helped at every lead time, in both halves of the test.
 - It replaces the old wind blend that only applied in a few frontal conditions at 24–47 hours, which had been losing to NBM.
@@ -211,6 +227,7 @@
 <details open>
 <summary><strong>v0.7.75 • October 22, 2026 (ECMWF joins the temperature and humidity blend)</strong></summary>
 
+- Architecture: ECMWF IFS added as a third blend input for t and h (HRRR / NBM / ECMWF).
 - Temperature and humidity are now a blend of three models instead of two: the corrected HRRR, the corrected NBM, and the European model (ECMWF IFS, raw). Today's temperature weights (HRRR / NBM / ECMWF): 0.85 / 0.05 / 0.10 for the next 0–5 hours, then about 0.30 / 0.00 / 0.70 at 6–23 hours and 0.15 / 0.10 / 0.75 at 24–47. Humidity splits more evenly, weighted by time of day. The weights are refit every morning. If ECMWF is missing for an hour, that hour falls back to the two-model blend.
 - Why: NBM has run 5–10°F too cold on three of the last six nights. Neither the gap between HRRR and NBM nor the forecast cloud cover predicted those misses. ECMWF is a different model with different errors, and from 6 hours out it beat both of the others on temperature even before blending.
 - Walk-forward test over 17 days (weights fit on the 14 days before each day): temperature 19.1% better than v0.7.74 (both halves of the window, 13 of 17 days), humidity 11.5% (13 of 17). The test used ECMWF runs that were 1–3 days old, so the model the forecast now uses is fresher than the one tested. Dew point is calculated from the blended temperature and humidity, so it improves too.
