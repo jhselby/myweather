@@ -17,7 +17,10 @@ MIN_WF = 1
 
 
 def main():
-    d = sys.argv[1] if len(sys.argv) > 1 else "."
+    if len(sys.argv) < 2:   # manual tool: the digest runs every script with no args
+        print("usage: wind_station_rank.py <dir of station_readings/*.json>; skipped (no dir)")
+        return
+    d = sys.argv[1]
     meta, ticks = {}, []
     for f in sorted(glob.glob(str(Path(d) / "*.json"))):
         j = json.load(open(f))
