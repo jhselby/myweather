@@ -1,7 +1,9 @@
 <details open>
 <summary><strong>v0.7.100 • November 14, 2026 (daily refit was running out of memory; dew point joins the cloud URMA store)</strong></summary>
 
-- The daily 04:30 refit has run out of memory (8 GB) on November 13 and 14, partway through. The tables after that point were not refit: the learned selector and the served blend weights (terminal blend) were last refit November 12, and the URMA shadow table had never been refit in the cloud since it was added on November 13. The refitter now has 16 GB.
+- The daily 04:30 refit has run out of memory (8 GB) on November 13 and 14, partway through. The tables after that point were not refit: the learned selector and the served blend weights (terminal blend) were last refit November 12, and the URMA shadow table had never been refit in the cloud since it was added on November 13. The refitter now has 16 GB, and each table is fitted in its own process so memory no longer piles up across tables.
+- Nothing reported the failure: the run status was only written at the end of a run, and nothing read it. The status is now written after every table, and a new digest check (analysis/refitter_status.py) fails when any refit table is more than a day old or was never published.
+- Today's refit was re-run by hand after the fix: the served blend weights and the URMA shadow are current. The learned selector's refit came back empty and its guard kept the November 12 table (one sr cell); that is flagged for a look.
 - The refit also keeps a URMA dew point store next to the temperature one, so humidity and dew point can be scored on URMA going forward. Nothing served changes.
 
 </details>

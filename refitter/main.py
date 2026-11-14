@@ -142,6 +142,39 @@ def _put_back(out_path, prev):
             json.dump(prev, f, indent=2)
 
 
+def _refit_isolated(spec, now):
+    """_refit_one in a forked child (v0.7.100). Every fitter re-reads the pair log, and
+    in one process the memory piled up across tables until the 8 GB instance was killed
+    mid-run (11-13, 11-14). A child returns all of its memory when it exits, so the peak
+    is one table's. Files the fitters write (tables, state) are shared through the
+    filesystem as before. If the child dies, the table is reported as not published."""
+    import multiprocessing as mp
+    ctx = mp.get_context("fork")
+    recv, send = ctx.Pipe(duplex=False)
+
+    def child():
+        try:
+            st = _refit_one(spec, now)
+        except Exception as e:  # noqa: BLE001
+            st = {"attempted_at": now, "published": False,
+                  "reason": f"fitter crashed: {e.__class__.__name__}: {e}"}
+            logging.error(f"refitter: {spec['name']} crashed\n{traceback.format_exc()}")
+        send.send(st)
+        send.close()
+
+    proc = ctx.Process(target=child)
+    proc.start()
+    send.close()
+    try:
+        st = recv.recv()
+    except EOFError:
+        st = {"attempted_at": now, "published": False,
+              "reason": f"fitter process died (exit code {proc.exitcode}; out of memory?)"}
+        logging.error(f"refitter: {spec['name']} process died")
+    proc.join()
+    return st
+
+
 def refit(request):
     """HTTP entrypoint. Cloud Scheduler hits this once a day."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
@@ -149,12 +182,7 @@ def refit(request):
     status.setdefault("tables", {})
     ok = True
     for spec in TABLES:
-        try:
-            st = _refit_one(spec, now)
-        except Exception as e:
-            st = {"attempted_at": now, "published": False,
-                  "reason": f"fitter crashed: {e.__class__.__name__}: {e}"}
-            logging.error(f"refitter: {spec['name']} crashed\n{traceback.format_exc()}")
+        st = _refit_isolated(spec, now)
         prev_st = status["tables"].get(spec["name"], {})
         if st.get("published"):
             st["last_published_at"] = now
@@ -162,6 +190,10 @@ def refit(request):
             ok = False
             st["last_published_at"] = prev_st.get("last_published_at")
         status["tables"][spec["name"]] = st
+        if not DRY_RUN:   # written after every table, so a run killed midway still shows how far it got
+            status["last_run_at"] = now
+            status["last_run_ok"] = None
+            upload_json(status, STATUS_PATH, "runtime_tables status")
     status["last_run_at"] = now
     status["last_run_ok"] = ok
     if DRY_RUN:
