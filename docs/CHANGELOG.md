@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.100 • November 14, 2026 (daily refit was running out of memory; dew point joins the cloud URMA store)</strong></summary>
+
+- The daily 04:30 refit has run out of memory (8 GB) on November 13 and 14, partway through. The tables after that point were not refit: the learned selector and the served blend weights (terminal blend) were last refit November 12, and the URMA shadow table had never been refit in the cloud since it was added on November 13. The refitter now has 16 GB.
+- The refit also keeps a URMA dew point store next to the temperature one, so humidity and dew point can be scored on URMA going forward. Nothing served changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.99a • November 14, 2026 (Total Lift chart markers current again)</strong></summary>
 
 - The numbered change markers on the Total Lift trend chart stopped at September 10: they were a hand-typed list. Markers after that now come from the same changelog entries tagged "Architecture:" that feed the Architecture now block, so new ones appear on every release. Four earlier releases that changed what is served were tagged: router-as-authority (v0.7.5), the cloud refitter (v0.7.30), selector blends instead of picks (v0.7.56 to v0.7.57) and t/h/sr/wg served as a blend (v0.7.71).
