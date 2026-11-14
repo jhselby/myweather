@@ -1,5 +1,5 @@
 {
- "version": "v0.7.99",
+ "version": "v0.7.99a",
  "components": [
   {
    "name": "HRRR cascade",
@@ -68,56 +68,93 @@
   {
    "version": "v0.7.99",
    "date": "November 14, 2026",
+   "iso": "2026-11-14",
    "title": "debug page shows the architecture and a third truth",
    "change": "the debug page opens with \"Architecture now\": each pipeline piece marked served, shadow or off, read from the code flags at build time, plus every release tagged as an architecture change. URMA joins the truth table for t."
   },
   {
    "version": "v0.7.97",
    "date": "November 13, 2026",
+   "iso": "2026-11-13",
    "title": "URMA-truth shadow blend for temperature",
    "change": "Third truth, URMA (NOAA analysis), enters: t_urmab shadow blend logged every tick and refit daily by the refitter; nothing served changes."
   },
   {
    "version": "v0.7.95",
    "date": "November 8, 2026",
+   "iso": "2026-11-08",
    "title": "Weather Underground calls stopped",
    "change": "Weather Underground calls switched off."
   },
   {
    "version": "v0.7.91",
    "date": "November 4, 2026",
+   "iso": "2026-11-04",
    "title": "the same forecast scored on both truths",
    "change": "Scoring on two truths side by side (truth_compare.json, hourly by the publisher)."
   },
   {
    "version": "v0.7.88",
    "date": "November 4, 2026",
+   "iso": "2026-11-04",
    "title": "Tempest is now the only station feed, so it gets a health check",
    "change": "Tempest becomes the only station feed (Weather Underground dead since 10-21)."
   },
   {
    "version": "v0.7.86",
    "date": "November 2, 2026",
+   "iso": "2026-11-02",
    "title": "logging the station-only temperature and humidity next to the scored ones",
    "change": "Second truth logged: observed_stations (station readings only) next to the model-shrunk observed for t, h, dp."
   },
   {
    "version": "v0.7.85",
    "date": "November 1, 2026",
+   "iso": "2026-11-01",
    "title": "blend weights now fit to the ECMWF timing the app receives",
    "change": "Blend fit aligned to the ECMWF hour the app actually receives (1 h live lag)."
   },
   {
    "version": "v0.7.81",
    "date": "October 24, 2026",
+   "iso": "2026-10-24",
    "title": "ECMWF joins the wind speed blend",
    "change": "ECMWF added to the ws blend."
   },
   {
    "version": "v0.7.75",
    "date": "October 22, 2026",
+   "iso": "2026-10-22",
    "title": "ECMWF joins the temperature and humidity blend",
    "change": "ECMWF IFS added as a third blend input for t and h (HRRR / NBM / ECMWF)."
+  },
+  {
+   "version": "v0.7.71",
+   "date": "October 20, 2026",
+   "iso": "2026-10-20",
+   "title": "t, h, sr, wg served as a blend of both forecasts",
+   "change": "t, h, sr and wg served as a blend of both forecasts."
+  },
+  {
+   "version": "v0.7.56\u2013v0.7.57",
+   "date": "October 14, 2026",
+   "iso": "2026-10-14",
+   "title": "selector: blend instead of pick",
+   "change": "Selector serves a blend of the HRRR and NBM sides instead of picking one."
+  },
+  {
+   "version": "v0.7.30",
+   "date": "October 7, 2026",
+   "iso": "2026-10-07",
+   "title": "refitter: every self-refitting live table moves to the cloud; churning cell sets become ship decisions",
+   "change": "Cloud refitter owns every self-refitting live table (daily 04:30 refit, no deploy needed)."
+  },
+  {
+   "version": "v0.7.5",
+   "date": "September 26, 2026",
+   "iso": "2026-09-26",
+   "title": "Router-as-authority \u2014 ch via ims-threshold, sr via GBM, both live",
+   "change": "Router-as-authority: ch routed by an ims threshold and sr by a GBM, both live (2 fields)."
   }
  ]
 }

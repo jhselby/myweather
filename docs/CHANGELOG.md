@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.99a • November 14, 2026 (Total Lift chart markers current again)</strong></summary>
+
+- The numbered change markers on the Total Lift trend chart stopped at September 10: they were a hand-typed list. Markers after that now come from the same changelog entries tagged "Architecture:" that feed the Architecture now block, so new ones appear on every release. Four earlier releases that changed what is served were tagged: router-as-authority (v0.7.5), the cloud refitter (v0.7.30), selector blends instead of picks (v0.7.56 to v0.7.57) and t/h/sr/wg served as a blend (v0.7.71).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.99 • November 14, 2026 (debug page shows the architecture and a third truth)</strong></summary>
 
 - Architecture: the debug page opens with "Architecture now": each pipeline piece marked served, shadow or off, read from the code flags at build time, plus every release tagged as an architecture change. URMA joins the truth table for t.
@@ -263,6 +270,7 @@
 <details open>
 <summary><strong>v0.7.71 • October 20, 2026 (t, h, sr, wg served as a blend of both forecasts)</strong></summary>
 
+- Architecture: t, h, sr and wg served as a blend of both forecasts.
 - Temperature, humidity, solar and gusts are now served on every hour as a weighted average of the corrected HRRR and corrected NBM forecasts, instead of picking one source. One weight per field (today: HRRR 0.45 t, 0.65 h, 0.55 sr, 0.40 wg), refit each morning by the cloud refitter on the last 14 days. A table older than 3 days switches the blend off and the previous routing serves.
 - Walk-forward test over 17 days (weight fit on the prior 14 days, scored on the next): humidity 12.2% better than what shipped (won 16 of 17 days), solar 11.2% (12 of 17), temperature 4.2% (11 of 17), gusts 3.3% (12 of 17). Before this, the blend covered only 8.5% of temperature hours and 37% of solar hours.
 - The digest now opens with a selector block: score, room to gain and best blend weight per field, plus the open selector work item.
@@ -388,6 +396,7 @@
 <details open>
 <summary><strong>v0.7.56–v0.7.57 • October 14, 2026 (selector: blend instead of pick)</strong></summary>
 
+- Architecture: Selector serves a blend of the HRRR and NBM sides instead of picking one.
 * **Why.** Selector Skill was red on every field (Value Captured 8–49%, per-row win rate 47–57%), and Routing attribution was flat or negative everywhere but h. A 30-day retro on corrected output showed that no "recent winner" rule beats the live selector (yesterday's winner −0.2% vs the better fixed routing, last 3 days +2.5%, live +2.1%): which model wins changes day to day. A plain 50/50 average of the two corrected forecasts beat the better fixed routing by t +10.7%, sr +14.6%, h +20.9%, ws +2.1% in both halves of the month. The L1 static blender, built for this on Sept 26, had 2 of 20 cells live while 12 read SHIP-READY.
 * **v0.7.56 — four more h L1-blend cells live.** nw_flow/6-11, pre_frontal/24-47, se_flow/24-47, sw_flow/6-11, each positive on 7d, 30d and both 7d halves (+24% to +45% vs served). h now has 6 applied cells. Not taken: nw_flow/12-23 (KILL), three HOLD cells.
 * **v0.7.57 — terminal static blend for t, sr, ws.** New `terminal_static_blend.py`: served = w·HRRR terminal + (1−w)·NBM terminal per (field, runtime regime, band), weights from `analysis/terminal_blend_fit.py` → `terminal_static_blend_curated.json`. A cell is kept only if its weight, fit on one half of the month, lifts ≥5% vs the served forecast on the other half, both ways (n ≥ 400). Live: sr 10 cells (+10% to +27%), t 4 (+9.5% to +21%), ws 4 (+7.5% to +15%). h's 9 passing terminal cells stamp shadow only; its L1 blend owns h. wg: no cell passed. Each covered hour stamps `tblend_shadow`; the PWA write-back covers `tblend`.
@@ -630,6 +639,7 @@
 <details open>
 <summary><strong>v0.7.30 • October 7, 2026 (refitter: every self-refitting live table moves to the cloud; churning cell sets become ship decisions)</strong></summary>
 
+- Architecture: Cloud refitter owns every self-refitting live table (daily 04:30 refit, no deploy needed).
 - **Seven more live tables refit daily in the cloud** and load through `runtime_tables` (GCS copy, else last good, else bundled), so none of them depends on the Mac digest or a deploy any more:
   - plain refits: Lc fit (`lc_correction_table`), Lsr solar bias (`lsr_bias_table_curated`), sr sea-breeze override (`sr_sea_breeze_lsr_curated`), the sr learned GBM selector (`l1_learned_selector_curated`, chain v2 → v5 → curate; `LIVE_DEMOTED` stays in code);
   - self-gating walkers: chp cell gate, Lc recent-bias gate, selector regime overrides. Their streak histories now persist in `runtime_tables/state/`, saved only when the table publishes.
@@ -948,6 +958,7 @@
 <details>
 <summary><strong>v0.7.5 • September 26, 2026 (Router-as-authority — ch via ims-threshold, sr via GBM, both live)</strong></summary>
 
+- Architecture: Router-as-authority: ch routed by an ims threshold and sr by a GBM, both live (2 fields).
 - **One-commit ship of the router-as-authority pivot.** L1 selector's two per-obs override mechanisms — `_IMS_SELECTOR_CELLS` (linear ims threshold) and `_LEARNED_CELLS` (GBM classifier) — flipped from shadow to live in a single collector deploy. Both flag names preserved as `..._SHADOW_ENABLED` for wire compat with existing telemetry consumers; `True` = live apply (docstring already reflected this).
 - **ch via `_IMS_SELECTOR_CELLS`.** Old v0.6.641 (09-20) shadow table replaced with the 10-cell refit from `analysis/l1_selector_ims_threshold_refit.py` (commit 3a11ca87, 09-25). Halves-stable A/B ≥ +37% test-side lift on `error_prod_real`, ablation-cleared (commit f24ab785). Cells: ne_flow/0-5, ne_flow/12-23, nw_flow/24-47, pre_frontal/0-5, pre_frontal/6-11, pre_frontal/12-23, se_flow/6-11, se_flow/12-23, se_flow/24-47, sw_flow/12-23. `IMS_SELECTOR_SHADOW_ENABLED = True`.
 - **sr via `_LEARNED_CELLS` (GBM).** `weather_collector/data/l1_learned_selector_curated.json` populated with 5 sr STABLE cells from the v5 GBM sweep (commit f9cc4443). ch cells from the v5 candidate dropped — the two mechanisms are non-overlapping by field. `LEARNED_SELECTOR_SHADOW_ENABLED = True`.

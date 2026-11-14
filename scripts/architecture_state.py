@@ -11,6 +11,7 @@ Run by build.py on every release; also runnable alone:  python3 scripts/architec
 """
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -57,7 +58,12 @@ def changes():
     out = []
     for m in re.finditer(r"<summary><strong>(v[\d.]+(?:[–-]v[\d.]+)?) • ([^(<]+?)\s*(?:\(([^)]*)\))?</strong></summary>(.*?)</details>", text, re.S):
         for a in re.findall(r"^[-*]\s*Architecture:\s*(.+)$", m.group(4), re.M):
-            out.append({"version": m.group(1), "date": m.group(2).strip(), "title": m.group(3) or "", "change": a.strip()})
+            date = m.group(2).strip()
+            try:
+                iso = datetime.strptime(re.sub(r"[–-]\d+,", ",", date), "%B %d, %Y").strftime("%Y-%m-%d")
+            except ValueError:
+                iso = None
+            out.append({"version": m.group(1), "date": date, "iso": iso, "title": m.group(3) or "", "change": a.strip()})
     return out
 
 

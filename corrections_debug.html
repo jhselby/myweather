@@ -10281,6 +10281,20 @@ load();
     {date: "2026-09-05", label: "h L3_NBM + ch chp_nbm kills (2 fields)"},
     {date: "2026-09-10", label: "cc L3_NBM drop + wg REMOVE (2 fields)"},
   ];
+  // v0.7.99: everything after 09-10 comes from architecture.json (CHANGELOG
+  // entries tagged "Architecture:", written by build.py), so the markers can
+  // no longer stop at the last hand edit.
+  fetch("architecture.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (!d) return;
+      const last = AGGREGATE_SHIP_EVENTS[AGGREGATE_SHIP_EVENTS.length - 1].date;
+      d.changes.filter(c => c.iso && c.iso > last).sort((a, b) => a.iso < b.iso ? -1 : 1)
+        .forEach(c => AGGREGATE_SHIP_EVENTS.push({ date: c.iso, label: `${c.version} ${c.title || c.change}` }));
+      renderAggregateEventsLegend("stack-health-events-legend");
+      if (window.Chart && Chart.instances) Object.values(Chart.instances).forEach(ch => ch.update("none"));
+    })
+    .catch(() => {});
   function aggregateEventsPlugin() {
     return {
       id: "aggregateShipEvents",
