@@ -11,6 +11,7 @@ Results go through analysis/ship_rule.py (day-block bootstrap, holdout days >= 2
 
     PYTHONPATH=. .venv/bin/python -m analysis.urma_blend_wf
 """
+import ast
 import collections
 import json
 import os
@@ -66,18 +67,24 @@ def load():
             k = u.strftime("%Y-%m-%dT%H")
             if k not in U:
                 continue
+            sfc = r.get("state_fc")
+            if isinstance(sfc, str):
+                try:
+                    sfc = ast.literal_eval(sfc)
+                except Exception:  # noqa: BLE001
+                    sfc = {}
             rows.append((vt[:10], int(r["lead_h"]), vt, float(sv), float(r["forecast_l1"]),
-                         float(r["forecast_raw_nbm"]), U[k]))
+                         float(r["forecast_raw_nbm"]), U[k], (sfc or {}).get("regime_flow") or "?"))
     days = sorted({r[0] for r in rows})
     eh = tb.ecmwf_history(days[0], days[-1])
     out = []
-    for day, lead, vt, sv, hr, nb, tr in rows:
+    for day, lead, vt, sv, hr, nb, tr, flow in rows:
         fe = (eh.get(tb._ecmwf_key(vt)) or {}).get("t")
         fe = fe[tb._ecmwf_day(lead)] if fe else None
         band = next((b for b, lo, hi in tb.BANDS if lo <= lead < hi), None)
         if fe is None or band is None:
             continue
-        out.append((day, band, sv - tr, hr - tr, nb - tr, float(fe) - tr))  # errors vs URMA
+        out.append((day, band, sv - tr, hr - tr, nb - tr, float(fe) - tr, int(vt[11:13]), flow))  # errors vs URMA, valid hour (ET), forecast flow regime
     return out
 
 
@@ -100,8 +107,8 @@ def run():
             fit_days = {d for d in days if d0 - timedelta(days=WIN) <= datetime.strptime(d, "%Y-%m-%d") < d0}
             if len(fit_days) < WIN - 2:
                 continue
-            fit = np.array([r[2:] for r in rows if r[0] in fit_days])
-            test = np.array([r[2:] for r in rows if r[0] == D])
+            fit = np.array([r[2:6] for r in rows if r[0] in fit_days])
+            test = np.array([r[2:6] for r in rows if r[0] == D])
             if len(fit) < MIN_N or len(test) == 0:
                 continue
             base = float(np.abs(test[:, 0]).sum())
