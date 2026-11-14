@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.98 • November 14, 2026 (KBVY readings in the backtest snapshot fixed; humidity and wind scored on URMA)</strong></summary>
+
+- The backtest snapshot has recorded KBVY dew point, humidity, wind, gust and pressure as empty since June: it looked up field names the airport fetcher never writes. It now reads the real ones and converts units. Gives an airport dew point next to the Tempest network and URMA, a tie-breaker for the moisture-truth question below.
+- Fixed an analysis bug: the URMA temperature reader also picked up the dew point and wind rows added November 13, so local URMA temperature scores since then used wind speed as temperature. The cloud fit that drives the shadow blend filtered correctly and was not affected.
+- New analysis/urma_field_score.py scores served h, dp and ws against URMA next to raw HRRR and raw NBM. Served humidity beats raw NBM 14 to 36% (holdout passes every lead band). Wind ties NBM. Dew point loses to raw NBM 19 to 36% at 6 to 47 h on URMA, but beats it 5 to 13% on the Tempest stations: the two truths differ on moisture (stations read about 2.5% RH and 0.6°F of dew point drier than URMA, and NBM is calibrated to URMA). Nothing served changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.97 • November 13, 2026 (URMA-truth shadow blend for temperature)</strong></summary>
 
 - New shadow temperature forecast for 6 to 47 h. Each source's recent bias against URMA (NOAA's hourly analysis, independent of our forecast) is removed, then HRRR, NBM and ECMWF are blended with weights fitted on the corrected errors. It is stamped as t_urmab and the pair log gains forecast_urmab / error_urmab. Nothing served changes.

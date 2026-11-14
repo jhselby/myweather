@@ -94,16 +94,26 @@ def _slim_wu_obs(wu):
 
 
 def _slim_kbvy(kbvy):
+    # The METAR fetcher (fetchers/noaa.py) keys are dewpoint_c / wind_*_kt / pressure_hpa;
+    # until 11-14 this read *_f / *_mph / *_in names that never existed, so dp/h/ws/wg/p were None.
     if not kbvy:
         return None
+    t, dpc = kbvy.get("temp_f"), kbvy.get("dewpoint_c")
+    dp = round(dpc * 9 / 5 + 32, 1) if dpc is not None else None
+    h = None
+    if t is not None and dpc is not None:
+        tc = (t - 32) * 5 / 9
+        h = round(100 * math.exp(17.625 * dpc / (243.04 + dpc)) / math.exp(17.625 * tc / (243.04 + tc)), 1)
+    kt = lambda k: round(kbvy[k] * 1.15078, 1) if kbvy.get(k) is not None else None  # noqa: E731
+    p = kbvy.get("pressure_hpa")
     return {
-        "t":  kbvy.get("temp_f"),
-        "dp": kbvy.get("dew_point_f"),
-        "h":  kbvy.get("humidity_pct"),
-        "ws": kbvy.get("wind_speed_mph"),
-        "wg": kbvy.get("wind_gust_mph"),
+        "t":  t,
+        "dp": dp,
+        "h":  h,
+        "ws": kt("wind_speed_kt"),
+        "wg": kt("wind_gust_kt"),
         "wd": kbvy.get("wind_dir"),
-        "p":  kbvy.get("pressure_in"),
+        "p":  round(p * 0.0295300, 2) if p is not None else None,
     }
 
 

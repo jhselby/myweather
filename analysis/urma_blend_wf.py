@@ -41,6 +41,8 @@ def urma_idw():
     out = {}
     for line in open(URMA):
         r = json.loads(line)
+        if r.get("var", "TMP") != "TMP":   # file also holds DPT/WIND since 11-14
+            continue
         nb = r["nb"]
         w = np.array([1 / max(x[2], 0.1) ** 2 for x in nb])
         out[r["valid"][:13]] = ((sum(wi * x[3] for wi, x in zip(w, nb)) / w.sum()) - 273.15) * 9 / 5 + 32
