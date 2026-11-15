@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.106 • November 15, 2026 (debug page brought current)</strong></summary>
+
+- "Where things stand" now reads as of November 15: cloud cover graded on URMA (raw NBM is the best cloud source and we match it), the three NBM feed fixes and when to check them, and today's rejected ideas (a cloud blend on URMA, moving rain chance to NBM).
+- The three-truths table now has a cloud cover line on URMA, per lead band.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.105 • November 15, 2026 (NBM one hour fresher)</strong></summary>
 
 - NBM posts each hourly run about an hour after its start time, but our hourly pull, at a quarter to the hour, only looked at runs at least 2 hours old. It skipped the newest one and served NBM one run older than the public forecast uses. It now takes the newest complete run. Most fields gain under 1% from one hour fresher; cloud cover in the next 3 hours gains 3 to 5%.
