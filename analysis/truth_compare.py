@@ -29,6 +29,11 @@ Per field (t, h, dp, ws, wg; all NBM-scope, so the public baseline is raw NBM):
     ceilometers (the scored cc `observed` is HRRR shrunk toward KBOS/KBVY METAR, 15 MAE
     off URMA). Block `cc_urma`: served vs raw NBM on URMA TCDC per lead band and per day,
     from the refitter's urma_truth_tcdc.json.
+  - NWS (11-15): the NWS gridpoint forecast (`forecast_nws`, what weather.gov shows) is a second
+    public baseline. Raw NBM at the Cove's grid cell runs ~3F cold at night vs URMA while the NWS
+    forecast does not, so "vs NBM" can overstate what a person would gain. Same truths, rows that
+    carry forecast_nws only: t/dp/ws inside the field buckets (nws_* keys); wd and pp, which have
+    no station truth, in block `nws_shrunk` on the logged observed.
 
 Runtime:
     python3 -m analysis.truth_compare
@@ -61,7 +66,8 @@ def _prod_error(row):
 def _new():
     return {"n": 0, "pub_o": 0.0, "pub_s": 0.0, "srv_o": 0.0, "srv_s": 0.0,
             "l1_o": 0.0, "l1_s": 0.0, "l2_o": 0.0, "l2_s": 0.0, "n_l2": 0,
-            "n_u": 0, "pub_u": 0.0, "srv_u": 0.0}
+            "n_u": 0, "pub_u": 0.0, "srv_u": 0.0,
+            "n_w": 0, "nws_s": 0.0, "srvw_s": 0.0, "n_wu": 0, "nws_u": 0.0, "srvw_u": 0.0}
 
 
 CC_BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
@@ -137,6 +143,14 @@ def _summ(b):
         "public_mae_urma": round(b["pub_u"] / b["n_u"], 4) if b["n_u"] else None,
         "served_mae_urma": round(b["srv_u"] / b["n_u"], 4) if b["n_u"] else None,
         "total_lift_urma_pct": _lift(b["pub_u"], b["srv_u"]) if b["n_u"] else None,
+        "n_nws": b["n_w"],
+        "nws_mae_stations": round(b["nws_s"] / b["n_w"], 4) if b["n_w"] else None,
+        "served_mae_stations_nwsrows": round(b["srvw_s"] / b["n_w"], 4) if b["n_w"] else None,
+        "lift_vs_nws_stations_pct": _lift(b["nws_s"], b["srvw_s"]) if b["n_w"] else None,
+        "n_nws_urma": b["n_wu"],
+        "nws_mae_urma": round(b["nws_u"] / b["n_wu"], 4) if b["n_wu"] else None,
+        "served_mae_urma_nwsrows": round(b["srvw_u"] / b["n_wu"], 4) if b["n_wu"] else None,
+        "lift_vs_nws_urma_pct": _lift(b["nws_u"], b["srvw_u"]) if b["n_wu"] else None,
     }
 
 
@@ -150,8 +164,21 @@ def build():
     cc_new = lambda: {"n": 0, "pub": 0.0, "srv": 0.0, "bias": 0.0, "obs": 0.0}  # noqa: E731
     cc_band = {b[0]: cc_new() for b in CC_BANDS}
     cc_day = defaultdict(cc_new)
+    nws_sh = {f: {"n": 0, "nws": 0.0, "srv": 0.0} for f in ("wd", "pp")}
     with open(path) as fin:
         for line in fin:
+            if '"forecast_nws"' in line and ('"field": "wd"' in line or '"field": "pp"' in line):
+                try:
+                    r = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                f, nw, obs, lead, srv = r.get("field"), r.get("forecast_nws"), r.get("observed"), r.get("lead_h"), _prod_error(r)
+                if f in nws_sh and None not in (nw, obs, lead, srv) and 2 <= lead < 48:
+                    en = nw - obs
+                    if f == "wd":
+                        en, srv = ((en + 180) % 360) - 180, ((srv + 180) % 360) - 180
+                    b = nws_sh[f]; b["n"] += 1; b["nws"] += abs(en); b["srv"] += abs(srv)
+                continue
             if urma_cc and ('"field": "cc"' in line or '"field":"cc"' in line):
                 try:
                     r = json.loads(line)
@@ -190,6 +217,7 @@ def build():
             if lead is None:
                 continue
             shift = obs - obs_s
+            nw = r.get("forecast_nws")
             tu = urma.get(_utc_hour(r.get("valid_time") or "")) if f == "t" else None
             day = (r.get("valid_time") or "")[:10]
             first = day if first is None or day < first else first
@@ -205,6 +233,12 @@ def build():
                 if tu is not None:   # error vs URMA = error + (observed - urma)
                     b["n_u"] += 1
                     b["pub_u"] += abs(pub + obs - tu); b["srv_u"] += abs(srv + obs - tu)
+                if nw is not None:   # NWS gridpoint forecast, same truths
+                    b["n_w"] += 1
+                    b["nws_s"] += abs(nw - obs_s); b["srvw_s"] += abs(srv + shift)
+                    if tu is not None:
+                        b["n_wu"] += 1
+                        b["nws_u"] += abs(nw - tu); b["srvw_u"] += abs(srv + obs - tu)
                 e1, e2 = r.get("error_l1"), r.get("error_l2")
                 if e1 is not None and e2 is not None:
                     b["n_l2"] += 1
@@ -239,6 +273,9 @@ def build():
             "bands": {n: _cc_summ(b) for n, b in cc_band.items()},
             "per_day_6_47h": {d: _cc_summ(b) for d, b in sorted(cc_day.items())},
         },
+        "nws_shrunk": {f: ({"n": b["n"], "nws_mae": round(b["nws"] / b["n"], 3), "served_mae": round(b["srv"] / b["n"], 3),
+                            "lift_vs_nws_pct": _lift(b["nws"], b["srv"])} if b["n"] else None)
+                       for f, b in nws_sh.items()},
     }
 
 
