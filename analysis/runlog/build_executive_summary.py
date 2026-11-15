@@ -1319,6 +1319,19 @@ def selector_status():
         parts = [f"{b} {v['total_lift_urma_pct']:+.1f}%" for b, v in (cu.get("bands") or {}).items() if v]
         if parts:
             out.append(f"  cc on URMA (served vs raw NBM, all days): {' · '.join(parts)}")
+        # 11-15: the NWS gridpoint forecast (weather.gov) is what a person reads; raw NBM runs ~3F
+        # cold at night at the Cove's cell, so "vs NBM" overstates the user-facing t gain.
+        tcd = json.loads((HERE.parent / "output" / "truth_compare.json").read_text())
+        nws = []
+        for f, key in (("t", "lift_vs_nws_urma_pct"), ("dp", "lift_vs_nws_stations_pct"), ("ws", "lift_vs_nws_stations_pct")):
+            v = ((tcd.get("fields") or {}).get(f) or {}).get("lead_2h_plus") or {}
+            if v.get(key) is not None:
+                nws.append(f"{f} {v[key]:+.1f}%")
+        for f, v in (tcd.get("nws_shrunk") or {}).items():
+            if v:
+                nws.append(f"{f} {v['lift_vs_nws_pct']:+.1f}%")
+        if nws:
+            out.append(f"  vs weather.gov (served vs NWS forecast, 2-47h): {' · '.join(nws)}")
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
         out.append(f"  ⚠ cc on URMA unreadable ({e})")
     try:
