@@ -159,7 +159,8 @@ def ingest(request):
 
     n_ok = sum(1 for v in leads_data.values() if v and not v.get("_interp"))
     elapsed = time.time() - t0
-    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/{MAX_LEAD} interp={sorted(filled)} sr_filled={sum(1 for v in filled.values() if "sr" in v)} "
+    n_sr = sum(1 for v in filled.values() if "sr" in v)
+    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/{MAX_LEAD} interp={sorted(filled)} sr_filled={n_sr} "
                  f"bytes={raw_b:,} gz={gz_b:,} elapsed={elapsed:.1f}s")
 
     return (json.dumps({"cycle": f"{ymd}{hh}", "n_ok": n_ok, "interp": {str(k): v for k, v in sorted(filled.items())},
