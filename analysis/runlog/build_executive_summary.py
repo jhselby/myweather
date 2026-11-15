@@ -1307,9 +1307,20 @@ def selector_status():
         out.append(f"  {f:5} {num(x.get('selector_score_pct'), '7.1f')} "
                    f"{w24_score} {head:5.1f}% {num(w24_f.get('selector_vs_fixed_pct'), '+8.1f')}%  "
                    f"{num(x.get('chosen_prod_mae'), '7.2f')} {num(x.get('best_fixed_mae'), '7.2f')} "
-                   f"{num(x.get('best_rule_mae'), '7.2f')}  {x.get('best_rule_kind') or '—'}")
+                   f"{num(x.get('best_rule_mae'), '7.2f')}  {x.get('best_rule_kind') or '—'}"
+                   + ("  ← scored on METAR-shrunk cc, not a read; see URMA line" if f == "cc" else ""))
     if flat:
         out.append(f"  no room (<2%): {', '.join(flat)}")
+    # 11-15: cc's scored `observed` (HRRR shrunk toward KBOS/KBVY METAR, ceilometers blind
+    # above 12,000 ft) sits 13-15 points off URMA TCDC, so the cc row above measures the wrong
+    # thing. The URMA line is the cc read: served vs raw NBM (the normal source) on URMA.
+    try:
+        cu = json.loads((HERE.parent / "output" / "truth_compare.json").read_text()).get("cc_urma") or {}
+        parts = [f"{b} {v['total_lift_urma_pct']:+.1f}%" for b, v in (cu.get("bands") or {}).items() if v]
+        if parts:
+            out.append(f"  cc on URMA (served vs raw NBM, all days): {' · '.join(parts)}")
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
+        out.append(f"  ⚠ cc on URMA unreadable ({e})")
     try:
         work = SELECTOR_WORK.read_text().strip()
         from datetime import datetime
