@@ -25,7 +25,9 @@ Horizon (v0.7.102): the cycle is 2-6 h old, so cycle leads 1-47 ended ~44 h from
 every NBM field fell back to HRRR at 45-47 h (cc on URMA: 27 MAE there vs ~21 for NBM).
 Leads now run to 55 (53 needed, 55 so the next 3-hourly step exists). NBM is hourly only to about f049 and 3-hourly after, so the hours
 between published steps are filled by linear interpolation (wd on the circle) for the
-state fields in INTERP_FIELDS and flagged "_interp": True. Amounts and probabilities
+state fields in INTERP_FIELDS and flagged "_interp": True. v0.7.104: the fill is per field,
+so sr (published 3-hourly from ~f034 while other fields stay hourly) is filled too; every
+filled field is listed in the lead's "_interp_fields". Amounts and probabilities
 (pa, pp, tstm_prob) are period values and are never interpolated.
 """
 import json
@@ -74,29 +76,32 @@ MAX_LEAD = 55   # fetch past 53 so the 3-hourly step after the last needed hour 
 INTERP_FIELDS = ("t", "dp", "ws", "wd", "wg", "cc", "h", "sr", "ch")
 
 
+MAX_GAP = 3   # NBM's widest step inside the horizon; never bridge wider gaps (ch stops at f036)
+
+
 def _interp_gaps(leads_data):
-    """Fill empty leads between two fetched ones (in place). Returns the filled leads."""
-    have = sorted(int(k) for k, v in leads_data.items() if v)
-    filled = []
-    for a, b in zip(have, have[1:]):
-        for ld in range(a + 1, b):
-            if leads_data.get(str(ld)):
+    """Fill gaps per field (in place): a lead missing field f between two leads that have f,
+    at most MAX_GAP apart, gets the linear interpolation. Covers whole empty leads (3-hourly
+    steps past ~f049) and single fields NBM publishes 3-hourly earlier (sr from ~f034).
+    Returns {lead: [filled fields]}."""
+    filled = {}
+    for f in INTERP_FIELDS:
+        have = sorted(int(k) for k, v in leads_data.items() if v and v.get(f) is not None)
+        for a, b in zip(have, have[1:]):
+            if b - a > MAX_GAP:
                 continue
-            fa, fb, x = leads_data[str(a)], leads_data[str(b)], (ld - a) / (b - a)
-            out = {}
-            for f in INTERP_FIELDS:
-                va, vb = fa.get(f), fb.get(f)
-                if va is None or vb is None:
-                    continue
+            va, vb = leads_data[str(a)][f], leads_data[str(b)][f]
+            for ld in range(a + 1, b):
+                x = (ld - a) / (b - a)
+                cell = leads_data.get(str(ld))
+                if not cell:
+                    cell = leads_data[str(ld)] = {"_interp": True}
                 if f == "wd":
-                    d = ((vb - va + 180) % 360) - 180
-                    out[f] = (va + x * d) % 360
+                    cell[f] = (va + x * (((vb - va + 180) % 360) - 180)) % 360
                 else:
-                    out[f] = va + x * (vb - va)
-            if out:
-                out["_interp"] = True
-                leads_data[str(ld)] = out
-                filled.append(ld)
+                    cell[f] = va + x * (vb - va)
+                cell.setdefault("_interp_fields", []).append(f)
+                filled.setdefault(ld, []).append(f)
     return filled
 
 
@@ -154,9 +159,9 @@ def ingest(request):
 
     n_ok = sum(1 for v in leads_data.values() if v and not v.get("_interp"))
     elapsed = time.time() - t0
-    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/{MAX_LEAD} interp={filled} "
+    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/{MAX_LEAD} interp={sorted(filled)} sr_filled={sum(1 for v in filled.values() if "sr" in v)} "
                  f"bytes={raw_b:,} gz={gz_b:,} elapsed={elapsed:.1f}s")
 
-    return (json.dumps({"cycle": f"{ymd}{hh}", "n_ok": n_ok, "interp": filled,
+    return (json.dumps({"cycle": f"{ymd}{hh}", "n_ok": n_ok, "interp": {str(k): v for k, v in sorted(filled.items())},
                         "elapsed_s": round(elapsed, 1)}),
             200, {"Content-Type": "application/json"})

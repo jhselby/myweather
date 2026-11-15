@@ -1,5 +1,5 @@
 {
- "version": "v0.7.103",
+ "version": "v0.7.104",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.104",
+   "date": "November 15, 2026",
+   "iso": "2026-11-15",
+   "title": "solar forecast past 33 hours no longer drops NBM",
+   "change": "NBM gap fill is per field (sr 3-hourly from ~f034), max gap 3 hours."
+  },
   {
    "version": "v0.7.103",
    "date": "November 15, 2026",

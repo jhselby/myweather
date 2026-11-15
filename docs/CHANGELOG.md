@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.104 • November 15, 2026 (solar forecast past 33 hours no longer drops NBM)</strong></summary>
+
+- From about 34 hours out, NBM publishes sunshine (solar radiation) only every 3 hours while its other fields stay hourly. For the two hours in between, we had no NBM sunshine and served raw HRRR: on daylight hours 34 to 44 hours out that was 104 W/m² off on average, against 58 on the hours that had NBM.
+- Each missing value is now filled in from the NBM values on either side, field by field. On hours where the real NBM value is known, a forecast built from the filled-in value was 26% closer than HRRR alone. High cloud is not filled past 36 hours because NBM stops publishing it there.
+- Architecture: NBM gap fill is per field (sr 3-hourly from ~f034), max gap 3 hours.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.103 • November 15, 2026 (NBM now reaches the full 47-hour forecast)</strong></summary>
 
 - The NBM forecast we pull each hour is 2 to 6 hours old, and we read only its first 47 hours, so it ran out about 44 hours from now. For the last three hours of the 48-hour forecast every NBM field fell back to HRRR, and the error jumped there: temperature about 10% worse than at 44 hours, humidity 23%, dew point 40%, gusts 34%, cloud cover 25%.
