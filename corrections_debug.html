@@ -2587,7 +2587,7 @@
         <li><strong>NBM feed fixes — 11-15 (v0.7.103–105), verify ~11-17/18:</strong> (1) we read NBM out to only 47 hours of a 2–6 hour old run, so 45–47h had no NBM on any field and fell back to HRRR (error jumped there: t +10%, h +23%, dp +40%, wg +34%, cc +25% vs 44h); now 55 hours, 3-hourly steps filled in. (2) NBM sunshine is 3-hourly from ~34h, so 2 of 3 daylight hours at 34–44h were raw HRRR (104 W/m² off vs 58 with NBM); filled per field now. (3) the pull skipped the newest complete NBM run; now one hour fresher. Check in the pair log that the 45h jump and the sr gap are gone.</li>
         <li><strong>~11-22 — wind-on-water truth:</strong> only Neptune Rd is a live waterfront station; rank the rest against it over two weeks of <code>station_readings</code>, then the airport floor, split-network L2 and wg stronger L2 (held, +2.4% on shrunk truth).</li>
         <li><strong>~11-19 — C1b revival:</strong> refit the cluster-spread cuts on <code>cluster_spread_tempest_log.json</code>, then point the confidence layer at it.</li>
-        <li><strong>Backups:</strong> weekly bucket copy (last 11-08, next 11-15); 12-06 next pair-log archive snapshot. Refitter memory back to 8 GB about 11-21 once a week of per-table runs shows the peak.</li>
+        <li><strong>Backups:</strong> weekly bucket copy (last 11-08, next 11-15); 12-06 next pair-log archive snapshot. Refitter memory stays at 16 GB: the per-table peak is 8.3 GB, all from the learned selector (which currently finds no cells); 12 GB is the only safe smaller size (checked 11-15).</li>
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Not built</div>
       <ul style="margin:0 0 8px 16px;padding:0;">
