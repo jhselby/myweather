@@ -1028,26 +1028,259 @@
 </head>
 <body>
 <header>
-  <h1>Forecast pipeline</h1>
+  <h1>Wyman Cove forecast</h1>
   <span class="meta" id="meta">loading…</span>
   <span class="meta" id="meta-mae" style="opacity:0.75;">Scoreboard …</span>
 </header>
 
 <nav class="toc">
-  <a href="/" style="color:#8a93a3;">← Back</a>
-  <a href="#sec-recent">Recent activity</a>
-  <a href="#sec-accuracy" class="accuracy">Accuracy</a>
-  <a href="#sec-applicability">Applicability</a>
-  <a href="#sec-layer1">L1 Raw + router</a>
-  <a href="#sec-layer2">L2 Aggregate bias</a>
-  <a href="#sec-layer3">L3 Decay</a>
-  <a href="#sec-layer4">L4 Diurnal</a>
-  <a href="#sec-layer5">Lsr Synoptic (sr)</a>
-  <a href="#sec-lc">Lc Cloud saturation (cc/cl/cm/ch)</a>
-  <a href="#sec-research" class="research">Research & Diagnostics</a>
+  <a href="/" style="color:#8a93a3;">← App</a>
+  <a href="#sec-front">Scorecard</a>
+  <a href="#sec-engine-scoreboard">Detailed scoreboard</a>
+  <a href="#sec-stack-health" class="accuracy">Trend</a>
+  <a href="#sec-state-now">Where things stand</a>
+  <a href="#sec-layer1" title="L1: raw models + selector">Layers ▸ L1</a>
+  <a href="#sec-layer2" title="L2: local station bias">L2</a>
+  <a href="#sec-layer3" title="L3: lead-time decay">L3</a>
+  <a href="#sec-layer4" title="L4: time-of-day">L4</a>
+  <a href="#sec-layer5" title="Lsr: sunshine by weather regime">Lsr</a>
+  <a href="#sec-lc" title="Lc: cloud saturation">Lc</a>
+  <a href="#sec-applicability">When corrections fire</a>
+  <a href="#sec-research" class="research">Research</a>
   <a href="#sec-archive">Archive</a>
 </nav>
+<!-- ───────────────────── Front page (v0.7.107) ─────────────────────
+     The one question this project answers: are we beating the forecast a normal
+     user already gets? Scorecard is live (truth_compare.json + per_field_scoring.json,
+     both refreshed hourly by the publisher). "Coming up" is hand-kept: update it in the
+     same commit as the detailed "Being evaluated next" list under Where things stand. -->
+<style>
+  .fp { margin: 4px 0 22px 0; }
+  .fp-q { font-size: 1.35em; font-weight: 650; color: #e8eef6; margin: 6px 0 2px 0; letter-spacing: -0.01em; }
+  .fp-sub { color: #9aa6b6; font-size: 0.9em; margin-bottom: 14px; max-width: 980px; line-height: 1.5; }
+  .fp-verdict { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 14px 0; }
+  .fp-pill { padding: 8px 14px; border-radius: 10px; font-size: 0.95em; border: 1px solid; }
+  .fp-pill b { font-size: 1.35em; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .fp-win  { color: #6fe3a8; border-color: #1f5a3e; background: #0d1f17; }
+  .fp-tie  { color: #c9d1dc; border-color: #3a4352; background: #151a22; }
+  .fp-loss { color: #ff9a8a; border-color: #6a2a24; background: #22120f; }
+  .fp-card { border: 1px solid #253247; background: #0d141e; border-radius: 10px; padding: 6px 4px 4px 4px; }
+  .fp-table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+  .fp-table th { text-align: left; font-weight: 500; color: #7f8ba0; font-size: 0.82em; padding: 6px 12px; border-bottom: 1px solid #1d2838; }
+  .fp-table td { padding: 9px 12px; border-bottom: 1px solid #161f2c; vertical-align: middle; }
+  .fp-table tr:last-child td { border-bottom: none; }
+  .fp-field { color: #e8eef6; font-weight: 600; white-space: nowrap; }
+  .fp-field small { display: block; color: #7f8ba0; font-weight: 400; font-size: 0.82em; }
+  .fp-big { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fp-bars { width: 230px; }
+  .fp-bar { height: 7px; border-radius: 4px; margin: 3px 0; }
+  .fp-bar.us { background: #4fb3ff; } .fp-bar.them { background: #59606c; }
+  .fp-nums { color: #9aa6b6; font-size: 0.86em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .fp-nums b { color: #dfe7f1; font-weight: 600; }
+  .fp-truth { display: inline-block; font-size: 0.78em; padding: 2px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; cursor: help; }
+  .fp-t-ind { color: #6fe3a8; border-color: #1f5a3e; }
+  .fp-t-stn { color: #7fc4ff; border-color: #24496b; }
+  .fp-t-mix { color: #e6c46a; border-color: #5a4a1f; }
+  .fp-t-weak { color: #9aa6b6; border-color: #3a4352; }
+  .fp-note { color: #c9a86a; font-size: 0.8em; display: block; margin-top: 3px; }
+  .fp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .fp-panel { border: 1px solid #253247; background: #0d141e; border-radius: 10px; padding: 12px 16px; }
+  .fp-h { color: #e8eef6; font-weight: 650; font-size: 1em; margin-bottom: 8px; }
+  .fp-h span { color: #7f8ba0; font-weight: 400; font-size: 0.85em; }
+  .fp-list { list-style: none; margin: 0; padding: 0; font-size: 0.88em; line-height: 1.45; }
+  .fp-list li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid #161f2c; color: #cfd8e3; }
+  .fp-list li:last-child { border-bottom: none; }
+  .fp-date { color: #7fb3ff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fp-done .fp-date { color: #6fe3a8; }
+  .fp-flow { display: flex; align-items: stretch; gap: 0; margin-top: 4px; font-size: 0.86em; }
+  .fp-step { flex: 1; border: 1px solid #253247; background: #101a27; border-radius: 9px; padding: 10px 12px; color: #cfd8e3; line-height: 1.45; }
+  .fp-step b { color: #e8eef6; display: block; margin-bottom: 4px; font-size: 1.02em; }
+  .fp-step small { color: #8b97a8; display: block; margin-top: 5px; }
+  .fp-arrow { align-self: center; color: #4fb3ff; padding: 0 8px; font-size: 1.3em; }
+  .fp-legend { color: #7f8ba0; font-size: 0.8em; margin: 8px 4px 0 4px; line-height: 1.5; }
+  .fp-engine { margin-top: 18px; color: #9aa6b6; font-size: 0.88em; }
+</style>
 
+<section class="fp" id="sec-front">
+  <div class="fp-q">Are we beating the forecast you'd normally get?</div>
+  <div class="fp-sub">
+    Our bar is <b>NBM</b>, the National Weather Service's model blend, for every field it publishes (raw <b>HRRR</b> for the few it doesn't). What a person actually reads on weather.gov is the <b>NWS forecast</b>: NBM plus forecaster edits, and at the Cove it is much better than raw NBM on night-time temperature (raw NBM runs ~3°F cold there). So each field shows both. Every number is our average error against theirs on the same hours, graded on the most independent truth we have for that field, leads 2–47 hours.
+  </div>
+
+  <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
+
+  <div class="fp-card">
+    <table class="fp-table">
+      <thead><tr><th>Field</th><th>vs NBM <span style="font-weight:400;opacity:0.7;">(our bar)</span></th><th title="The NWS forecast for this spot as weather.gov shows it (NBM with forecaster edits), same hours and same truth.">vs weather.gov</th><th class="fp-bars">Our error <span style="color:#4fb3ff;">■</span> vs theirs <span style="color:#59606c;">■</span></th><th>Average error</th><th>Graded on</th></tr></thead>
+      <tbody id="fp-rows"></tbody>
+    </table>
+  </div>
+  <div class="fp-legend">
+    <b style="color:#6fe3a8;">Independent truth</b> = URMA, NOAA's hourly analysis from satellite and surface reports; it doesn't use our stations or our corrections. ·
+    <b style="color:#7fc4ff;">Station truth</b> = our local weather stations only, no model mixed in. ·
+    <b style="color:#e6c46a;">Model-blended truth</b> = stations pulled toward the model; it flatters us, so read these as optimistic. ·
+    <b style="color:#9aa6b6;">Weak truth</b> = airport cloud reports, which can't see above 12,000 ft.
+    A field counts as a win or a loss only beyond ±2%. "vs weather.gov" is blank where the NWS forecast doesn't carry the field. <span id="fp-stamp"></span>
+  </div>
+
+  <div class="fp-grid">
+    <div class="fp-panel">
+      <div class="fp-h">What changed recently <span>· every release, from the changelog</span></div>
+      <ul class="fp-list" id="fp-changes"><li><span class="fp-date">…</span><span>loading</span></li></ul>
+    </div>
+    <div class="fp-panel">
+      <div class="fp-h">Coming up <span>· each one waits on enough days of data</span></div>
+      <ul class="fp-list">
+        <li><span class="fp-date">Nov 17</span><span><b>Check today's NBM fixes landed:</b> the error jump at 45 hours should be gone. Then refit temperature on station truth with a full 14 days; switch only if it passes the ship rule.</span></li>
+        <li><span class="fp-date">Nov 18</span><span><b>Sunshine 34–47 hours out:</b> confirm the filled-in NBM values close the gap (was 104 W/m² off vs 58).</span></li>
+        <li><span class="fp-date">Nov 19–20</span><span><b>Temperature candidate</b> (bias removed against URMA, three models blended): ship if 5 of 7 live days beat what we serve.</span></li>
+        <li><span class="fp-date">Nov 21</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
+        <li><span class="fp-date">Nov 22</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
+        <li><span class="fp-date">Nov 24</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week.</span></li>
+      </ul>
+      <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">Full detail, killed ideas and what's not built →</a></div>
+    </div>
+  </div>
+
+  <div class="fp-panel" style="margin-top:14px;">
+    <div class="fp-h">How it works <span>· every 10 minutes, in the cloud</span></div>
+    <div class="fp-flow">
+      <div class="fp-step"><b>1 · Gather</b>Forecasts from HRRR (hourly, fine-grained), NBM (the official blend) and ECMWF (European), plus readings from ~19 local weather stations and the airports.<small>Collector, every 10 min · NBM pulled hourly</small></div>
+      <div class="fp-arrow">→</div>
+      <div class="fp-step"><b>2 · Correct</b>Nudge each model toward what our stations are seeing right now (strongest in the first ~5 hours), then fix known habits: how errors grow with lead time, time-of-day biases, sea-breeze sunshine, cloud saturation.<small>Layers L2 → L4 and the specialists</small></div>
+      <div class="fp-arrow">→</div>
+      <div class="fp-step"><b>3 · Blend &amp; choose</b>For each field and lead time, mix the corrected models with weights refit every morning from the last 14 days, or pick the one source that has been winning.<small>Terminal blend + selector · refit 04:30 ET</small></div>
+      <div class="fp-arrow">→</div>
+      <div class="fp-step"><b>4 · Grade</b>Every forecast hour is logged and scored once it happens, against several truths, so a change ships only if it wins on days it was never tuned on.<small>Pair log · ship rule (holdout from Nov 3)</small></div>
+    </div>
+  </div>
+
+  <div class="fp-engine">
+    Below this line is the <b>engine room</b>: the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
+  </div>
+</section>
+
+<script>
+(function () {
+  const BASE = "https://data.wymancove.com/";
+  const get = n => fetch(BASE + n + "?_=" + Date.now(), { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(n + " HTTP " + r.status); return r.json(); });
+  const FIELDS = [
+    // key, name, plain description, unit, decimals
+    ["t",  "Temperature",    "air temperature",               "°F",   1],
+    ["h",  "Humidity",       "relative humidity",             "% RH", 1],
+    ["dp", "Dew point",      "how much moisture is in the air","°F",  1],
+    ["ws", "Wind speed",     "sustained wind",                "mph",  1],
+    ["wg", "Gusts",          "peak gusts",                    "mph",  1],
+    ["wd", "Wind direction", "where the wind comes from",     "°",    0],
+    ["sr", "Sunshine",       "solar radiation at the ground", "W/m²", 0],
+    ["cc", "Cloud cover",    "how much of the sky is covered","%",    1],
+    ["pp", "Rain chance",    "probability of rain that hour", "pts",  1],
+    ["pa", "Rain amount",    "inches that hour",              "in",   3],
+    ["cl", "Low cloud",      "cloud below ~6,500 ft",         "%",    1],
+    ["cm", "Mid cloud",      "cloud ~6,500–20,000 ft",        "%",    1],
+    ["ch", "High cloud",     "cloud above ~20,000 ft",        "%",    1],
+  ];
+  const NOTES = {
+    h:  "Our stations read drier than URMA; which one is right is settled ~Nov 21.",
+    dp: "On URMA truth we lose to NBM here; which truth is right is settled ~Nov 21.",
+    ws: "Backyard anemometers, not wind on the water; that truth comes ~Nov 22.",
+    wg: "Backyard anemometers, not wind on the water; that truth comes ~Nov 22.",
+    pp: "Over 78 days NBM ties us at 0–23h and does worse at 24–47h, so we keep HRRR.",
+  };
+  const TRUTH = {
+    urma: ["fp-t-ind", "Independent (URMA)", "NOAA's hourly analysis (URMA), built from satellite and surface reports. Independent of our stations and corrections."],
+    stn:  ["fp-t-stn", "Stations", "Our local weather stations only, with no model mixed in. Since Nov 2."],
+    mix:  ["fp-t-mix", "Model-blended", "Station readings pulled toward the model forecast (the logged 'observed'). Flatters us: treat as optimistic. Last 7 days."],
+    weak: ["fp-t-weak", "Weak (airport)", "Airport cloud reports pulled toward the model; ceilometers can't see above 12,000 ft. Treat as a rough guide."],
+  };
+  const pct = (us, them) => (them ? (them - us) / them * 100 : null);
+
+  Promise.allSettled([get("truth_compare.json"), get("per_field_scoring.json")]).then(([tcR, pfR]) => {
+    const tc = tcR.status === "fulfilled" ? tcR.value : null;
+    const pf = pfR.status === "fulfilled" ? (pfR.value.windows["7d"] || {}).per_field || {} : {};
+    const rows = [];
+    for (const [k, name, desc, unit, dec] of FIELDS) {
+      let us = null, them = null, src = "NBM", truth = null, n = null;
+      const two = tc && tc.fields && tc.fields[k] ? tc.fields[k].lead_2h_plus : null;
+      if (k === "t" && two && two.n_urma > 500) {
+        us = two.served_mae_urma; them = two.public_mae_urma; truth = "urma"; n = two.n_urma;
+      } else if (two && two.n > 500) {
+        us = two.served_mae_stations; them = two.public_mae_stations; truth = "stn"; n = two.n;
+      } else if (k === "cc" && tc && tc.cc_urma && tc.cc_urma.bands) {
+        let s = 0, p = 0, m = 0;   // leads 6-47h, matching the 2h+ rows above as closely as the bands allow
+        for (const [b, v] of Object.entries(tc.cc_urma.bands)) { if (v && b !== "0-5") { s += v.served_mae_urma * v.n; p += v.public_mae_urma * v.n; m += v.n; } }
+        if (m) { us = s / m; them = p / m; truth = "urma"; n = m; }
+      }
+      if (us == null && pf[k]) {
+        const x = pf[k];
+        us = x.prod_current_config_mae ?? x.prod_mae;
+        const nbm = x.nbm_raw_mae;
+        if (x.in_nbm_scope || ((k === "pp" || k === "pa") && nbm != null)) { them = nbm; src = "NBM"; }
+        else { them = x.hrrr_raw_mae; src = "HRRR"; }
+        truth = (k === "cl" || k === "cm" || k === "ch") ? "weak" : "mix"; n = x.n_prod;
+      }
+      if (us == null || them == null) continue;
+      let nws = null;
+      if (two && k === "t" && two.lift_vs_nws_urma_pct != null) nws = two.lift_vs_nws_urma_pct;
+      else if (two && truth === "stn" && two.lift_vs_nws_stations_pct != null) nws = two.lift_vs_nws_stations_pct;
+      else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) nws = tc.nws_shrunk[k].lift_vs_nws_pct;
+      rows.push({ k, name, desc, unit, dec, us, them, src, truth, n, nws, lift: pct(us, them) });
+    }
+    const main = rows.filter(r => !["cl", "cm", "ch"].includes(r.k));
+    const W = main.filter(r => r.lift > 2), L = main.filter(r => r.lift < -2), T = main.filter(r => Math.abs(r.lift) <= 2);
+    const names = a => a.map(r => r.name.toLowerCase()).join(", ") || "—";
+    document.getElementById("fp-verdict").innerHTML =
+      `<span class="fp-pill fp-win"><b>${W.length}</b>better: ${names(W)}</span>` +
+      `<span class="fp-pill fp-tie"><b>${T.length}</b>tied: ${names(T)}</span>` +
+      `<span class="fp-pill fp-loss"><b>${L.length}</b>worse: ${names(L)}</span>`;
+    const max = Math.max(...rows.map(r => Math.max(r.us, r.them)));
+    const fmt = (v, d) => Number(v).toFixed(d);
+    document.getElementById("fp-rows").innerHTML = rows.map((r, i) => {
+      const c = r.lift > 2 ? "#6fe3a8" : r.lift < -2 ? "#ff9a8a" : "#c9d1dc";
+      const word = r.lift > 2 ? "better" : r.lift < -2 ? "worse" : "tied";
+      const [cls, label, tip] = TRUTH[r.truth];
+      const per = Math.max(r.us, r.them);
+      const sep = (r.k === "cl") ? `<tr><td colspan="6" style="color:#7f8ba0;font-size:0.82em;padding:12px 12px 4px;">Cloud layers: the app uses these for sky and sunset; there is no good truth for them yet, so take these lightly.</td></tr>` : "";
+      return sep + `<tr>
+        <td class="fp-field">${r.name}<small>${r.desc}</small></td>
+        <td><span class="fp-big" style="color:${c};">${r.lift > 0 ? "+" : ""}${fmt(r.lift, 0)}%</span> <span style="color:${c};font-size:0.82em;">${word}</span></td>
+        <td>${r.nws == null ? '<span style="color:#4a5363;">—</span>' : `<span style="font-weight:650;font-variant-numeric:tabular-nums;color:${r.nws > 2 ? "#6fe3a8" : r.nws < -2 ? "#ff9a8a" : "#c9d1dc"};">${r.nws > 0 ? "+" : ""}${fmt(r.nws, 0)}%</span>`}</td>
+        <td class="fp-bars"><div class="fp-bar us" style="width:${(r.us / per * 100).toFixed(1)}%"></div><div class="fp-bar them" style="width:${(r.them / per * 100).toFixed(1)}%"></div></td>
+        <td class="fp-nums">ours <b>${fmt(r.us, r.dec)}</b> vs ${r.src} <b>${fmt(r.them, r.dec)}</b> ${r.unit}${NOTES[r.k] ? `<span class="fp-note">${NOTES[r.k]}</span>` : ""}</td>
+        <td><span class="fp-truth ${cls}" title="${tip} n=${(r.n || 0).toLocaleString()} hour-forecasts.">${label}</span></td>
+      </tr>`;
+    }).join("");
+    const w = tc ? `station/URMA rows ${tc.first_day} → ${tc.last_day}` : "truth_compare.json unavailable";
+    document.getElementById("fp-stamp").textContent = `Windows: ${w}; model-blended rows = last 7 days. Refreshed hourly.`;
+  }).catch(e => { document.getElementById("fp-verdict").innerHTML = `<span style="color:#e08a70;">scorecard unavailable (${e})</span>`; });
+
+  // Nav links open the collapsed section they point at (and any collapsed parents).
+  const openTarget = () => {
+    const el = location.hash && document.getElementById(location.hash.slice(1));
+    if (!el) return;
+    for (let n = el; n; n = n.parentElement) if (n.tagName === "DETAILS") n.open = true;
+    el.scrollIntoView();
+  };
+  window.addEventListener("hashchange", openTarget);
+  window.addEventListener("load", openTarget);
+
+  fetch("architecture.json?_=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(a => {
+    const ch = (a.releases || a.changes || []).slice(0, 8);
+    const short = s => s.replace(/\s+/g, " ");
+    document.getElementById("fp-changes").innerHTML = ch.map(c => {
+      const d = new Date(c.iso + "T12:00:00");
+      const ds = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const t = short(c.title || c.change);
+      return `<li class="fp-done"><span class="fp-date">${ds}</span><span><b>${t.charAt(0).toUpperCase() + t.slice(1)}</b> <span style="color:#7f8ba0;font-size:0.9em;">${c.version}</span></span></li>`;
+    }).join("") || "<li>no changes recorded</li>";
+  }).catch(e => { document.getElementById("fp-changes").innerHTML = `<li><span class="fp-date">—</span><span>architecture.json unavailable (${e})</span></li>`; });
+})();
+</script>
+
+
+<details id="sec-engine-scoreboard" style="margin:0 0 16px 0;padding:10px 14px;border:1px solid #253247;background:#0b1119;border-radius:10px;">
+  <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Detailed scoreboard &amp; architecture <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
+  <div style="margin-top:12px;">
 <!-- ───────────────────── Architecture now (v0.7.99) ─────────────────────
      Rendered from architecture.json, written by build.py on every release:
      component status read from the code flags, plus every CHANGELOG entry
@@ -1897,6 +2130,9 @@
 </script>
 
 
+  </div>
+</details>
+
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
      Forward-looking summary of the three lenses that matter for a daily
      read: what's running, what's improving, what's being evaluated next.
@@ -1907,7 +2143,7 @@
        - What's running: current live state, no history (kill trail below)
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
-<h2 class="section" id="sec-current-state">Current state</h2>
+<h2 class="section" id="sec-current-state">Trend &amp; where things stand <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· how our lead over the public forecast has moved, and the full status notes</span></h2>
 
 <!-- v0.6.580: compact aggregate stack-health chart at top of Current State.
      Full "Accuracy over time" section (with per-field drill-down + sparklines)
@@ -2370,35 +2606,9 @@
 </details>
 
 <a id="sec-recent"></a>
-<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Recent activity <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">— today + 2 prior days (older entries in <code>docs/CHANGELOG.md</code>)</span></summary>
-    <div style="font-size:0.78em;opacity:0.6;margin-bottom:8px;">
-      Badges:
-      <span style="color:#4ad29a;font-weight:700;">PIPELINE</span> ·
-      <span style="color:#e0a070;font-weight:700;">DISCOVERY</span> ·
-      <span style="color:#7090a0;font-weight:700;">INFRA</span> ·
-      <span style="color:#a89ce0;font-weight:700;">DASHBOARD</span> ·
-      <span style="color:#8fa5c4;font-weight:700;">PREFLIGHT</span>
-    </div>
-    <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
-
-
-
-
-      <li><strong style="color:#7fb3ff;">2026-11-10 (Tue) — today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 220/220. First 8-day holdout verdicts: served beats HRRR on t/h/ws where it should and NBM on t/h everywhere. ws 6–23h loss to raw NBM traced to pre-11-06 refit weights (−7.6% → −0.9%); closed. Stronger L2 passes on holdout for t 2–5/6–11h and wg 2–5h but is held for station truth. New HOT: ch.l4_nbm, wg.l3_nbm (3d, watch). Pushed <code>979c47e9</code>; debug page brought current (v0.7.96).</li>
-
-      <li><strong style="opacity:0.85;">2026-11-09 (Mon) — 1 day ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 220/220. cc fresh fire = same HRRR-raw baseline artifact; wd.l3_nbm alert gone (11-05 one day, no skip); sr.l3_nbm decaying. Selector room is blend vs fixed, not served gain: served already beats the blend rule on t/dp/h. Pushed <code>e658cbe3</code>.</li>
-
-      <li><strong style="opacity:0.85;">2026-11-08 (Sun) — 2 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. <strong style="color:#e0a070;">DISCOVERY</strong> — the cc "fresh fire" (3d +613%) is a baseline artifact: the sentry compares served cc (NBM terminal) with raw HRRR, which scores 0.8–5 on clear days against NBM's 12–19; served cc beats raw NBM. The planned ws→NBM change would be a near no-op: the live ws blend is already ~pure NBM below 24h, so the 6–7% loss to raw NBM comes from somewhere else (open). First weekly bucket copy ran (marker 05:30). Holdout: 6 of 8 days.</li>
-
-      <li><strong style="opacity:0.85;">2026-11-07 (Sat) — 3 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd.l3_nbm loss traced per valid day: only 11-05 (s-flow, −40.8%) lost, no repeat; hold. ECMWF ws gate closed unclean and folded into the holdout verdicts. Pushed <code>9dfa0b2c</code>.</li>
-
-      <li><strong style="opacity:0.85;">2026-11-06 (Fri) — 4 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>0 ships.</strong></span> Digest 218/218. wd fresh fire and wd.l3_nbm HOT diagnosed as one day (11-05 s-flow regime shift 16°→30°). ws loses raw NBM at 6–47h on exploratory rows; t 6–11h vs HRRR −1.4%.</li>
-
-      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-11-05 and earlier</strong> <span style="opacity:0.6;font-size:0.85em;">— in <code>docs/CHANGELOG.md</code> (v0.7.88–v0.7.92 station feed, dual-truth scoring and Tempest fixes 11-04; v0.7.86/87 observed_stations logging 11-02; v0.7.85 ECMWF timing fix, …).</span></li>
-
-    </ul>
-</details>
+<!-- v0.7.107: the hand-kept "Recent activity" list (last entry 11-10) is retired; the front
+     page's "What changed recently" reads the newest CHANGELOG entries from architecture.json
+     (scripts/architecture_state.py releases), so it cannot go stale. Full history: docs/CHANGELOG.md. -->
 
 <!-- ───────────────────── Applicability map (Section D) ─────────────────────
      Global "what corrections trigger, and why" view, code-derived. Each

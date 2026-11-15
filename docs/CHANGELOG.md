@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.107 • November 15, 2026 (debug page opens with a plain-English scorecard)</strong></summary>
+
+- The debug page now opens with one question, "Are we beating the forecast you'd normally get?", answered field by field: our average error next to the normal forecast's on the same hours, graded on the most independent truth each field has (URMA, our stations, or the model-blended truth, labelled). A count of fields better, tied and worse sits on top.
+- Each field is also compared with the NWS forecast as weather.gov shows it. At the Cove, raw NBM runs about 3°F cold at night while the NWS forecast does not, so against what a person actually reads we lead by less on temperature: about +18% on URMA, against +42% over raw NBM. We beat the weather.gov forecast on every field it covers (temperature, dew point, wind speed and direction, rain chance).
+- Below the scorecard: every recent release (read from the changelog, so it cannot go stale), dated next steps, and a four-step picture of how the forecast is made. The old scoreboard tiles and architecture list are kept, collapsed under "Detailed scoreboard"; navigation links now open the section they point to. The hand-kept "Recent activity" list, last updated November 10, is retired.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.106 • November 15, 2026 (debug page brought current)</strong></summary>
 
 - "Where things stand" now reads as of November 15: cloud cover graded on URMA (raw NBM is the best cloud source and we match it), the three NBM feed fixes and when to check them, and today's rejected ideas (a cloud blend on URMA, moving rain chance to NBM).

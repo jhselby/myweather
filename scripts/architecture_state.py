@@ -5,6 +5,8 @@ Two parts, both read from the repo at build time so the block cannot drift from 
   components  - each piece of the pipeline and whether it is served, shadow or off, read from
                 the flags in the code that decide it (regex on the source, no imports).
   changes     - every CHANGELOG.md entry carrying a "- Architecture: ..." line, newest first.
+  releases    - the newest 12 CHANGELOG.md entries (version, date, plain title), for the debug
+                page's "What changed recently" (v0.7.107); nothing hand-kept.
                 A release that changes the architecture adds that line; nothing else is curated.
 
 Run by build.py on every release; also runnable alone:  python3 scripts/architecture_state.py
@@ -67,10 +69,25 @@ def changes():
     return out
 
 
+def releases(limit=12):
+    text = (ROOT / "docs" / "CHANGELOG.md").read_text()
+    out = []
+    for m in re.finditer(r"<summary><strong>(v[\d.]+[a-z]?(?:[–-]v[\d.]+[a-z]?)?) • ([^(<]+?)\s*(?:\(([^)]*)\))?</strong></summary>", text):
+        date = m.group(2).strip()
+        try:
+            iso = datetime.strptime(re.sub(r"[–-]\d+,", ",", date), "%B %d, %Y").strftime("%Y-%m-%d")
+        except ValueError:
+            iso = None
+        out.append({"version": m.group(1), "date": date, "iso": iso, "title": (m.group(3) or "").strip()})
+        if len(out) >= limit:
+            break
+    return out
+
+
 def main():
     comps, tables = components()
     version = json.loads((ROOT / "version.json").read_text())["version"]
-    payload = {"version": version, "components": comps, "refit_tables": tables, "changes": changes()}
+    payload = {"version": version, "components": comps, "refit_tables": tables, "changes": changes(), "releases": releases()}
     (ROOT / "architecture.json").write_text(json.dumps(payload, indent=1) + "\n")
     print(f"  ✓ architecture.json → {len(comps)} components, {len(payload['changes'])} architecture changes")
 
