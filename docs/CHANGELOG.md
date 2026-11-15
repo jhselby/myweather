@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.108 • November 15, 2026 (weather.gov is now the bar)</strong></summary>
+
+- The scorecard's main comparison is now the NWS forecast on weather.gov, for every field it carries (temperature, dew point, wind speed and direction, rain chance); NBM stays the bar for the other fields and HRRR for the cloud layers. Raw NBM runs about 3°F cold at night at the Cove, so beating it alone overstated what a person feels: temperature is +18% against weather.gov (it was +42% against raw NBM). Against the new bar: 8 fields better, 2 tied, none worse. Raw NBM stays in the next column.
+- Temperature at 24 to 47 hours ties weather.gov. That is the first thing to work on; the URMA-corrected temperature blend now running in the background is the candidate, due to be read around November 19 to 20.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.107 • November 15, 2026 (debug page opens with a plain-English scorecard)</strong></summary>
 
 - The debug page now opens with one question, "Are we beating the forecast you'd normally get?", answered field by field: our average error next to the normal forecast's on the same hours, graded on the most independent truth each field has (URMA, our stations, or the model-blended truth, labelled). A count of fields better, tied and worse sits on top.

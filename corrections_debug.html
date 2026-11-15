@@ -1104,14 +1104,14 @@
 <section class="fp" id="sec-front">
   <div class="fp-q">Are we beating the forecast you'd normally get?</div>
   <div class="fp-sub">
-    Our bar is <b>NBM</b>, the National Weather Service's model blend, for every field it publishes (raw <b>HRRR</b> for the few it doesn't). What a person actually reads on weather.gov is the <b>NWS forecast</b>: NBM plus forecaster edits, and at the Cove it is much better than raw NBM on night-time temperature (raw NBM runs ~3°F cold there). So each field shows both. Every number is our average error against theirs on the same hours, graded on the most independent truth we have for that field, leads 2–47 hours.
+    Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Raw NBM alone is a softer bar: at the Cove it runs ~3°F cold at night. Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.
   </div>
 
   <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
 
   <div class="fp-card">
     <table class="fp-table">
-      <thead><tr><th>Field</th><th>vs NBM <span style="font-weight:400;opacity:0.7;">(our bar)</span></th><th title="The NWS forecast for this spot as weather.gov shows it (NBM with forecaster edits), same hours and same truth.">vs weather.gov</th><th class="fp-bars">Our error <span style="color:#4fb3ff;">■</span> vs theirs <span style="color:#59606c;">■</span></th><th>Average error</th><th>Graded on</th></tr></thead>
+      <thead><tr><th>Field</th><th title="Our bar: the NWS forecast on weather.gov where it carries the field, otherwise NBM (HRRR where NBM has none). Same hours, same truth.">vs the bar</th><th title="Raw NBM, the softer bar; same hours, same truth.">vs raw NBM</th><th class="fp-bars">Our error <span style="color:#4fb3ff;">■</span> vs theirs <span style="color:#59606c;">■</span></th><th>Average error</th><th>Graded on</th></tr></thead>
       <tbody id="fp-rows"></tbody>
     </table>
   </div>
@@ -1120,7 +1120,7 @@
     <b style="color:#7fc4ff;">Station truth</b> = our local weather stations only, no model mixed in. ·
     <b style="color:#e6c46a;">Model-blended truth</b> = stations pulled toward the model; it flatters us, so read these as optimistic. ·
     <b style="color:#9aa6b6;">Weak truth</b> = airport cloud reports, which can't see above 12,000 ft.
-    A field counts as a win or a loss only beyond ±2%. "vs weather.gov" is blank where the NWS forecast doesn't carry the field. <span id="fp-stamp"></span>
+    A field counts as a win or a loss only beyond ±2%. The bar is weather.gov where it carries the field and NBM (HRRR for the cloud layers) elsewhere; "vs raw NBM" is the softer comparison. <span id="fp-stamp"></span>
   </div>
 
   <div class="fp-grid">
@@ -1181,6 +1181,7 @@
     ["ch", "High cloud",     "cloud above ~20,000 ft",        "%",    1],
   ];
   const NOTES = {
+    t:  "Against weather.gov we win at 0–23h (+49% / +25% / +16%) and tie at 24–47h (+6.5%, interval spans zero); the live candidate that closes it reads out ~Nov 19–20.",
     h:  "Our stations read drier than URMA; which one is right is settled ~Nov 21.",
     dp: "On URMA truth we lose to NBM here; which truth is right is settled ~Nov 21.",
     ws: "Backyard anemometers, not wind on the water; that truth comes ~Nov 22.",
@@ -1224,29 +1225,39 @@
       if (two && k === "t" && two.lift_vs_nws_urma_pct != null) nws = two.lift_vs_nws_urma_pct;
       else if (two && truth === "stn" && two.lift_vs_nws_stations_pct != null) nws = two.lift_vs_nws_stations_pct;
       else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) nws = tc.nws_shrunk[k].lift_vs_nws_pct;
-      rows.push({ k, name, desc, unit, dec, us, them, src, truth, n, nws, lift: pct(us, them) });
+      // The bar: NWS forecast (weather.gov) where it carries the field, else NBM/HRRR.
+      let bUs = us, bThem = them, bSrc = src;
+      if (nws != null) {
+        let nu = null, nt = null;
+        if (k === "t" && two && two.nws_mae_urma != null) { nu = two.served_mae_urma_nwsrows; nt = two.nws_mae_urma; }
+        else if (two && truth === "stn" && two.nws_mae_stations != null) { nu = two.served_mae_stations_nwsrows; nt = two.nws_mae_stations; }
+        else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) { nu = tc.nws_shrunk[k].served_mae; nt = tc.nws_shrunk[k].nws_mae; }
+        if (nu != null && nt != null) { bUs = nu; bThem = nt; bSrc = "weather.gov"; }
+      }
+      rows.push({ k, name, desc, unit, dec, us, them, src, truth, n, nws, bUs, bThem, bSrc, bar: pct(bUs, bThem), lift: pct(us, them) });
     }
     const main = rows.filter(r => !["cl", "cm", "ch"].includes(r.k));
-    const W = main.filter(r => r.lift > 2), L = main.filter(r => r.lift < -2), T = main.filter(r => Math.abs(r.lift) <= 2);
+    const W = main.filter(r => r.bar > 2), L = main.filter(r => r.bar < -2), T = main.filter(r => Math.abs(r.bar) <= 2);
     const names = a => a.map(r => r.name.toLowerCase()).join(", ") || "—";
     document.getElementById("fp-verdict").innerHTML =
       `<span class="fp-pill fp-win"><b>${W.length}</b>better: ${names(W)}</span>` +
       `<span class="fp-pill fp-tie"><b>${T.length}</b>tied: ${names(T)}</span>` +
       `<span class="fp-pill fp-loss"><b>${L.length}</b>worse: ${names(L)}</span>`;
-    const max = Math.max(...rows.map(r => Math.max(r.us, r.them)));
+    const max = Math.max(...rows.map(r => Math.max(r.bUs, r.bThem)));
     const fmt = (v, d) => Number(v).toFixed(d);
     document.getElementById("fp-rows").innerHTML = rows.map((r, i) => {
-      const c = r.lift > 2 ? "#6fe3a8" : r.lift < -2 ? "#ff9a8a" : "#c9d1dc";
-      const word = r.lift > 2 ? "better" : r.lift < -2 ? "worse" : "tied";
+      const c = r.bar > 2 ? "#6fe3a8" : r.bar < -2 ? "#ff9a8a" : "#c9d1dc";
+      const word = r.bar > 2 ? "better" : r.bar < -2 ? "worse" : "tied";
       const [cls, label, tip] = TRUTH[r.truth];
-      const per = Math.max(r.us, r.them);
+      const per = Math.max(r.bUs, r.bThem);
+      const rc = r.lift > 2 ? "#6fe3a8" : r.lift < -2 ? "#ff9a8a" : "#c9d1dc";
       const sep = (r.k === "cl") ? `<tr><td colspan="6" style="color:#7f8ba0;font-size:0.82em;padding:12px 12px 4px;">Cloud layers: the app uses these for sky and sunset; there is no good truth for them yet, so take these lightly.</td></tr>` : "";
       return sep + `<tr>
         <td class="fp-field">${r.name}<small>${r.desc}</small></td>
-        <td><span class="fp-big" style="color:${c};">${r.lift > 0 ? "+" : ""}${fmt(r.lift, 0)}%</span> <span style="color:${c};font-size:0.82em;">${word}</span></td>
-        <td>${r.nws == null ? '<span style="color:#4a5363;">—</span>' : `<span style="font-weight:650;font-variant-numeric:tabular-nums;color:${r.nws > 2 ? "#6fe3a8" : r.nws < -2 ? "#ff9a8a" : "#c9d1dc"};">${r.nws > 0 ? "+" : ""}${fmt(r.nws, 0)}%</span>`}</td>
-        <td class="fp-bars"><div class="fp-bar us" style="width:${(r.us / per * 100).toFixed(1)}%"></div><div class="fp-bar them" style="width:${(r.them / per * 100).toFixed(1)}%"></div></td>
-        <td class="fp-nums">ours <b>${fmt(r.us, r.dec)}</b> vs ${r.src} <b>${fmt(r.them, r.dec)}</b> ${r.unit}${NOTES[r.k] ? `<span class="fp-note">${NOTES[r.k]}</span>` : ""}</td>
+        <td><span class="fp-big" style="color:${c};">${r.bar > 0 ? "+" : ""}${fmt(r.bar, 0)}%</span> <span style="color:${c};font-size:0.82em;">${word}</span><small style="display:block;color:#7f8ba0;font-size:0.78em;">vs ${r.bSrc}</small></td>
+        <td><span style="font-weight:650;font-variant-numeric:tabular-nums;color:${rc};">${r.lift > 0 ? "+" : ""}${fmt(r.lift, 0)}%</span></td>
+        <td class="fp-bars"><div class="fp-bar us" style="width:${(r.bUs / per * 100).toFixed(1)}%"></div><div class="fp-bar them" style="width:${(r.bThem / per * 100).toFixed(1)}%"></div></td>
+        <td class="fp-nums">ours <b>${fmt(r.bUs, r.dec)}</b> vs ${r.bSrc} <b>${fmt(r.bThem, r.dec)}</b> ${r.unit}${NOTES[r.k] ? `<span class="fp-note">${NOTES[r.k]}</span>` : ""}</td>
         <td><span class="fp-truth ${cls}" title="${tip} n=${(r.n || 0).toLocaleString()} hour-forecasts.">${label}</span></td>
       </tr>`;
     }).join("");
