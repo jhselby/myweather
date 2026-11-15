@@ -17,8 +17,8 @@ The collector reads this file each tick and stamps `raw_nbm` into
 forecast_snapshot / pair log rows whose lead maps to a `lead_valid_utc`
 entry. That wiring is Phase 1.
 
-Cycle selection: try the most recent 3 cycles (T-2h, T-3h, T-4h) and use
-the newest one whose .idx sidecar exists for lead 47 — that's a good
+Cycle selection: walk back T-1h..T-6h and use the newest cycle whose .idx sidecars
+exist for leads 1 and 47 — that's a good
 proxy for "all leads published."
 
 Horizon (v0.7.102): the cycle is 2-6 h old, so cycle leads 1-47 ended ~44 h from now and
@@ -51,19 +51,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 def _cycle_lead47_ready(ymd, hh):
-    """Cheap availability check: HEAD the f047 .idx for this cycle."""
-    url = f"{NBM_BASE}/blend.{ymd}/{hh}/core/blend.t{hh}z.core.f047.co.grib2.idx"
-    req = urllib.request.Request(url, method="HEAD")
-    try:
-        urllib.request.urlopen(req, timeout=15)
-        return True
-    except Exception:
-        return False
+    """Cheap availability check: HEAD the f001 and f047 .idx for this cycle (v0.7.105: f001 too,
+    since f001 can land after f047 within one cycle's upload, e.g. 12Z 11-15)."""
+    for lead in ("001", "047"):
+        url = f"{NBM_BASE}/blend.{ymd}/{hh}/core/blend.t{hh}z.core.f{lead}.co.grib2.idx"
+        req = urllib.request.Request(url, method="HEAD")
+        try:
+            urllib.request.urlopen(req, timeout=15)
+        except Exception:
+            return False
+    return True
 
 
 def _pick_cycle(now_utc):
-    """Walk back T-2h → T-6h looking for the newest fully-published cycle."""
-    for offset_h in range(2, 7):
+    """Walk back T-1h → T-6h looking for the newest fully-published cycle. NBM posts a cycle
+    ~1h after its hour (12Z complete by 13:04 on 11-15); starting at T-2h skipped it at the
+    :45 run and served NBM one cycle older than the public product (v0.7.105)."""
+    for offset_h in range(1, 7):
         cand = now_utc - timedelta(hours=offset_h)
         ymd = cand.strftime("%Y%m%d")
         hh = cand.strftime("%H")

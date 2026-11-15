@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.105 • November 15, 2026 (NBM one hour fresher)</strong></summary>
+
+- NBM posts each hourly run about an hour after its start time, but our hourly pull, at a quarter to the hour, only looked at runs at least 2 hours old. It skipped the newest one and served NBM one run older than the public forecast uses. It now takes the newest complete run. Most fields gain under 1% from one hour fresher; cloud cover in the next 3 hours gains 3 to 5%.
+- A run now counts as complete only when both its first and its 47-hour files are up (on November 15 the first-hour file landed after the 47-hour one).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.104 • November 15, 2026 (solar forecast past 33 hours no longer drops NBM)</strong></summary>
 
 - From about 34 hours out, NBM publishes sunshine (solar radiation) only every 3 hours while its other fields stay hourly. For the two hours in between, we had no NBM sunshine and served raw HRRR: on daylight hours 34 to 44 hours out that was 104 W/m² off on average, against 58 on the hours that had NBM.
