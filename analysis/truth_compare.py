@@ -25,6 +25,10 @@ Per field (t, h, dp, ws, wg; all NBM-scope, so the public baseline is raw NBM):
     our stations and of L2), from the refitter's GCS store urma_truth_t.json (TMP
     only; h/dp need DPT in that store first). URMA publishes ~8h late, so the
     newest hours have no URMA row.
+  - cc (v0.7.102): URMA TCDC is the only cloud truth that sees above the airport
+    ceilometers (the scored cc `observed` is HRRR shrunk toward KBOS/KBVY METAR, 15 MAE
+    off URMA). Block `cc_urma`: served vs raw NBM on URMA TCDC per lead band and per day,
+    from the refitter's urma_truth_tcdc.json.
 
 Runtime:
     python3 -m analysis.truth_compare
@@ -60,26 +64,46 @@ def _new():
             "n_u": 0, "pub_u": 0.0, "srv_u": 0.0}
 
 
-def _urma_t():
-    """{UTC 'YYYY-MM-DDTHH': URMA t (F)}: inverse-distance mean of the 4 cells around the Cove."""
+CC_BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
+
+
+def _urma(var="TMP", store="urma_truth_t.json"):
+    """{UTC 'YYYY-MM-DDTHH': value}: inverse-distance mean of the 4 URMA cells around the Cove.
+    TMP in F; TCDC in % as published."""
+    conv = (lambda k: (k - 273.15) * 9 / 5 + 32) if var == "TMP" else (lambda v: v)
+
     def idw(nb):
         w = [1 / max(x[2], 0.1) ** 2 for x in nb]
-        return (sum(wi * x[3] for wi, x in zip(w, nb)) / sum(w) - 273.15) * 9 / 5 + 32
+        return conv(sum(wi * x[3] for wi, x in zip(w, nb)) / sum(w))
     try:
         if os.environ.get("MYWEATHER_CACHE_MODE") == "gcs":
             from weather_collector.gcs_io import load_json
-            return {k: idw(nb) for k, nb in (load_json("urma_truth_t.json") or {}).items()}
+            return {k: idw(nb) for k, nb in (load_json(store) or {}).items()}
         out = {}
         local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "urma_truth", "urma_cell.jsonl")
         if os.path.exists(local):
             for line in open(local):
                 r = json.loads(line)
-                if r.get("var") == "TMP":
+                if r.get("var") == var:
                     out[r["valid"][:13]] = idw(r["nb"])
         return out
     except Exception as e:  # noqa: BLE001
-        print(f"  ⚠ URMA truth unavailable ({type(e).__name__}: {e})")
+        print(f"  ⚠ URMA {var} truth unavailable ({type(e).__name__}: {e})")
         return {}
+
+
+def _urma_t():
+    return _urma("TMP", "urma_truth_t.json")
+
+
+def _cc_summ(b):
+    if not b["n"]:
+        return None
+    return {"n": b["n"], "public_mae_urma": round(b["pub"] / b["n"], 3),
+            "served_mae_urma": round(b["srv"] / b["n"], 3),
+            "served_bias_urma": round(b["bias"] / b["n"], 3),
+            "observed_mae_urma": round(b["obs"] / b["n"], 3),
+            "total_lift_urma_pct": _lift(b["pub"], b["srv"])}
 
 
 def _utc_hour(valid_time):
@@ -122,8 +146,31 @@ def build():
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
     urma = _urma_t()
+    urma_cc = _urma("TCDC", "urma_truth_tcdc.json")
+    cc_new = lambda: {"n": 0, "pub": 0.0, "srv": 0.0, "bias": 0.0, "obs": 0.0}  # noqa: E731
+    cc_band = {b[0]: cc_new() for b in CC_BANDS}
+    cc_day = defaultdict(cc_new)
     with open(path) as fin:
         for line in fin:
+            if urma_cc and ('"field": "cc"' in line or '"field":"cc"' in line):
+                try:
+                    r = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                tc = urma_cc.get(_utc_hour(r.get("valid_time") or ""))
+                srv, pub, obs, lead = _prod_error(r), r.get("error_raw_nbm"), r.get("observed"), r.get("lead_h")
+                if tc is None or srv is None or pub is None or obs is None or lead is None:
+                    continue
+                band = next((n for n, lo, hi in CC_BANDS if lo <= lead < hi), None)
+                if band is None:
+                    continue
+                for b in (cc_band[band], cc_day[(r.get("valid_time") or "")[:10]] if lead >= 6 else None):
+                    if b is None:
+                        continue
+                    b["n"] += 1   # error vs URMA = error + (observed - urma)
+                    b["pub"] += abs(pub + obs - tc); b["srv"] += abs(srv + obs - tc)
+                    b["bias"] += srv + obs - tc; b["obs"] += abs(obs - tc)
+                continue
             if '"observed_stations"' not in line:
                 continue
             try:
@@ -184,6 +231,14 @@ def build():
                        "t also on URMA (total_lift_urma_pct), independent of stations and L2."),
         "urma_hours": len(urma),
         "fields": fields,
+        "cc_urma": {
+            "urma_hours": len(urma_cc),
+            "definition": ("cc on URMA TCDC (satellite + surface analysis): served = error_{applied_layer}, "
+                           "public = raw NBM; observed_mae_urma = how far the scored cc observed sits from URMA. "
+                           "per_day is leads 6-47h."),
+            "bands": {n: _cc_summ(b) for n, b in cc_band.items()},
+            "per_day_6_47h": {d: _cc_summ(b) for d, b in sorted(cc_day.items())},
+        },
     }
 
 
@@ -205,6 +260,10 @@ def main():
         print(f"{f:2} 2h+  n={two['n']:5}  lift shrunk {two['total_lift_shrunk_pct']:>6}%  stations {two['total_lift_stations_pct']:>6}%  "
               f"gap {v['gap_pts_2h_plus']:>6} pts | L2 gain 2-5h shrunk {l2w['l2_gain_shrunk_pct'] if l2w else None}% stations {l2w['l2_gain_stations_pct'] if l2w else None}%"
               + (f" || 0-1h L2 gain shrunk {now['l2_gain_shrunk_pct']}% stations {now['l2_gain_stations_pct']}%" if now else ""))
+    for band, b in payload["cc_urma"]["bands"].items():
+        if b:
+            print(f"cc {band:5} on URMA  n={b['n']:5}  served {b['served_mae_urma']:6} (bias {b['served_bias_urma']:+.1f})  "
+                  f"raw NBM {b['public_mae_urma']:6}  lift {b['total_lift_urma_pct']:>6}%  | observed off URMA {b['observed_mae_urma']}")
 
 
 if __name__ == "__main__":

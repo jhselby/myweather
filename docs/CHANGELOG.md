@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.102 • November 15, 2026 (cloud cover scored on an independent truth)</strong></summary>
+
+- The truth comparison behind the debug page now grades cloud cover against URMA, NOAA's hourly analysis built from satellite and surface reports. It sees high cloud the airport ceilometers miss. The cloud cover we score today is the HRRR model nudged toward the KBOS and KBVY airport reports, and it sits about 14 points from URMA. On URMA, what we serve beats raw NBM by 1.8% at 0-5 hours and ties it at 6-47 hours.
+- The daily refit now keeps a 25-day store of URMA cloud cover in the cloud, next to temperature and dew point.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.101 • November 14, 2026 (debug page brought current; Open-Meteo rate-limit retry)</strong></summary>
 
 - "Where things stand" on the debug page now reads as of November 14: the URMA shadow as the live candidate, the refitter outage and fix, the early t station-truth result (fails; rerun about November 17 before any flip), the moisture-truth question that gates h, the cloud-truth work, and today's rejected ideas (h URMA blend, sr field weight, extra t inputs, the sr learned selector).

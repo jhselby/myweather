@@ -43,6 +43,8 @@ def _idw_f(nb):
 
 GCS_STORE = "urma_truth_t.json"   # cloud mode: {"YYYY-MM-DDTHH": [[lat, lon, km, K] x4]}, ~50 KB for 14 days
 GCS_STORE_DPT = "urma_truth_dpt.json"   # same shape, dew point (v0.7.100): h/dp scored on URMA; not used by the fit
+GCS_STORE_TCDC = "urma_truth_tcdc.json"   # same shape, total cloud cover % (v0.7.102): cc scored on URMA; not used by the fit
+AUX_STORES = (("DPT", GCS_STORE_DPT), ("TCDC", GCS_STORE_TCDC))
 KEEP_DAYS = 25
 
 
@@ -75,15 +77,20 @@ def _save_cloud(new, name=GCS_STORE):
     upload_json(store, name, "urma truth store")
 
 
-def update_dpt():
-    """Cloud only: keep the URMA dew point store current (same hours/lag/cap as TMP). Best effort;
-    a failure here never touches the t fit."""
+def update_aux():
+    """Cloud only: keep the URMA dew point and cloud cover stores current."""
+    for var, store in AUX_STORES:
+        _update_aux(var, store)
+
+
+def _update_aux(var, store):
+    """Same hours/lag/cap as TMP. Best effort; a failure here never touches the t fit."""
     if not _cloud():
         return
     try:
         from analysis.urma_truth_backfill import fetch
         from weather_collector.gcs_io import load_json
-        have = load_json(GCS_STORE_DPT) or {}
+        have = load_json(store) or {}
         now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
         t = now - timedelta(days=WIN + 2)
         if have:
@@ -92,16 +99,16 @@ def update_dpt():
         while t <= now - timedelta(hours=URMA_LAG_H) and n < MAX_FETCH_H:
             k = t.strftime("%Y-%m-%dT%H")
             if k not in have:
-                nb = fetch(t, "DPT")
+                nb = fetch(t, var)
                 if nb is not None:
                     new[k] = nb
                     n += 1
             t += timedelta(hours=1)
         if new:
-            _save_cloud(new, GCS_STORE_DPT)
-        print(f"  URMA DPT: fetched {n} new hours")
+            _save_cloud(new, store)
+        print(f"  URMA {var}: fetched {n} new hours")
     except Exception as e:  # noqa: BLE001
-        print(f"  URMA DPT update failed ({type(e).__name__}: {e})")
+        print(f"  URMA {var} update failed ({type(e).__name__}: {e})")
 
 
 def update_truth(truth):
@@ -141,7 +148,7 @@ def best_w(e3):
 def fit():
     truth = load_truth()
     update_truth(truth)
-    update_dpt()
+    update_aux()
     by_day = {}
     for k in truth:
         d = datetime.strptime(k, "%Y-%m-%dT%H").replace(tzinfo=timezone.utc).astimezone(ET).strftime("%Y-%m-%d")
