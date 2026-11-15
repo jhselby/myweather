@@ -2,7 +2,7 @@
 Hourly NBM ingester Cloud Function.
 
 Fetches the freshest available NBM CO cycle, extracts point values for
-Wyman Cove across all leads (1-47), and writes:
+Wyman Cove across leads 1-55, and writes:
 
     gs://myweather-data/nbm_point_extract.json
 
@@ -20,6 +20,13 @@ entry. That wiring is Phase 1.
 Cycle selection: try the most recent 3 cycles (T-2h, T-3h, T-4h) and use
 the newest one whose .idx sidecar exists for lead 47 — that's a good
 proxy for "all leads published."
+
+Horizon (v0.7.102): the cycle is 2-6 h old, so cycle leads 1-47 ended ~44 h from now and
+every NBM field fell back to HRRR at 45-47 h (cc on URMA: 27 MAE there vs ~21 for NBM).
+Leads now run to 55 (53 needed, 55 so the next 3-hourly step exists). NBM is hourly only to about f049 and 3-hourly after, so the hours
+between published steps are filled by linear interpolation (wd on the circle) for the
+state fields in INTERP_FIELDS and flagged "_interp": True. Amounts and probabilities
+(pa, pp, tstm_prob) are period values and are never interpolated.
 """
 import json
 import logging
@@ -63,6 +70,36 @@ def _pick_cycle(now_utc):
     return None, None, None
 
 
+MAX_LEAD = 55   # fetch past 53 so the 3-hourly step after the last needed hour exists
+INTERP_FIELDS = ("t", "dp", "ws", "wd", "wg", "cc", "h", "sr", "ch")
+
+
+def _interp_gaps(leads_data):
+    """Fill empty leads between two fetched ones (in place). Returns the filled leads."""
+    have = sorted(int(k) for k, v in leads_data.items() if v)
+    filled = []
+    for a, b in zip(have, have[1:]):
+        for ld in range(a + 1, b):
+            if leads_data.get(str(ld)):
+                continue
+            fa, fb, x = leads_data[str(a)], leads_data[str(b)], (ld - a) / (b - a)
+            out = {}
+            for f in INTERP_FIELDS:
+                va, vb = fa.get(f), fb.get(f)
+                if va is None or vb is None:
+                    continue
+                if f == "wd":
+                    d = ((vb - va + 180) % 360) - 180
+                    out[f] = (va + x * d) % 360
+                else:
+                    out[f] = va + x * (vb - va)
+            if out:
+                out["_interp"] = True
+                leads_data[str(ld)] = out
+                filled.append(ld)
+    return filled
+
+
 def _upload_json(client, path, payload):
     import gzip
     blob = client.bucket(BUCKET).blob(path)
@@ -77,7 +114,7 @@ def _upload_json(client, path, payload):
 def ingest(request):
     args = request.args if request else {}
     parallel = int(args.get("parallel", "12"))
-    leads = list(range(1, 48))
+    leads = list(range(1, MAX_LEAD + 1))
 
     now_utc = datetime.now(timezone.utc)
     ymd, hh, cycle_dt = _pick_cycle(now_utc)
@@ -98,6 +135,7 @@ def ingest(request):
                 logging.warning(f"lead {ld} failed: {e}")
                 leads_data[str(ld)] = {}
 
+    filled = _interp_gaps(leads_data)
     lead_valid_utc = {
         str(ld): (cycle_dt + timedelta(hours=ld)).strftime("%Y-%m-%dT%H:00:00Z")
         for ld in leads
@@ -114,11 +152,11 @@ def ingest(request):
     client = get_client()
     raw_b, gz_b = _upload_json(client, "nbm_point_extract.json", payload)
 
-    n_ok = sum(1 for v in leads_data.values() if v)
+    n_ok = sum(1 for v in leads_data.values() if v and not v.get("_interp"))
     elapsed = time.time() - t0
-    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/47 "
+    logging.info(f"NBM ingest cycle={ymd}{hh} n_ok={n_ok}/{MAX_LEAD} interp={filled} "
                  f"bytes={raw_b:,} gz={gz_b:,} elapsed={elapsed:.1f}s")
 
-    return (json.dumps({"cycle": f"{ymd}{hh}", "n_ok": n_ok,
+    return (json.dumps({"cycle": f"{ymd}{hh}", "n_ok": n_ok, "interp": filled,
                         "elapsed_s": round(elapsed, 1)}),
             200, {"Content-Type": "application/json"})

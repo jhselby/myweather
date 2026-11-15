@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.103 • November 15, 2026 (NBM now reaches the full 47-hour forecast)</strong></summary>
+
+- The NBM forecast we pull each hour is 2 to 6 hours old, and we read only its first 47 hours, so it ran out about 44 hours from now. For the last three hours of the 48-hour forecast every NBM field fell back to HRRR, and the error jumped there: temperature about 10% worse than at 44 hours, humidity 23%, dew point 40%, gusts 34%, cloud cover 25%.
+- We now read NBM out to 55 hours. Past about 49 hours NBM publishes every 3 hours, so the hours between are filled in by straight-line interpolation (wind direction the short way round). Rain amounts and probabilities are not filled in.
+- Architecture: NBM ingest horizon 47 -> 55 cycle hours, 3-hourly gaps interpolated.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.102 • November 15, 2026 (cloud cover scored on an independent truth)</strong></summary>
 
 - The truth comparison behind the debug page now grades cloud cover against URMA, NOAA's hourly analysis built from satellite and surface reports. It sees high cloud the airport ceilometers miss. The cloud cover we score today is the HRRR model nudged toward the KBOS and KBVY airport reports, and it sits about 14 points from URMA. On URMA, what we serve beats raw NBM by 1.8% at 0-5 hours and ties it at 6-47 hours.

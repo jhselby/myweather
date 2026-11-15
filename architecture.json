@@ -1,5 +1,5 @@
 {
- "version": "v0.7.102",
+ "version": "v0.7.103",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.103",
+   "date": "November 15, 2026",
+   "iso": "2026-11-15",
+   "title": "NBM now reaches the full 47-hour forecast",
+   "change": "NBM ingest horizon 47 -> 55 cycle hours, 3-hourly gaps interpolated."
+  },
   {
    "version": "v0.7.99",
    "date": "November 14, 2026",
