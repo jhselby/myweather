@@ -21,7 +21,11 @@ import requests
 from ..gcs_io import load_json, upload_json
 from ..utils import redact_secrets
 
-WU_ARCHIVE_ENABLED = False
+WU_ARCHIVE_ENABLED = True
+# Joe's own station (16 Indianhead Circle, HomeKit sensor: t/rh/p only). Archived with the
+# neighbours but kept out of wu_scraper_realtime.STATIONS: at ~0.04 mi its 1/d^2 weight would
+# swamp the live aggregate if WU_ENABLED were ever turned back on.
+OWN_STATION = "KMAMARBL124"
 SLOT_HOURS_UTC = (0, 6, 12, 18)
 SLOT_MINUTES = 10  # collector ticks at :07; only the first tick of the slot hour polls
 PAUSE_S = 2.5  # ~24 calls/min, under WU's 30/min cap
@@ -78,10 +82,13 @@ def append_wu_archive(stations, now_utc=None, key=None, get=requests.get, load=l
         path = f"{GCS_PREFIX}{now_utc.strftime('%Y-%m-%d')}.json"
         doc = load(path, default=None) or {"schema": 1, "stations": {}, "obs": {}}
         added = ok = 0
+        blocked = False
+        stations = [OWN_STATION] + [s for s in stations if s != OWN_STATION]  # own station first: it survives a mid-run block
         for sid in stations:
             rows, lat, lon, status = fetch_station(sid, key, get)
             if status == "blocked":
                 logging.warning("  ⚠  wu_archive: key refused (401/429); stopping this run")
+                blocked = True
                 break
             if status == "ok":
                 ok += 1
@@ -90,7 +97,7 @@ def append_wu_archive(stations, now_utc=None, key=None, get=requests.get, load=l
         if added:
             save(doc, path, path)
         logging.info(f"  ✓ wu_archive: {ok}/{len(stations)} stations, +{added} readings")
-        return {"ok": ok, "added": added}
+        return {"ok": ok, "added": added, "blocked": blocked}
     except Exception as e:  # noqa: BLE001
         logging.warning(f"  ⚠  wu_archive failed: {redact_secrets(e)}")
         return None

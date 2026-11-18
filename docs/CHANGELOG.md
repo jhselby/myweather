@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.110 • November 18, 2026 (Weather Underground archive back on, with your own station)</strong></summary>
+
+- Weather Underground readings are being collected again, at a low rate: each station is polled four times a day, about 160 calls a day against the free limit of about 1,500, and the whole run stops on the first refusal so the new key cannot be throttled the way the old one was.
+- Your own station (Indianhead, KMAMARBL124: temperature, humidity and pressure) is now in the archive and is polled first. It is not in the live station average, where its distance of about 0.04 miles would give it a weight far above every neighbour.
+- Nothing served or scored reads the archive yet. It exists so a held-out comparison of your sensor and the neighbours against the Tempest network can be run on real data.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.109 • November 18, 2026 (debug page: upcoming list caught up, satellite cloud check added)</strong></summary>
 
 - Closed the overdue truth-audit watch (temperature on station truth closed November 16; wind and humidity rechecks live on in the November 22 and 21 items) and dropped the two upcoming items that finished.
