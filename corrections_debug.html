@@ -1131,12 +1131,10 @@
     <div class="fp-panel">
       <div class="fp-h">Coming up <span>· each one waits on enough days of data</span></div>
       <ul class="fp-list">
-        <li><span class="fp-date">Nov 17</span><span><b>Check today's NBM fixes landed:</b> the error jump at 45 hours should be gone. Then refit temperature on station truth with a full 14 days; switch only if it passes the ship rule.</span></li>
-        <li><span class="fp-date">Nov 18</span><span><b>Sunshine 34–47 hours out:</b> confirm the filled-in NBM values close the gap (was 104 W/m² off vs 58).</span></li>
         <li><span class="fp-date">Nov 19–20</span><span><b>Temperature candidate</b> (bias removed against URMA, three models blended): ship if 5 of 7 live days beat what we serve.</span></li>
         <li><span class="fp-date">Nov 21</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
         <li><span class="fp-date">Nov 22</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
-        <li><span class="fp-date">Nov 24</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week.</span></li>
+        <li><span class="fp-date">Nov 24</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours.</span></li>
       </ul>
       <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">Full detail, killed ideas and what's not built →</a></div>
     </div>
@@ -2106,7 +2104,7 @@
     // ws vs raw NBM removed 2026-11-10 - CLOSED CLEAN: loss was pre-11-06-refit weights (-7.6% to 11-05, -0.9% since).
     // Holdout verdicts removed 2026-11-10 - CLOSED: first 8-day verdicts run 11-10 (ledger rows written); tracker keeps running.
     // Backup first weekly bucket copy removed 2026-11-08 - CLOSED CLEAN: backup_last_ok touched 11-08 05:30.
-    { name: "Truth audit rescore on observed_stations + apply 2h-onward L2 grading", closeDate: "2026-11-17", note: "both truths per band; ws ECMWF diurnal bias on wind_mph_stations; h L2 recheck" },
+    // Truth audit rescore removed 2026-11-18 - CLOSED UNCLEAN: t station truth closed 11-16 (fails both truths); 2h-onward grading is live in truth_compare; ws diurnal bias on station wind folded into the 11-22 wind-truth item, h L2 recheck into the 11-21 dew point tie-breaker.
     { name: "Archive — monthly pair-log snapshot (backup_bucket.sh)", closeDate: "2026-12-06", note: "verify archive/ object exists" },
     // ECMWF ws gate removed 2026-11-07 - CLOSED UNCLEAN: pair-log gate never run as scoped; folded into Holdout verdicts (11-11) + truth audit rescore (11-17).
     // Both entries removed 2026-08-25 — CLOSED CLEAN HOLD.

@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.109 • November 18, 2026 (debug page: upcoming list caught up, satellite cloud check added)</strong></summary>
+
+- Closed the overdue truth-audit watch (temperature on station truth closed November 16; wind and humidity rechecks live on in the November 22 and 21 items) and dropped the two upcoming items that finished.
+- Cloud cover re-read on November 24 now includes a satellite check; the first read on November 18 agrees with the other two truths.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.108 • November 15, 2026 (weather.gov is now the bar)</strong></summary>
 
 - The scorecard's main comparison is now the NWS forecast on weather.gov, for every field it carries (temperature, dew point, wind speed and direction, rain chance); NBM stays the bar for the other fields and HRRR for the cloud layers. Raw NBM runs about 3°F cold at night at the Cove, so beating it alone overstated what a person feels: temperature is +18% against weather.gov (it was +42% against raw NBM). Against the new bar: 8 fields better, 2 tied, none worse. Raw NBM stays in the next column.
