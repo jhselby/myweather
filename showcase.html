@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyman Cove Weather: a forecast built for one cove</title>
+<meta name="description" content="A hyperlocal forecast for Wyman Cove, Marblehead, graded every hour against weather.gov and NOAA's independent analysis.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root {
+    --bg: #0c1118; --panel: #141b25; --panel2: #1a2330; --line: #243245;
+    --ink: #eaf0f7; --muted: #93a0b3; --faint: #6b7a8f;
+    --win: #5fe0a0; --tie: #c4cfdc; --loss: #ff9a8a; --blue: #5aaaff; --teal: #3fd0c9; --gold: #f2c14e;
+    --tile-filter: brightness(0.62) contrast(1.05);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f7fa; --panel: #ffffff; --panel2: #eef2f7; --line: #d9e1ec;
+      --ink: #14202e; --muted: #536278; --faint: #7a889b;
+      --win: #0f8a52; --tie: #4a5a6e; --loss: #c2402b; --blue: #1d6fd6; --teal: #0e8f89; --gold: #a97800;
+      --tile-filter: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  a { color: var(--blue); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  section { padding: 54px 0; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: 0; }
+  h1 { font-size: clamp(30px, 5vw, 50px); line-height: 1.08; margin: 0 0 14px; letter-spacing: -0.02em; font-weight: 720; }
+  h2 { font-size: clamp(22px, 3vw, 30px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.01em; font-weight: 700; }
+  .lede { font-size: clamp(16px, 2vw, 19px); color: var(--muted); max-width: 700px; margin: 0 0 24px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; font-weight: 600; }
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; font-size: 14px; color: var(--muted); }
+  .nav b { color: var(--ink); letter-spacing: 0.02em; }
+  .nav a { color: var(--muted); text-decoration: none; margin-left: 18px; }
+  .nav a:hover { color: var(--ink); }
+
+  .hero { padding: 40px 0 58px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 28px; }
+  .pill { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; color: var(--muted); }
+  .pill b { font-size: 20px; margin-right: 8px; font-variant-numeric: tabular-nums; }
+  .pill.win b { color: var(--win); } .pill.tie b { color: var(--tie); } .pill.loss b { color: var(--loss); }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; align-items: stretch; }
+  @media (max-width: 820px) { .hero-grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+  .bignum { font-size: clamp(54px, 9vw, 92px); font-weight: 760; line-height: 1; letter-spacing: -0.03em; color: var(--win); font-variant-numeric: tabular-nums; }
+  .bignum small { font-size: 0.32em; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-left: 6px; }
+  .cap { color: var(--muted); margin-top: 10px; }
+  .duel { display: grid; gap: 10px; margin-top: 18px; }
+  .duel .row { display: grid; grid-template-columns: 96px 1fr 64px; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); }
+  .bar { height: 12px; border-radius: 6px; background: var(--panel2); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 6px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); font-weight: 600; padding: 0 12px 10px; }
+  td { padding: 14px 12px; border-top: 1px solid var(--line); vertical-align: middle; }
+  td small { display: block; color: var(--faint); font-size: 12.5px; }
+  .pct { font-size: 24px; font-weight: 720; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .tag { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .tag.ind { color: var(--win); border-color: color-mix(in srgb, var(--win) 40%, transparent); }
+  .note { color: var(--faint); font-size: 13px; margin-top: 14px; max-width: 760px; }
+  .scroll { overflow-x: auto; }
+
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 26px; }
+  @media (max-width: 820px) { .three { grid-template-columns: 1fr; } }
+  .three .card h3 { margin: 0 0 8px; font-size: 18px; }
+  .three .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .killed { margin-top: 26px; }
+  .killed h3 { font-size: 15px; margin: 0 0 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .killed li { margin: 8px 0; color: var(--muted); }
+  .killed li b { color: var(--ink); }
+
+  .mesonet { display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; margin-top: 26px; }
+  @media (max-width: 900px) { .mesonet { grid-template-columns: 1fr; } }
+  #map { height: 440px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel2); }
+  .leaflet-tile-pane { filter: var(--tile-filter); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .stat { display: flex; align-items: baseline; gap: 14px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .stat:first-child { border-top: 0; padding-top: 0; }
+  .stat .v { font-size: 32px; font-weight: 720; font-variant-numeric: tabular-nums; min-width: 92px; letter-spacing: -0.02em; }
+  .stat .t { color: var(--muted); font-size: 14.5px; }
+  .stat .t b { color: var(--ink); }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px; counter-reset: s; }
+  @media (max-width: 900px) { .flow { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .flow { grid-template-columns: 1fr; } }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; position: relative; }
+  .step::before { counter-increment: s; content: counter(s); position: absolute; top: -13px; left: 16px; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .step b { display: block; margin-bottom: 6px; }
+  .step span { color: var(--muted); font-size: 14.5px; }
+
+  .next { display: grid; gap: 12px; margin-top: 22px; max-width: 800px; }
+  .next div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; color: var(--muted); }
+  .next b { color: var(--ink); }
+  footer { padding: 34px 0 60px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav"><b>Wyman Cove Weather</b><span><a href="#scorecard">Scorecard</a><a href="#proof">How we know</a><a href="#network">The network</a><a href="#how">How it works</a></span></div>
+
+  <section class="hero">
+    <div class="eyebrow">Hyperlocal forecast · Marblehead, Massachusetts</div>
+    <h1>A forecast for one cove, graded every hour against the one everyone reads.</h1>
+    <p class="lede">The forecast on weather.gov covers a grid square. This one is built for Wyman Cove, corrected by the weather stations around it, and scored against the real weather after the fact. The scores below are live.</p>
+    <div class="pills" id="pills"><span class="pill">loading the scorecard…</span></div>
+    <div class="hero-grid">
+      <div class="card" id="hero-card"><div class="cap">loading…</div></div>
+      <div class="card">
+        <div class="eyebrow">What the bar is</div>
+        <p style="margin:0 0 10px;">A person looking up the weather reads the <b>National Weather Service forecast on weather.gov</b>. That is the bar we beat, field by field, not a raw model that nobody reads.</p>
+        <p style="margin:0;color:var(--muted);font-size:15px;">Early on we compared ourselves to a raw model that runs about 3°F cold at night at the Cove. Beating that overstated the gain, so on November 15 we moved the bar to weather.gov and the numbers got smaller and more honest.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="scorecard">
+    <div class="eyebrow">Scorecard</div>
+    <h2>Every field, against the bar a person would use.</h2>
+    <p class="lede">Average error over the forecast hours that have happened, ours against the bar. Smaller is better. A field counts as a win or a loss only beyond 2%.</p>
+    <div class="card scroll"><table>
+      <thead><tr><th>Field</th><th>Us vs the bar</th><th style="min-width:180px;">Average error</th><th>Scored against</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <p class="note" id="score-note"></p>
+  </section>
+
+  <section id="proof">
+    <div class="eyebrow">How we know it's real</div>
+    <h2>The scoring is built so we can't flatter ourselves.</h2>
+    <div class="three">
+      <div class="card"><h3>Truth we don't control</h3><p>Temperature is scored against URMA, NOAA's hourly analysis built from satellites and surface reports. It doesn't use our stations or our corrections. Where only our stations are available we say so on the row.</p></div>
+      <div class="card"><h3>Days it never saw</h3><p>A change ships only if it wins on days it was never tuned on. Models and blend weights refit every morning from the last 14 days and are judged on what happens next.</p></div>
+      <div class="card"><h3>The bar can move against us</h3><p>When a number disagrees with reality we suspect the number first. The bar itself has been moved twice to a harder one, and the scoreboard shows the smaller gain.</p></div>
+    </div>
+    <div class="card killed">
+      <h3>Ideas we tested and killed</h3>
+      <ul style="margin:0;padding-left:20px;">
+        <li><b>A European-model solar blend</b> looked 25.7% better. It was a one-hour timing error in our own data; on aligned data it was zero.</li>
+        <li><b>A "bust-aware" temperature blend</b> moved every field by less than half a percent. Rejected.</li>
+        <li><b>Calling the model's own output "observed"</b>: the scored observation was partly the model. We now score on stations alone and on URMA, and say which is which.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="network">
+    <div class="eyebrow">The neighborhood network</div>
+    <h2>Dozens of stations within two and a half miles, each one corrected for its own habits.</h2>
+    <p class="lede">Every ten minutes we read the stations around the cove, remove each one's known bias, and use what's left to nudge the models toward what is actually happening. Positions on the map are rounded so no single house is pinned.</p>
+    <div class="mesonet">
+      <div>
+        <div id="map"></div>
+        <div class="legend">
+          <span><i style="background:var(--blue)"></i>Tempest station</span>
+          <span><i style="background:var(--teal)"></i>Weather Underground station</span>
+          <span><i style="background:var(--win)"></i>polled every 10 minutes</span>
+          <span><i style="background:var(--gold)"></i>the cove</span>
+        </div>
+      </div>
+      <div class="card" id="stats"><div class="cap">loading…</div></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="eyebrow">How it works</div>
+    <h2>Every ten minutes, in the cloud.</h2>
+    <div class="flow">
+      <div class="step"><b>Gather</b><span>Forecasts from HRRR (hourly, fine-grained), NBM (the official blend) and the European model, plus readings from the local stations and the airports.</span></div>
+      <div class="step"><b>Correct</b><span>Nudge each model toward what the stations see right now, strongest in the first five hours, then fix known habits: how errors grow with lead time, time-of-day bias, sea-breeze sun, cloud saturation.</span></div>
+      <div class="step"><b>Blend and choose</b><span>Mix the corrected models with weights refit every morning from the last 14 days, or pick the one source that has been winning for that field and lead time.</span></div>
+      <div class="step"><b>Grade</b><span>Every forecast hour is logged and scored once it happens, against several truths, so a change ships only if it wins on days it was never tuned on.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">What's next</div>
+    <h2>Where we're working now.</h2>
+    <div class="next">
+      <div><b>Testing a homebuilt sensor.</b> A backyard temperature, humidity and pressure sensor now feeds the network. It stays an input with a capped weight until it passes an accuracy test against independent sources.</div>
+      <div><b>Deciding whether the extra stations earn a place in the live forecast.</b> They improve the network's temperature estimate. Whether that shows up as a better forecast is measured above, and we flip it on only if it does.</div>
+      <div><b>Humidity and dew point.</b> Our stations and NOAA disagree on how dry the air is; a third source settles which one is right before we change anything.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div id="stamp">Numbers refresh hourly from the live scoring.</div>
+    <div style="margin-top:6px;">The engineering console behind these numbers is <a href="corrections_debug.html">here</a>.</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const BASE = "https://data.wymancove.com/";
+  const get = n => fetch(BASE + n + "?_=" + Date.now(), { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(n + " HTTP " + r.status); return r.json(); });
+  const FIELDS = [
+    ["t", "Temperature", "air temperature", "°F", 1], ["h", "Humidity", "relative humidity", "% RH", 1],
+    ["dp", "Dew point", "moisture in the air", "°F", 1], ["ws", "Wind speed", "sustained wind", "mph", 1],
+    ["wg", "Gusts", "peak gusts", "mph", 1], ["wd", "Wind direction", "where it blows from", "°", 0],
+    ["sr", "Sunshine", "solar radiation", "W/m²", 0], ["cc", "Cloud cover", "share of sky covered", "%", 1],
+    ["pp", "Rain chance", "chance of rain that hour", "pts", 1], ["pa", "Rain amount", "inches that hour", "in", 3],
+  ];
+  const TRUTH = { urma: ["ind", "NOAA analysis (independent)"], stn: ["", "Local stations"], mix: ["", "Stations blended with the model"] };
+  const pct = (us, them) => (them ? (them - us) / them * 100 : null);
+  const fmt = (v, d) => Number(v).toFixed(d);
+  const sgn = v => (v > 0 ? "+" : "") + fmt(v, 0) + "%";
+
+  Promise.allSettled([get("truth_compare.json"), get("per_field_scoring.json")]).then(([tcR, pfR]) => {
+    const tc = tcR.status === "fulfilled" ? tcR.value : null;
+    const pf = pfR.status === "fulfilled" ? (pfR.value.windows["7d"] || {}).per_field || {} : {};
+    const rows = [];
+    for (const [k, name, desc, unit, dec] of FIELDS) {
+      let us = null, them = null, src = "NBM", truth = null;
+      const two = tc && tc.fields && tc.fields[k] ? tc.fields[k].lead_2h_plus : null;
+      if (k === "t" && two && two.n_urma > 500) { us = two.served_mae_urma; them = two.public_mae_urma; truth = "urma"; }
+      else if (two && two.n > 500) { us = two.served_mae_stations; them = two.public_mae_stations; truth = "stn"; }
+      else if (k === "cc" && tc && tc.cc_urma && tc.cc_urma.bands) {
+        let s = 0, p = 0, m = 0;
+        for (const [b, v] of Object.entries(tc.cc_urma.bands)) if (v && b !== "0-5") { s += v.served_mae_urma * v.n; p += v.public_mae_urma * v.n; m += v.n; }
+        if (m) { us = s / m; them = p / m; truth = "urma"; }
+      }
+      if (us == null && pf[k]) {
+        const x = pf[k]; us = x.prod_current_config_mae ?? x.prod_mae;
+        const nbm = x.nbm_raw_mae;
+        if (x.in_nbm_scope || ((k === "pp" || k === "pa") && nbm != null)) { them = nbm; src = "NBM"; } else { them = x.hrrr_raw_mae; src = "HRRR"; }
+        truth = "mix";
+      }
+      if (us == null || them == null) continue;
+      let nws = null;
+      if (two && k === "t" && two.lift_vs_nws_urma_pct != null) nws = two.lift_vs_nws_urma_pct;
+      else if (two && truth === "stn" && two.lift_vs_nws_stations_pct != null) nws = two.lift_vs_nws_stations_pct;
+      else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) nws = tc.nws_shrunk[k].lift_vs_nws_pct;
+      let bUs = us, bThem = them, bSrc = src;
+      if (nws != null) {
+        let nu = null, nt = null;
+        if (k === "t" && two && two.nws_mae_urma != null) { nu = two.served_mae_urma_nwsrows; nt = two.nws_mae_urma; }
+        else if (two && truth === "stn" && two.nws_mae_stations != null) { nu = two.served_mae_stations_nwsrows; nt = two.nws_mae_stations; }
+        else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) { nu = tc.nws_shrunk[k].served_mae; nt = tc.nws_shrunk[k].nws_mae; }
+        if (nu != null && nt != null) { bUs = nu; bThem = nt; bSrc = "weather.gov"; }
+      }
+      rows.push({ k, name, desc, unit, dec, truth, bUs, bThem, bSrc, bar: pct(bUs, bThem) });
+    }
+    const W = rows.filter(r => r.bar > 2), L = rows.filter(r => r.bar < -2), T = rows.filter(r => Math.abs(r.bar) <= 2);
+    const names = a => a.map(r => r.name.toLowerCase()).join(", ") || "none";
+    document.getElementById("pills").innerHTML =
+      `<span class="pill win"><b>${W.length}</b>fields better · ${names(W)}</span>` +
+      `<span class="pill tie"><b>${T.length}</b>tied · ${names(T)}</span>` +
+      `<span class="pill loss"><b>${L.length}</b>worse · ${names(L)}</span>`;
+    const t = rows.find(r => r.k === "t");
+    document.getElementById("hero-card").innerHTML = t ? `
+      <div class="eyebrow">Temperature, past forecast hours</div>
+      <div class="bignum" style="color:var(${t.bar > 2 ? "--win" : t.bar < -2 ? "--loss" : "--tie"})">${sgn(t.bar)}<small>vs ${t.bSrc}</small></div>
+      <div class="cap">${t.bar > 2 ? "Smaller average error than" : "Compared with"} the ${t.bSrc === "weather.gov" ? "forecast on weather.gov" : t.bSrc + " forecast"}, scored against NOAA's independent analysis.</div>
+      <div class="duel">
+        <div class="row"><span>Us</span><div class="bar"><i style="width:${(t.bUs / Math.max(t.bUs, t.bThem) * 100).toFixed(1)}%;background:var(--blue)"></i></div><span class="num">${fmt(t.bUs, 2)}°F</span></div>
+        <div class="row"><span>${t.bSrc}</span><div class="bar"><i style="width:${(t.bThem / Math.max(t.bUs, t.bThem) * 100).toFixed(1)}%;background:var(--faint)"></i></div><span class="num">${fmt(t.bThem, 2)}°F</span></div>
+      </div>` : `<div class="cap">temperature score unavailable</div>`;
+    document.getElementById("rows").innerHTML = rows.map(r => {
+      const c = r.bar > 2 ? "--win" : r.bar < -2 ? "--loss" : "--tie";
+      const word = r.bar > 2 ? "better" : r.bar < -2 ? "worse" : "tied";
+      const per = Math.max(r.bUs, r.bThem); const [cls, label] = TRUTH[r.truth];
+      return `<tr><td><b>${r.name}</b><small>${r.desc}</small></td>
+        <td><span class="pct" style="color:var(${c})">${sgn(r.bar)}</span> <span style="color:var(${c});font-size:13px;">${word}</span><small>vs ${r.bSrc}</small></td>
+        <td><div class="bar" style="margin-bottom:6px;"><i style="width:${(r.bUs / per * 100).toFixed(1)}%;background:var(--blue)"></i></div><div class="bar"><i style="width:${(r.bThem / per * 100).toFixed(1)}%;background:var(--faint)"></i></div>
+          <small>us ${fmt(r.bUs, r.dec)} · ${r.bSrc} ${fmt(r.bThem, r.dec)} ${r.unit}</small></td>
+        <td><span class="tag ${cls}">${label}</span></td></tr>`;
+    }).join("");
+    document.getElementById("score-note").textContent = tc
+      ? `Scored ${tc.first_day} to ${tc.last_day} on forecast hours two or more hours ahead. Rows scored on our own stations or on the model-blended record are optimistic and labelled as such.`
+      : "Detailed scoring window unavailable right now.";
+  }).catch(e => { document.getElementById("pills").innerHTML = `<span class="pill">scorecard unavailable (${e})</span>`; });
+
+  fetch("mesonet.json?_=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(m => {
+    const map = L.map("map", { scrollWheelZoom: false, zoomControl: true }).setView([42.5, -70.875], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17, attribution: "© OpenStreetMap" }).addTo(map);
+    const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const col = { tempest: css("--blue"), wu: css("--teal"), wu_live: css("--win") };
+    for (const s of m.stations) {
+      if (s.ok === false) continue;
+      L.circleMarker([s.lat, s.lon], { radius: s.kind === "wu_live" ? 7 : 5, color: "#0008", weight: 1, fillColor: col[s.kind], fillOpacity: 0.92 }).addTo(map);
+    }
+    L.circleMarker([42.5, -70.875], { radius: 9, color: "#fff", weight: 2, fillColor: css("--gold"), fillOpacity: 1 }).addTo(map).bindTooltip("Wyman Cove", { permanent: false });
+    const c = m.counts, ms = m.measurements || {}, nv = ms.network_vs_urma, fr = ms.forecast_replay;
+    const total = c.tempest_ok + c.wu_ok + c.homebuilt;
+    let html = `<div class="stat"><div class="v">${total}</div><div class="t"><b>stations reporting</b> within about 2.5 miles: ${c.tempest_ok} Tempest, ${c.wu_ok} Weather Underground and one homebuilt sensor.</div></div>`;
+    if (nv) html += `<div class="stat"><div class="v" style="color:var(--win)">${fmt(nv.tempest, 2)} → ${fmt(nv.tempest_plus_wu, 2)}°</div><div class="t"><b>Adding the second network</b> cut the network's temperature error against NOAA's independent analysis, on ${nv.hours} held-out hours. Each station is corrected on days it is not scored on.</div></div>`;
+    if (fr) html += `<div class="stat"><div class="v">${fr.wu_effect_pct > 0 ? "+" : ""}${fmt(fr.wu_effect_pct, 1)}%</div><div class="t"><b>What that is worth in the forecast so far.</b> A better estimate of the current bias made the 1–6 hour temperature forecast only about ${fmt(Math.abs(fr.wu_effect_pct), 1)}% better in a replay (${fr.origins} forecast runs). That is within noise, so the extra stations stay in shadow until they earn a place.</div></div>`;
+    html += `<div class="stat"><div class="v">${c.wu_retired + c.wu_silent}</div><div class="t"><b>stations set aside</b> because they stopped reporting. We keep a station only while it keeps reporting.</div></div>`;
+    document.getElementById("stats").innerHTML = html;
+    document.getElementById("stamp").textContent = `Scores refresh hourly. Station map generated ${m.generated_at.replace("T", " ").replace("Z", " UTC")}.`;
+  }).catch(e => { document.getElementById("stats").innerHTML = `<div class="cap">network summary unavailable (${e})</div>`; });
+})();
+</script>
+</body>
+</html>

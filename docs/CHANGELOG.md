@@ -1,5 +1,5 @@
 <details open>
-<summary><strong>v0.7.110–v0.7.112 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
+<summary><strong>v0.7.110–v0.7.113 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
 
 * **Your own key and station**
   - Weather Underground readings are being collected again with your own key. The old key was never yours and had been refused since October.
@@ -9,6 +9,9 @@
   - A liveness check of all 41 neighbours found 35 reporting and 6 silent.
 * **Live set re-picked on history (v0.7.112)**
   - Weather Underground returns past readings, so a week of hourly history for all 36 working stations was recovered. Three of the eight live picks were replaced by stations that follow the Cove's real conditions more closely, and the choice held on four days it had not seen.
+* **A showcase page and a refreshed debug page (v0.7.113)**
+  - New `showcase.html`: the live scorecard against weather.gov, how the scoring avoids flattering us, a map of the neighbourhood stations (positions rounded, no names or ids, the homebuilt sensor counted but not placed), and what is next. Every number is read from the live scoring or from `mesonet.json`.
+  - The debug page's stale Weather Underground text is corrected: the old "WU adds nothing" line was graded on our own stations. On NOAA's independent analysis the network's temperature estimate improves from 0.61°F to 0.48°F error, but the forecast replay improves only about 1%, so WU stays in shadow. Two new watches (the homebuilt sensor's accuracy test, and whether the extra stations earn a live place) are on the calendar.
 * **Shadow only**
   - Nothing served or scored reads this data yet. It exists so the best neighbours and the right polling rate can be chosen from a week of real readings, then tested against the served forecast and weather.gov before anything changes.
 

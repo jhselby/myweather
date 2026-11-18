@@ -1133,6 +1133,8 @@
       <ul class="fp-list">
         <li><span class="fp-date">Nov 19–20</span><span><b>Temperature candidate</b> (bias removed against URMA, three models blended): ship if 5 of 7 live days beat what we serve.</span></li>
         <li><span class="fp-date">Nov 21</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
+        <li><span class="fp-date">Nov 19</span><span><b>Is the homebuilt sensor accurate?</b> Day and night offsets against NOAA's analysis, Tempest and the neighbours (fitted on early days, scored on later ones), plus pressure against the airport. Until it passes it is an input at a capped weight, never the reference.</span></li>
+        <li><span class="fp-date">Nov 21–22</span><span><b>Do the extra stations earn a place in the live forecast?</b> They tighten the network's temperature estimate (0.61 → 0.48°F vs NOAA) but moved the forecast only ~1% so far. Rerun on 3+ days of WU data; flip nothing without a measured gain.</span></li>
         <li><span class="fp-date">Nov 22</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
         <li><span class="fp-date">Nov 24</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours.</span></li>
       </ul>
@@ -1154,7 +1156,7 @@
   </div>
 
   <div class="fp-engine">
-    Below this line is the <b>engine room</b>: the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
+    A shorter, outward-facing version of this page is the <a href="showcase.html" style="color:#7fb3ff;">showcase</a>. Below this line is the <b>engine room</b>: the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
   </div>
 </section>
 
@@ -2563,7 +2565,7 @@
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Correction stack (HRRR side; the NBM cascade mirrors it)</div>
       <ul style="margin:0 0 8px 16px;padding:0;">
-        <li><strong>L2 station-network bias</strong> — t · h · dp · pr · ws · wg · cloud (METAR blend) · wd. Station input is <strong>Tempest only</strong> (19 stations configured, 18 valid on the 11-04 tick; 7 more culled because owners restrict field sharing). Weather Underground stopped reporting 2026-10-21 (API key throttled; 401s since 10-07) and is dormant.</li>
+        <li><strong>L2 station-network bias</strong> — t · h · dp · pr · ws · wg · cloud (METAR blend) · wd. Station input is <strong>Tempest only</strong> (19 stations configured, 18 valid on the 11-04 tick; 7 more culled because owners restrict field sharing). Weather Underground stopped reporting 2026-10-21 (old key throttled) and returned 2026-11-18 on a new key in shadow: 8 stations polled every 10 minutes (your station + 7 chosen for how well they track the Cove), the rest twice a day, archived to <code>wu_readings/</code>; hourly history backfilled to <code>wu_readings_hourly/</code>.</li>
         <li><strong>L3 lead-decay:</strong> wg · ch. <strong>L4 diurnal:</strong> ch · wg (wg added 09-24 v0.7.1). Skip tables apply per cell.</li>
         <li><strong>Lsr</strong> synoptic-regime (sr; skip ne_flow + calm) · <strong>Lsb</strong> sea-breeze override (sr) · <strong>Lc</strong> cloud saturation-unbiasing (cm · ch; cl and cc off) · <strong>Ccd</strong> cc = max(cl, cm, ch) except se_flow/unknown.</li>
         <li><strong>chp</strong> high-cloud persistence: <strong>0–5h only</strong> since v0.7.76 (it lost at 6–23h), plus the dynamic cell gate refit daily. <strong>ch router</strong> drops ne_flow/12-23 (v0.7.45), nw_flow/24-47 (v0.7.68), se_flow/6-11 (v0.7.70). <strong>wdp</strong> wd calm/12-23 only. <strong>dpbp</strong> dp antecedent persistence. <strong>NBM wg</strong> L3_NBM runs on nw_flow/6-11 again (v0.7.66).</li>
@@ -3147,7 +3149,7 @@
 
 <div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;margin-bottom:10px;" id="sec-l2-worth">
   <p class="layer-summary" style="margin:0 0 6px 0;"><strong style="color:#4ad29a;">What L2 is worth, and what it is graded on</strong> <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· last manual run 2026-11-04 · pair log (backstamped 08-24→11-03 and primary) · scored on the older shrunk <code>observed</code> unless noted</span></p>
-  <div class="meta-line"><strong>Station feed:</strong> Tempest only. Weather Underground stopped reporting 2026-10-21 (key throttled; 401s from 10-07) and is not needed: L2's gain at 2–5h over raw HRRR, pooled by era —
+  <div class="meta-line"><strong>Station feed:</strong> the live forecast reads Tempest only. Weather Underground stopped reporting 2026-10-21 (old key throttled), and came back on 2026-11-18 on a key of our own, <strong>collected in shadow only</strong> (v0.7.110–112; nothing served reads it). The comparison below was made on 11-04, before that, and is graded on station truth, which is circular. L2's gain at 2–5h over raw HRRR, pooled by era —
     <table style="margin:6px 0;border-collapse:collapse;font-size:0.9em;">
       <tr style="opacity:0.7;"><td style="padding:2px 12px 2px 0;">field</td><td style="padding:2px 12px;">WU era 08-24→10-21 (58 days)</td><td style="padding:2px 12px;">Tempest only 10-22→11-03 (13 days)</td></tr>
       <tr><td>t</td><td style="padding:2px 12px;">+9.9%</td><td style="padding:2px 12px;">+11.8%</td></tr>
@@ -3156,7 +3158,7 @@
       <tr><td>dp</td><td style="padding:2px 12px;">+35.7%</td><td style="padding:2px 12px;">+29.4%</td></tr>
       <tr><td>h</td><td style="padding:2px 12px;">+25.8%</td><td style="padding:2px 12px;">+14.9% <span style="opacity:0.7;">(daily median 19.5% → 17.8%; 8 of 13 days positive)</span></td></tr>
     </table>
-    Three times the stations (about 59 vs 18) bought nothing measurable. The limit is how L2 uses the readings, not how many there are.</div>
+    That test found nothing from three times the stations, but it graded the network on itself. <strong style="color:#4ad29a;">Re-measured 11-18 on independent URMA truth</strong> (<code>analysis/mesonet_vs_urma.py</code>, 189 hours, offsets fitted on other days): Tempest alone 0.61°F error, Tempest + the 7-station WU live set 0.48°F, all 35 WU stations 0.50°F. The small live set captures the gain. In a forecast replay (<code>analysis/l2_wu_replay.py</code>, 182 runs) that better estimate lowered the +1 to +6 h temperature error by only ~1% (1.10 → 1.09°F; raw model 1.47°F), within noise, so WU stays in shadow. The 11-04 line "WU adds nothing" was too strong: it adds to the estimate and barely to the forecast.</div>
   <div class="meta-line"><strong>Where the gain lives</strong> (11-02→11-04 on <code>observed_stations</code>, n≈38 per lead — three days, directional only): t is useful to ~5h (60% / 43% / 25% / 17% / 11% / 7% at leads 0–5, ~0 by 9h); ws and wg to ~3h; dp holds 16–45% out past 9h; h is mixed. Past ~5h L2 does nothing for t, ws or wg. <strong>Lead 0 is a tautology</strong> (the correction and the truth are the same reading); the real value starts at lead 2h.</div>
   <div class="meta-line"><strong>Conclusion:</strong> keep the stations as an L2 input for the 0–5h nowcast; grade L2 from lead 2h on <code>observed_stations</code>; Tempest is the mesonet and the single point of failure (sentry shipped v0.7.88). Not yet done: a held-out truth / correction split (needs a per-station reading archive).</div>
 </div>
@@ -3423,7 +3425,7 @@
 
       <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
       <ul style="margin:4px 0 8px 20px;padding:0;">
-        <li><strong>t, dp, h, ws, wg, pr</strong>: station network within ~2.5 mi (Tempest only since the WU feed died 2026-10-21; 19 configured, ~18 valid), per-station Kalman offsets, then shrunk toward the model: <code>model_t + K × weighted bias</code>, so the scored value is partly the model (11-02 truth audit: 40–90% station). From 2026-11-02 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp, ws, wg; use it to grade layers that use the stations (L2) from lead 2h on.</li>
+        <li><strong>t, dp, h, ws, wg, pr</strong>: station network within ~2.5 mi (Tempest in the live blend, 19 configured, ~17 valid; WU collected in shadow since 2026-11-18), per-station Kalman offsets, then shrunk toward the model: <code>model_t + K × weighted bias</code>, so the scored value is partly the model (11-02 truth audit: 40–90% station). From 2026-11-02 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp, ws, wg; use it to grade layers that use the stations (L2) from lead 2h on.</li>
         <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
         <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
         <li><strong>pa</strong>: max precip rate across stations (patchy-rain-aware). <code>daily_extremes.py</code> reads <code>wu_stations</code> for this; pa had no truth from the WU outage (2026-10-21) until v0.7.90, which reads Tempest too. The observed current-hour precip (the pp truth) also fell back to the model's own forecast while WU was dark; v0.7.90 uses the Tempest network first (same wet rule as the app: at least 3 wet stations and 25% of those reporting).</li>
@@ -3566,7 +3568,7 @@
   <h4 style="color:#4ad29a;margin-top:16px;margin-bottom:6px;">Group A — C1 multi-axis confidence extension</h4>
   <div class="meta-line" style="margin-bottom:8px;">Individual axes. Five join the multi-axis Stage 4 calibration (C1a/b/c/f/e); C1h + C1d compose as marginal-premium tables (kept off the join to avoid cell-dilution). Stack-level status in C1 confidence stack card above.</div>
   <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
-    <li><strong>C1b</strong> Station-cluster disagreement — SHIPPED 2026-06-20 v0.6.149. <span style="color:#e0a070;">⚠ dark since the WU feed died (2026-10-21): the WU-cluster spread (<code>cluster_spread_log.json</code>) has no entries after 10-21, so the live axis is silent. v0.7.90 logs a Tempest-cluster spread (west / central / east by longitude) to <code>cluster_spread_tempest_log.json</code> and stamps <code>cluster_spread_tempest</code>. It is a different measure, so the confidence layer does NOT read it: its Q1/Q23/Q4 cuts must be refit on 14+ days of the new log (earliest ~11-19) before the axis comes back.</span></li>
+    <li><strong>C1b</strong> Station-cluster disagreement — SHIPPED 2026-06-20 v0.6.149. <span style="color:#e0a070;">⚠ dark since the WU feed died (2026-10-21): the WU-cluster spread (<code>cluster_spread_log.json</code>) has no entries after 10-21, so the live axis is silent. v0.7.90 logs a Tempest-cluster spread (west / central / east by longitude) to <code>cluster_spread_tempest_log.json</code> and stamps <code>cluster_spread_tempest</code>. WU is archived again since 11-18 (<code>wu_readings/</code>), so the WU-cluster spread could be rebuilt from it if wanted. The Tempest-cluster log is a different measure, so the confidence layer does NOT read it: its Q1/Q23/Q4 cuts must be refit on 14+ days of the new log (earliest ~11-19) before the axis comes back.</span></li>
     <li><strong>C1c</strong> Pressure-tendency regime — SHIPPED 2026-06-20.</li>
     <li><strong>C1f</strong> precip_fc&gt;0 — SHIPPED 2026-06-24 v0.6.215.</li>
     <li><strong>C1e</strong> Hours-since-front — SHIPPED 2026-07-01 v0.6.272 (post &lt;24h vs baseline ≥24h from <code>frontal_events_log.json</code>).</li>

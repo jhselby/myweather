@@ -1,5 +1,5 @@
 {
- "version": "v0.7.108",
+ "version": "v0.7.113",
  "components": [
   {
    "name": "HRRR cascade",
@@ -45,7 +45,7 @@
   },
   {
    "name": "WU archive poller",
-   "status": "off",
+   "status": "on",
    "what": "Dormant until a working key exists.",
    "flag": "weather_collector/processors/wu_archive.py WU_ARCHIVE_ENABLED"
   }
@@ -173,6 +173,18 @@
  ],
  "releases": [
   {
+   "version": "v0.7.110\u2013v0.7.113",
+   "date": "November 18, 2026",
+   "iso": "2026-11-18",
+   "title": "Weather Underground collection back on, with your own station"
+  },
+  {
+   "version": "v0.7.109",
+   "date": "November 18, 2026",
+   "iso": "2026-11-18",
+   "title": "debug page: upcoming list caught up, satellite cloud check added"
+  },
+  {
    "version": "v0.7.108",
    "date": "November 15, 2026",
    "iso": "2026-11-15",
@@ -231,18 +243,6 @@
    "date": "November 14, 2026",
    "iso": "2026-11-14",
    "title": "Total Lift chart markers current again"
-  },
-  {
-   "version": "v0.7.99",
-   "date": "November 14, 2026",
-   "iso": "2026-11-14",
-   "title": "debug page shows the architecture and a third truth"
-  },
-  {
-   "version": "v0.7.98",
-   "date": "November 14, 2026",
-   "iso": "2026-11-14",
-   "title": "KBVY readings in the backtest snapshot fixed; humidity and wind scored on URMA"
   }
  ]
 }

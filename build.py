@@ -210,6 +210,8 @@ def main():
         # component status from the code flags + CHANGELOG "Architecture:" lines.
         import subprocess, sys as _sys
         subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'architecture_state.py')], check=False)
+        # mesonet.json for showcase.html (public-safe station dots + dated measurements); needs gsutil, so best-effort.
+        subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'mesonet_state.py')], check=False)
 
         # Bump sw.js CACHE_VERSION to match — without this, the service worker
         # keeps serving the previous version's app shell (index.html, app.css,
