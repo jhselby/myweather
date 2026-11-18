@@ -1103,11 +1103,34 @@
 
 <section class="fp" id="sec-front">
   <div class="fp-q">Are we beating the forecast you'd normally get?</div>
-  <div class="fp-sub">
-    Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Raw NBM alone is a softer bar: at the Cove it runs ~3°F cold at night. Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.
+  <div class="fp-sub">Bar: weather.gov where it carries the field, NBM elsewhere (HRRR for cloud). Same hours, leads 2–47 h, scored on the most independent truth each field has.
+    <details style="margin-top:4px;"><summary style="cursor:pointer;color:#7f8ba0;">which bar for which field</summary><div style="margin-top:6px;"><div style="display:flex;gap:10px;align-items:baseline;margin:3px 0;"><b style="min-width:92px;color:#6fe3a8;">weather.gov</b><span><span style="display:inline-block;border:1px solid #6fe3a8;color:#6fe3a8;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">temperature</span><span style="display:inline-block;border:1px solid #6fe3a8;color:#6fe3a8;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">dew point</span><span style="display:inline-block;border:1px solid #6fe3a8;color:#6fe3a8;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">wind speed</span><span style="display:inline-block;border:1px solid #6fe3a8;color:#6fe3a8;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">wind direction</span><span style="display:inline-block;border:1px solid #6fe3a8;color:#6fe3a8;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">rain chance</span></span></div><div style="display:flex;gap:10px;align-items:baseline;margin:3px 0;"><b style="min-width:92px;color:#7fc4ff;">NBM</b><span><span style="display:inline-block;border:1px solid #7fc4ff;color:#7fc4ff;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">humidity</span><span style="display:inline-block;border:1px solid #7fc4ff;color:#7fc4ff;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">gusts</span><span style="display:inline-block;border:1px solid #7fc4ff;color:#7fc4ff;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">sunshine</span><span style="display:inline-block;border:1px solid #7fc4ff;color:#7fc4ff;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">cloud cover</span><span style="display:inline-block;border:1px solid #7fc4ff;color:#7fc4ff;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">rain amount</span></span></div><div style="display:flex;gap:10px;align-items:baseline;margin:3px 0;"><b style="min-width:92px;color:#e6c46a;">HRRR</b><span><span style="display:inline-block;border:1px solid #e6c46a;color:#e6c46a;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">low cloud</span><span style="display:inline-block;border:1px solid #e6c46a;color:#e6c46a;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">mid cloud</span><span style="display:inline-block;border:1px solid #e6c46a;color:#e6c46a;border-radius:999px;padding:1px 9px;margin:2px 3px 2px 0;font-size:0.92em;">high cloud</span></span></div></div></details>
   </div>
 
   <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
+
+  <style>
+    .mm-head { display:flex; gap:10px; flex-wrap:wrap; margin:0 0 12px 0; }
+    .mm-box { border:1px solid #253247; background:#0d141e; border-radius:10px; padding:8px 14px; min-width:150px; }
+    .mm-box b { display:block; font-size:1.55em; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.15; }
+    .mm-box span { color:#7f8ba0; font-size:0.8em; }
+    .mm-legend { display:flex; gap:16px; flex-wrap:wrap; color:#9aa6b6; font-size:0.8em; align-items:center; }
+    .mm-legend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+    .mm-tip { font-size:12px; line-height:1.45; font-variant-numeric:tabular-nums; }
+    .mm-tip b { color:#e8eef6; } .mm-tip em { color:#7f8ba0; font-style:normal; }
+    .mm-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+    @media (max-width:900px) { .mm-grid { grid-template-columns:1fr; } }
+    table.mm-t { border-collapse:collapse; width:100%; font-size:0.86em; font-variant-numeric:tabular-nums; }
+    table.mm-t th { text-align:right; color:#7f8ba0; font-weight:500; padding:3px 10px; border-bottom:1px solid #253247; }
+    table.mm-t td { text-align:right; padding:4px 10px; border-bottom:1px solid #1a2533; }
+    table.mm-t th:first-child, table.mm-t td:first-child { text-align:left; }
+  </style>
+  <div class="mm-head" id="fp-head"></div>
+  <div class="fp-panel" id="mm-panel" style="margin:0 0 14px 0;">
+    <div class="fp-h">Stations around the Cove <span id="mm-sub">· loading</span></div>
+    <div id="mm-map" class="bias-map-wrap" style="margin-bottom:8px;"></div>
+    <div class="mm-legend" id="mm-legend"></div>
+  </div>
 
   <div class="fp-card">
     <table class="fp-table">
@@ -1115,13 +1138,7 @@
       <tbody id="fp-rows"></tbody>
     </table>
   </div>
-  <div class="fp-legend">
-    <b style="color:#6fe3a8;">Independent truth</b> = URMA, NOAA's hourly analysis from satellite and surface reports; it doesn't use our stations or our corrections. ·
-    <b style="color:#7fc4ff;">Station truth</b> = our local weather stations only, no model mixed in. ·
-    <b style="color:#e6c46a;">Model-blended truth</b> = stations pulled toward the model; it flatters us, so read these as optimistic. ·
-    <b style="color:#9aa6b6;">Weak truth</b> = airport cloud reports, which can't see above 12,000 ft.
-    A field counts as a win or a loss only beyond ±2%. The bar is weather.gov where it carries the field and NBM (HRRR for the cloud layers) elsewhere; "vs raw NBM" is the softer comparison. <span id="fp-stamp"></span>
-  </div>
+  <div class="fp-legend"><details><summary style="cursor:pointer;">truth types and win/loss rule</summary><div style="margin-top:6px;"><span style="display:inline-block;border:1px solid #1f5a3e;color:#6fe3a8;border-radius:999px;padding:1px 10px;margin:2px 6px 2px 0;">Independent (URMA)</span><span style="display:inline-block;border:1px solid #24496b;color:#7fc4ff;border-radius:999px;padding:1px 10px;margin:2px 6px 2px 0;">Stations only</span><span style="display:inline-block;border:1px solid #5a4a1f;color:#e6c46a;border-radius:999px;padding:1px 10px;margin:2px 6px 2px 0;">Model-blended · optimistic</span><span style="display:inline-block;border:1px solid #3a4352;color:#9aa6b6;border-radius:999px;padding:1px 10px;margin:2px 6px 2px 0;">Weak · airport cloud</span><svg viewBox="0 0 360 46" style="width:340px;max-width:100%;display:block;margin-top:6px;font:10px -apple-system,system-ui,sans-serif;"><rect x="10" y="10" width="140" height="14" rx="3" fill="#ff8a70" opacity="0.55"/><rect x="150" y="10" width="60" height="14" fill="#8a93a3" opacity="0.55"/><rect x="210" y="10" width="140" height="14" rx="3" fill="#6fe3a8" opacity="0.55"/><text x="80" y="21" fill="#fff" text-anchor="middle">worse</text><text x="180" y="21" fill="#fff" text-anchor="middle">tied</text><text x="280" y="21" fill="#fff" text-anchor="middle">better</text><text x="150" y="40" fill="#7f8ba0" text-anchor="middle">−2%</text><text x="210" y="40" fill="#7f8ba0" text-anchor="middle">+2%</text><text x="180" y="40" fill="#7f8ba0" text-anchor="middle">vs the bar</text></svg></div></details> <span id="fp-stamp"></span></div>
 
   <div class="fp-grid">
     <div class="fp-panel">
@@ -1145,18 +1162,18 @@
   <div class="fp-panel" style="margin-top:14px;">
     <div class="fp-h">How it works <span>· every 10 minutes, in the cloud</span></div>
     <div class="fp-flow">
-      <div class="fp-step"><b>1 · Gather</b>Forecasts from HRRR (hourly, fine-grained), NBM (the official blend) and ECMWF (European), plus readings from ~19 local weather stations and the airports.<small>Collector, every 10 min · NBM pulled hourly</small></div>
+      <div class="fp-step"><b>1 · Gather</b>HRRR · NBM · ECMWF<br>~19 stations · airports<small>every 10 min</small></div>
       <div class="fp-arrow">→</div>
-      <div class="fp-step"><b>2 · Correct</b>Nudge each model toward what our stations are seeing right now (strongest in the first ~5 hours), then fix known habits: how errors grow with lead time, time-of-day biases, sea-breeze sunshine, cloud saturation.<small>Layers L2 → L4 and the specialists</small></div>
+      <div class="fp-step"><b>2 · Correct</b>L2 stations (0–5 h) → L3 lead decay → L4 time of day → specialists<small>L2 → L4</small></div>
       <div class="fp-arrow">→</div>
-      <div class="fp-step"><b>3 · Blend &amp; choose</b>For each field and lead time, mix the corrected models with weights refit every morning from the last 14 days, or pick the one source that has been winning.<small>Terminal blend + selector · refit 04:30 ET</small></div>
+      <div class="fp-step"><b>3 · Blend &amp; choose</b>weights refit daily on 14 days · selector per field and lead<small>04:30 ET</small></div>
       <div class="fp-arrow">→</div>
-      <div class="fp-step"><b>4 · Grade</b>Every forecast hour is logged and scored once it happens, against several truths, so a change ships only if it wins on days it was never tuned on.<small>Pair log · ship rule (holdout from Nov 3)</small></div>
+      <div class="fp-step"><b>4 · Grade</b>every hour scored · ships only if it wins on unseen days<small>pair log</small></div>
     </div>
   </div>
 
   <div class="fp-engine">
-    A shorter, outward-facing version of this page is the <a href="showcase.html" style="color:#7fb3ff;">showcase</a>. Below this line is the <b>engine room</b>: the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
+    Below: the <b>engine room</b> (<a href="showcase.html" style="color:#7fb3ff;">showcase</a>): the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
   </div>
 </section>
 
@@ -1243,6 +1260,16 @@
       `<span class="fp-pill fp-win"><b>${W.length}</b>better: ${names(W)}</span>` +
       `<span class="fp-pill fp-tie"><b>${T.length}</b>tied: ${names(T)}</span>` +
       `<span class="fp-pill fp-loss"><b>${L.length}</b>worse: ${names(L)}</span>`;
+    (function () {
+      const t = tc && tc.fields && tc.fields.t, a = t && t.lead_2h_plus, b = t && t.lead_2_5h;
+      const box = (v, c, lab) => `<div class="mm-box"><b style="color:${c};">${v}</b><span>${lab}</span></div>`;
+      const g = x => (x > 2 ? "#6fe3a8" : x < -2 ? "#ff9a8a" : "#c9d1dc"), sg = x => (x > 0 ? "+" : "") + x.toFixed(0) + "%";
+      let h = "";
+      if (a && a.lift_vs_nws_urma_pct != null) h += box(sg(a.lift_vs_nws_urma_pct), g(a.lift_vs_nws_urma_pct), `temperature vs weather.gov, 2h+ · ${a.served_mae_urma_nwsrows.toFixed(2)} vs ${a.nws_mae_urma.toFixed(2)}°F`);
+      if (b && b.lift_vs_nws_urma_pct != null) h += box(sg(b.lift_vs_nws_urma_pct), g(b.lift_vs_nws_urma_pct), `temperature vs weather.gov, 2–5h · ${b.served_mae_urma_nwsrows.toFixed(2)} vs ${b.nws_mae_urma.toFixed(2)}°F`);
+      h += `<div class="mm-box" id="fp-head-st"><b>—</b><span>stations reporting</span></div>`;
+      document.getElementById("fp-head").innerHTML = h;
+    })();
     const max = Math.max(...rows.map(r => Math.max(r.bUs, r.bThem)));
     const fmt = (v, d) => Number(v).toFixed(d);
     document.getElementById("fp-rows").innerHTML = rows.map((r, i) => {
@@ -1288,6 +1315,51 @@
 })();
 </script>
 
+
+<script>
+(function () {
+  const URLS = ["https://data.wymancove.com/mesonet.json", "mesonet.json"];
+  const load = async () => { for (const u of URLS) { try { const r = await fetch(u + "?_=" + Date.now(), { cache: "no-store" }); if (r.ok) return await r.json(); } catch (e) {} } throw new Error("mesonet.json unavailable"); };
+  const ramp = v => {
+    if (v == null) return "#6b7686";
+    const st = [[0.55, [74, 210, 154]], [1.0, [230, 196, 106]], [1.5, [255, 138, 112]]];
+    if (v <= st[0][0]) return `rgb(${st[0][1]})`; if (v >= st[2][0]) return `rgb(${st[2][1]})`;
+    const i = v < st[1][0] ? 0 : 1, a = st[i], b = st[i + 1], f = (v - a[0]) / (b[0] - a[0]);
+    return `rgb(${a[1].map((x, k) => Math.round(x + (b[1][k] - x) * f)).join(",")})`;
+  };
+  const f1 = (v, d = 1) => (v == null ? "—" : Number(v).toFixed(d)), sg = v => (v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(2));
+  const hhmm = ts => (ts ? ts.slice(11, 16) + "Z" : "—");
+  const KIND = { tempest: "Tempest", wu: "Weather Underground", wu_live: "Weather Underground · polled every 10 min" };
+  const tip = s => `<div class="mm-tip"><b>${KIND[s.k]}</b><br>${f1(s.t)}°F · ${f1(s.rh, 0)}% · ${f1(s.p, 2)} inHg <em>as of ${hhmm(s.ts)}</em><br>` +
+    `error vs URMA <b>${s.rmse == null ? "not scored yet" : s.rmse.toFixed(2) + "°F"}</b><br>` +
+    `offset day ${sg(s.od)} · night ${sg(s.on)}°F<br>uptime ${s.up == null ? "—" : Math.round(s.up * 100) + "%"}</div>`;
+  window.__mesonet = load().then(m => {
+    const el = document.getElementById("mm-map");
+    if (typeof L !== "undefined" && el) {
+      const map = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: true, zoomControl: true }).setView([42.5, -70.875], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17, attribution: "© OpenStreetMap" }).addTo(map);
+      const order = { tempest: 0, wu: 1, wu_live: 2 };
+      for (const s of m.stations.slice().sort((a, b) => order[a.k] - order[b.k])) {
+        if (!s.ok) continue;
+        const live = s.k === "wu_live";
+        const mk = L.circleMarker([s.lat, s.lon], { radius: live ? 9 : 6, color: live ? "#ffffff" : "#0b0f14", weight: live ? 2.5 : 1, fillColor: ramp(s.rmse), fillOpacity: 0.95 }).addTo(map);
+        mk.bindTooltip(tip(s), { sticky: true, direction: "top", opacity: 0.97 }); mk.bindPopup(tip(s));
+      }
+      const o = m.own || {};
+      L.circleMarker([42.5, -70.875], { radius: 8, color: "#fff", weight: 2, fillColor: "#f2c14e", fillOpacity: 1 }).addTo(map)
+        .bindTooltip(`<div class="mm-tip"><b>Wyman Cove</b><br>homebuilt sensor ${f1(o.t)}°F · ${f1(o.rh, 0)}% · ${f1(o.p, 2)} inHg <em>as of ${hhmm(o.ts)}</em><br><em>${o.n || 0} hourly readings so far; not yet validated</em></div>`, { sticky: true });
+    }
+    const c = m.counts;
+    document.getElementById("mm-sub").textContent = `· ${c.tempest_ok} Tempest + ${c.wu_ok} Weather Underground + 1 homebuilt · hover or tap a dot · snapshot ${m.generated_at.replace("T", " ").replace("Z", " UTC")}`;
+    document.getElementById("mm-legend").innerHTML =
+      `<span>error vs URMA: <i style="background:${ramp(0.5)}"></i>≤0.55°F <i style="background:${ramp(1.0)}"></i>1.0 <i style="background:${ramp(1.5)}"></i>≥1.5 <i style="background:#6b7686"></i>not scored</span>` +
+      `<span><i style="background:#0000;border:2px solid #fff;width:8px;height:8px"></i>polled every 10 min</span><span><i style="background:#f2c14e"></i>the Cove</span>`;
+    const st = document.getElementById("fp-head-st");
+    if (st) st.innerHTML = `<b>${c.tempest_ok + c.wu_ok + 1}</b><span>stations reporting · ${c.tempest_ok} Tempest · ${c.wu_ok} WU · 1 homebuilt</span>`;
+    return m;
+  }).catch(e => { const x = document.getElementById("mm-sub"); if (x) x.textContent = "· " + e.message; return null; });
+})();
+</script>
 
 <details id="sec-engine-scoreboard" style="margin:0 0 16px 0;padding:10px 14px;border:1px solid #253247;background:#0b1119;border-radius:10px;">
   <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Detailed scoreboard &amp; architecture <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
@@ -3196,6 +3268,70 @@
   <p class="layer-summary" style="margin:0;"><strong style="color:#d4a373;">⚠ These are internal pipeline values, not user forecasts.</strong> After the aggregate-bias correction is applied but <em>before</em> downstream layers and physical-bounds clamping (<code>FIELD_BOUNDS</code> in <code>decay_apply.py</code>). Values can legitimately fall outside physical ranges here — <code>cloud_cover 121%</code>, <code>precip_probability −6%</code>, <code>precip_amount −0.025 in</code> — because the bias offset is additive and the clamp comes downstream. If any of these look wrong for user display, check the L3 / L4 / cloud-clamp path, not this section.</p>
 </div>
 <div id="grid-layer2" class="grid"></div>
+
+<h3 class="subsection" id="sec-2f">2f. Station networks — Tempest + Weather Underground <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· scored on URMA, held out by day</span></h3>
+<div class="mm-grid">
+  <div class="fp-panel"><div class="fp-h">Network temperature error vs URMA <span>· °F, lower is better</span></div><div id="mm-c1"></div></div>
+  <div class="fp-panel"><div class="fp-h">Temperature forecast error by lead, replay <span>· °F vs URMA</span></div><div id="mm-c2"></div></div>
+</div>
+<div class="fp-panel" style="margin-top:12px;"><div class="fp-h">Every station's error vs URMA <span>· °F after its own day/night offset, offsets fitted on other days</span></div><div id="mm-c3"></div></div>
+<div class="fp-panel" style="margin:12px 0;"><div class="fp-h">Live set <span>· polled every 10 min, shadow only</span></div><div id="mm-t1"></div></div>
+<script>
+(function () {
+  const C = { ink: "#c9d1dc", mut: "#7f8ba0", grid: "#253247", blue: "#4fb3ff", green: "#6fe3a8", amber: "#e6c46a", red: "#ff8a70", grey: "#8a93a3" };
+  const svg = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;font:11px -apple-system,system-ui,sans-serif;">${body}</svg>`;
+  const T = (x, y, t, o = {}) => `<text x="${x}" y="${y}" fill="${o.c || C.ink}" text-anchor="${o.a || "start"}" ${o.b ? 'font-weight="700"' : ""} ${o.s ? `font-size="${o.s}"` : ""}>${t}</text>`;
+  const f2 = v => (v == null ? "—" : Number(v).toFixed(2)), sg = v => (v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(2));
+  const med = a => { const b = a.slice().sort((x, y) => x - y), n = b.length; return n ? (n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2) : null; };
+  (window.__mesonet || Promise.resolve(null)).then(m => {
+    if (!m) { for (const id of ["mm-c1", "mm-c2", "mm-c3", "mm-t1"]) { const e = document.getElementById(id); if (e) e.textContent = "mesonet.json unavailable"; } return; }
+    const ms = m.measurements || {};
+    // 1. network vs URMA: horizontal bars + URMA floor band
+    const nv = ms.network_vs_urma;
+    if (nv) {
+      const rows = [["Tempest", nv.tempest, C.blue], ["WU live set", nv.wu_live_alone, C.grey], ["All WU", nv.wu_all, C.amber], ["Tempest + WU live", nv.tempest_plus_wu, C.green]];
+      const W = 560, x0 = 128, sc = (W - x0 - 50) / 0.9; let b = "";
+      b += `<rect x="${x0 + 0.4 * sc}" y="6" width="${0.15 * sc}" height="${rows.length * 34 + 4}" fill="#6fe3a8" opacity="0.10"/>` + T(x0 + 0.475 * sc, rows.length * 34 + 22, "URMA floor 0.40–0.55", { c: C.mut, a: "middle", s: 10 });
+      rows.forEach(([n, v, c], i) => { const y = 12 + i * 34; b += T(x0 - 8, y + 14, n, { a: "end" }) + `<rect x="${x0}" y="${y}" width="${v * sc}" height="20" rx="3" fill="${c}"/>` + T(x0 + v * sc + 6, y + 15, f2(v) + "°F", { b: 1 }); });
+      document.getElementById("mm-c1").innerHTML = svg(W, rows.length * 34 + 30, b) + `<div style="color:${C.mut};font-size:0.78em;margin-top:4px;">${nv.hours} URMA hours · mesonet_vs_urma.py</div>`;
+    }
+    // 2. replay by lead: lines
+    const fr = ms.forecast_replay, bl = fr && fr.by_lead;
+    if (bl && bl.raw && bl.tempest && bl.tempest_plus_wu) {
+      const W = 560, H = 250, L0 = 44, R0 = 96, T0 = 14, B0 = 30, ymin = 0.6, ymax = 1.7;
+      const X = i => L0 + (W - L0 - R0) * i / 5, Y = v => T0 + (H - T0 - B0) * (1 - (v - ymin) / (ymax - ymin));
+      let b = "";
+      for (let v = 0.6; v <= 1.7; v += 0.2) b += `<line x1="${L0}" x2="${W - R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="${C.grid}"/>` + T(L0 - 6, Y(v) + 4, v.toFixed(1), { a: "end", c: C.mut });
+      bl.leads_h.forEach((h, i) => { b += T(X(i), H - 10, "+" + h + "h", { a: "middle", c: C.mut }); });
+      for (const [k, c, lab] of [["raw", C.grey, "raw model"], ["tempest", C.blue, "Tempest"], ["tempest_plus_wu", C.green, "Tempest + WU"]]) {
+        const a = bl[k]; b += `<polyline fill="none" stroke="${c}" stroke-width="2.4" points="${a.map((v, i) => X(i) + "," + Y(v)).join(" ")}"/>` + a.map((v, i) => `<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="${c}"/>`).join("") + T(W - R0 + 8, Y(a[5]) + 4, `${lab} ${f2(a[5])}`, { c });
+      }
+      document.getElementById("mm-c2").innerHTML = svg(W, H, b) + `<div style="color:${C.mut};font-size:0.78em;margin-top:4px;">${fr.origins} forecast runs · mean +1..+6h: raw ${f2(fr.raw)} · Tempest ${f2(fr.tempest)} · Tempest + WU ${f2(fr.tempest_plus_wu)} (${fr.wu_effect_pct > 0 ? "+" : ""}${fr.wu_effect_pct}%) · l2_wu_replay.py</div>`;
+    }
+    // 3. strip plot of per-station error
+    const groups = [["Tempest", m.stations.filter(s => s.k === "tempest"), C.blue], ["WU live set", m.stations.filter(s => s.k === "wu_live"), C.green], ["Other WU", m.stations.filter(s => s.k === "wu"), C.amber]];
+    {
+      const W = 1000, x0 = 120, xmax = 2.0, sc = (W - x0 - 40) / xmax, rowH = 58; let b = "";
+      for (let v = 0; v <= 2.0001; v += 0.25) b += `<line x1="${x0 + v * sc}" x2="${x0 + v * sc}" y1="6" y2="${groups.length * rowH + 6}" stroke="${C.grid}"/>` + T(x0 + v * sc, groups.length * rowH + 22, v.toFixed(2), { a: "middle", c: C.mut });
+      if (nv) b += `<line x1="${x0 + nv.tempest * sc}" x2="${x0 + nv.tempest * sc}" y1="6" y2="${groups.length * rowH + 6}" stroke="${C.blue}" stroke-dasharray="4 4" opacity="0.7"/>`;
+      groups.forEach(([n, arr, c], gi) => {
+        const sc2 = arr.filter(s => s.rmse != null), y = 6 + gi * rowH + rowH / 2, md = med(sc2.map(s => s.rmse));
+        b += T(x0 - 10, y + 4, n, { a: "end" }) + T(x0 - 10, y + 18, `n=${sc2.length}`, { a: "end", c: C.mut, s: 10 });
+        sc2.forEach((s, i) => { b += `<circle cx="${x0 + Math.min(s.rmse, xmax) * sc}" cy="${y + ((i * 7) % 5 - 2) * 5}" r="5.5" fill="${c}" fill-opacity="0.85" stroke="#0b0f14"/>`; });
+        if (md != null) b += `<line x1="${x0 + md * sc}" x2="${x0 + md * sc}" y1="${y - 22}" y2="${y + 22}" stroke="#fff" stroke-width="2"/>` + T(x0 + md * sc, y - 26, "median " + f2(md), { a: "middle", b: 1, s: 10 });
+      });
+      document.getElementById("mm-c3").innerHTML = svg(W, groups.length * rowH + 30, b) + `<div style="color:${C.mut};font-size:0.78em;margin-top:4px;">dashed = Tempest network estimate (${nv ? f2(nv.tempest) : "—"}) · white tick = group median · one dot per station</div>`;
+    }
+    // 4. live-set table
+    {
+      const rows = m.live.map(s => `<tr><td>${s.id}</td><td>${f2(s.rmse)}</td><td>${sg(s.od)}</td><td>${sg(s.on)}</td><td>${Math.round((s.up || 0) * 100)}%</td><td>${s.t == null ? "—" : s.t.toFixed(1)}</td><td>${s.rh == null ? "—" : Math.round(s.rh)}</td><td>${f2(s.p)}</td><td>${(s.ts || "").slice(11, 16)}Z</td></tr>`).join("");
+      const o = m.own;
+      const own = o ? `<tr style="color:#f2c14e;"><td>homebuilt (the Cove)</td><td>${o.rmse == null ? "not scored" : f2(o.rmse)}</td><td>—</td><td>—</td><td>${o.n} h</td><td>${o.t.toFixed(1)}</td><td>${Math.round(o.rh)}</td><td>${f2(o.p)}</td><td>${(o.ts || "").slice(11, 16)}Z</td></tr>` : "";
+      document.getElementById("mm-t1").innerHTML = `<table class="mm-t"><thead><tr><th>station</th><th>error vs URMA °F</th><th>offset day</th><th>offset night</th><th>uptime 7d</th><th>°F</th><th>% RH</th><th>inHg</th><th>latest</th></tr></thead><tbody>${rows}${own}</tbody></table>`;
+    }
+  });
+})();
+</script>
 
 <!-- ───────────────────── L3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">L3 — Lead-decay correction</h2>

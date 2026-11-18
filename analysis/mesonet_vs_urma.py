@@ -108,6 +108,27 @@ def corrected(series, urma, hold_day):
     return out
 
 
+def station_table(series, urma, days):
+    """{sid: {rmse, off_day, off_night, n}}: held-out RMSE vs URMA (leave-one-day-out day/night offsets)
+    plus the offsets fitted on ALL days. Used by scripts/mesonet_state.py for the map."""
+    errs = {}
+    hours = sorted(h for h in urma if day_of(h) in days)
+    for D in sorted({day_of(h) for h in hours}):
+        cor = corrected(series, urma, D)
+        for sid, vals in cor.items():
+            errs.setdefault(sid, []).extend(v - urma[h] for h, v in vals.items())
+    out = {}
+    for sid, e in errs.items():
+        if len(e) < 20:
+            continue
+        both = [(h, v - urma[h]) for h, v in series[sid].items() if h in urma]
+        dd = [d for h, d in both if is_day(h)]
+        nn = [d for h, d in both if not is_day(h)]
+        out[sid] = {"rmse": math.sqrt(st.mean(x * x for x in e)), "n": len(e),
+                    "off_day": st.median(dd) if dd else None, "off_night": st.median(nn) if nn else None}
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--from", dest="d0", default="2026-11-10")
