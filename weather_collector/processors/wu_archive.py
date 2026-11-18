@@ -26,9 +26,16 @@ WU_ARCHIVE_ENABLED = True
 # neighbours but kept out of wu_scraper_realtime.STATIONS: at ~0.04 mi its 1/d^2 weight would
 # swamp the live aggregate if WU_ENABLED were ever turned back on.
 OWN_STATION = "KMAMARBL124"
-SLOT_HOURS_UTC = (0, 6, 12, 18)
+# Provisional live set (11-18): own station + the closest healthy station in each of seven
+# compass octants (N skipped: farthest, sparsest), chosen from a liveness pass of all 41.
+# Polled EVERY tick (~1,150 calls/day). Shadow only: nothing served reads the archive; the
+# set is re-ranked once a week of archive data shows which stations track the Cove best.
+LIVE_STATIONS = (OWN_STATION, "KMAMARBL63", "KMAMARBL108", "KMAMARBL75", "KMAMARBL42",
+                 "KMAMARBL43", "KMAMARBL57", "KMASALEM91")
+SLOT_HOURS_UTC = (0, 12)  # the remaining neighbours: twice a day (each call returns 24 h)
 SLOT_MINUTES = 10  # collector ticks at :07; only the first tick of the slot hour polls
-PAUSE_S = 2.5  # ~24 calls/min, under WU's 30/min cap
+PAUSE_S = 2.5  # slot polls: ~24 calls/min, under WU's 30/min cap
+LIVE_PAUSE_S = 1.0  # live set is 8 calls per tick, well under 30/min
 GCS_PREFIX = "wu_readings/"
 BASE_URL = "https://api.weather.com/v2/pws/observations/all/1day"
 
@@ -76,15 +83,16 @@ def append_wu_archive(stations, now_utc=None, key=None, get=requests.get, load=l
     """Poll `stations` (WU station ids) once and merge into today's archive. Best-effort."""
     now_utc = now_utc or datetime.now(timezone.utc)
     key = key or os.environ.get("WU_API_KEY")
-    if not WU_ARCHIVE_ENABLED or not key or not in_slot(now_utc):
+    if not WU_ARCHIVE_ENABLED or not key:
         return None
+    live = list(LIVE_STATIONS)
+    rest = [s for s in stations if s not in LIVE_STATIONS] if in_slot(now_utc) else []
     try:
         path = f"{GCS_PREFIX}{now_utc.strftime('%Y-%m-%d')}.json"
         doc = load(path, default=None) or {"schema": 1, "stations": {}, "obs": {}}
         added = ok = 0
         blocked = False
-        stations = [OWN_STATION] + [s for s in stations if s != OWN_STATION]  # own station first: it survives a mid-run block
-        for sid in stations:
+        for sid in live + rest:  # live set first, own station first of all: it survives a mid-run block
             rows, lat, lon, status = fetch_station(sid, key, get)
             if status == "blocked":
                 logging.warning("  ⚠  wu_archive: key refused (401/429); stopping this run")
@@ -93,10 +101,10 @@ def append_wu_archive(stations, now_utc=None, key=None, get=requests.get, load=l
             if status == "ok":
                 ok += 1
                 added += merge(doc, sid, rows, lat, lon)
-            sleep(PAUSE_S)
+            sleep(LIVE_PAUSE_S if sid in LIVE_STATIONS else PAUSE_S)
         if added:
             save(doc, path, path)
-        logging.info(f"  ✓ wu_archive: {ok}/{len(stations)} stations, +{added} readings")
+        logging.info(f"  ✓ wu_archive: {ok}/{len(live) + len(rest)} stations, +{added} readings")
         return {"ok": ok, "added": added, "blocked": blocked}
     except Exception as e:  # noqa: BLE001
         logging.warning(f"  ⚠  wu_archive failed: {redact_secrets(e)}")

@@ -47,27 +47,43 @@ def test_enabled():
     assert wa.WU_ARCHIVE_ENABLED is True
 
 
+REST = ["KMAMARBL69", "KMAMARBL39", "KMAMARBL63"]  # KMAMARBL63 is also live: must not be polled twice
+
+
 def test_own_station_polled_first_and_archived():
-    out, calls, saved = _run(lambda sid: _Resp(200, [_obs(1), _obs(2)]), ["KMAMARBL63", "KMAMARBL124"])
+    out, calls, saved = _run(lambda sid: _Resp(200, [_obs(1), _obs(2)]), REST)
     assert calls[0] == wa.OWN_STATION and calls.count(wa.OWN_STATION) == 1
     assert len(saved["doc"]["obs"][wa.OWN_STATION]) == 2
-    assert out == {"ok": 2, "added": 4, "blocked": False}
+    assert calls.count("KMAMARBL63") == 1
+    assert out["blocked"] is False
+
+
+def test_in_slot_polls_live_then_rest():
+    out, calls, _ = _run(lambda sid: _Resp(200, [_obs(1)]), REST)
+    assert calls == list(wa.LIVE_STATIONS) + ["KMAMARBL69", "KMAMARBL39"]
 
 
 def test_block_stops_run_but_keeps_own_station():
     def responder(sid):
         return _Resp(200, [_obs(1)]) if sid == wa.OWN_STATION else _Resp(429)
 
-    out, calls, saved = _run(responder, ["KMAMARBL63", "KMAMARBL69", "KMAMARBL4"])
-    assert calls == [wa.OWN_STATION, "KMAMARBL63"]  # stopped at the first refusal
+    out, calls, saved = _run(responder, REST)
+    assert calls == [wa.OWN_STATION, wa.LIVE_STATIONS[1]]  # stopped at the first refusal
     assert out["blocked"] is True and out["added"] == 1
     assert wa.OWN_STATION in saved["doc"]["obs"]
 
 
-def test_outside_slot_does_not_poll():
-    out, calls, _ = _run(lambda sid: _Resp(200, [_obs(1)]), ["KMAMARBL63"],
+def test_outside_slot_polls_live_only():
+    out, calls, _ = _run(lambda sid: _Resp(200, [_obs(1)]), REST,
                          now=datetime(2026, 11, 19, 13, 7, tzinfo=timezone.utc))
-    assert out is None and calls == []
+    assert calls == list(wa.LIVE_STATIONS)
+
+
+def test_live_set_budget():
+    # live set every 10 min + the rest twice a day must stay well under ~1,500 calls/day
+    per_day = len(wa.LIVE_STATIONS) * 144 + 27 * len(wa.SLOT_HOURS_UTC)
+    assert per_day <= 1300, per_day
+    assert wa.LIVE_STATIONS[0] == wa.OWN_STATION and len(set(wa.LIVE_STATIONS)) == len(wa.LIVE_STATIONS)
 
 
 def test_merge_dedupes_on_epoch():

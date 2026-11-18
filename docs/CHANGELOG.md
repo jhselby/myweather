@@ -1,9 +1,14 @@
 <details open>
-<summary><strong>v0.7.110 • November 18, 2026 (Weather Underground archive back on, with your own station)</strong></summary>
+<summary><strong>v0.7.110–v0.7.111 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
 
-- Weather Underground readings are being collected again, at a low rate: each station is polled four times a day, about 160 calls a day against the free limit of about 1,500, and the whole run stops on the first refusal so the new key cannot be throttled the way the old one was.
-- Your own station (Indianhead, KMAMARBL124: temperature, humidity and pressure) is now in the archive and is polled first. It is not in the live station average, where its distance of about 0.04 miles would give it a weight far above every neighbour.
-- Nothing served or scored reads the archive yet. It exists so a held-out comparison of your sensor and the neighbours against the Tempest network can be run on real data.
+* **Your own key and station**
+  - Weather Underground readings are being collected again with your own key. The old key was never yours and had been refused since October.
+  - Your own station (Indianhead, KMAMARBL124: temperature, humidity and pressure) is collected first on every run. It is kept out of the live station average, where its distance of about 0.04 miles would give it a weight far above every neighbour.
+* **Eight stations every 10 minutes**
+  - Your station plus one neighbour per compass direction (the closest healthy one) are collected every 10 minutes, about 1,150 calls a day. The other 27 working neighbours are collected twice a day, since one call returns a whole day. Total is about 1,200 calls a day against a free limit of about 1,500, and a refusal stops the whole run.
+  - A liveness check of all 41 neighbours found 35 reporting and 6 silent.
+* **Shadow only**
+  - Nothing served or scored reads this data yet. It exists so the best neighbours and the right polling rate can be chosen from a week of real readings, then tested against the served forecast and weather.gov before anything changes.
 
 </details>
 
