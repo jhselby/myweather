@@ -22,7 +22,7 @@ import json
 import math
 import statistics as st
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 BUCKET = "gs://myweather-data/"
@@ -157,7 +157,8 @@ def greedy(wu, ref, field, scores, kmax=8):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--days", default=datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    ap.add_argument("--days", default=",".join(
+        (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in (2, 1, 0)))
     ap.add_argument("--ref", default="tempest", choices=("tempest", "own"))
     a = ap.parse_args()
     days = a.days.split(",")
@@ -167,6 +168,7 @@ def main():
         ref = [{"ep": r["ep"], "t": r.get("t"), "rh": r.get("rh"), "p": r.get("p")} for r in wu.get(OWN, [])]
         wu = {k: v for k, v in wu.items() if k != OWN}
     print(f"days={days} reference={a.ref} ({len(ref)} ticks) stations={len(wu)}")
+    headline = []
     for field in FIELDS:
         scores = {sid: s for sid, rows in wu.items() if (s := score_station(rows, ref, field))}
         print(f"\n== {field}: offset (WU - ref) and residual spread after removing it ==")
@@ -178,6 +180,14 @@ def main():
         print("  greedy best-k RMSE:", ", ".join(f"{i + 1}:{sid}={rmse:.2f}" for i, (sid, rmse) in enumerate(curve)))
         print("  staleness RMS change (median station): " +
               ", ".join(f"{lag}min={staleness(wu, field, lag):.2f}" for lag in (10, 30, 60)))
+        own = scores.get(OWN)
+        headline.append(f"{field}: " + (f"own n={own['n']} offset {own['off']:+.2f} (day {own['off_day']:+.2f} / night "
+                        f"{own['off_night']:+.2f}) resid {own['resid_sd']:.2f}" if own else
+                        f"own station not scorable yet ({len(wu.get(OWN, []))} readings, need {MIN_N} matched)"))
+    span = {sid: (rows[-1]["ep"] - rows[0]["ep"]) / 3600 for sid, rows in wu.items() if rows}
+    print(f"\nVERDICT WU archive: {len(wu)} stations, longest history {max(span.values(), default=0):.0f} h; "
+          f"own station {OWN}: " + " | ".join(headline) + (" -> sun-driven if day/night offsets differ by >1F; "
+          "rank/replay needs >=3 days" if a.ref == "tempest" else ""))
 
 
 if __name__ == "__main__":
