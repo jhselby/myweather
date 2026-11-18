@@ -41,10 +41,10 @@ def _cat(path):
     return json.loads(gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw)
 
 
-def load_wu(days):
+def load_wu(days, prefix="wu_readings"):
     obs = {}
     for d in days:
-        doc = _cat(f"wu_readings/{d}.json")
+        doc = _cat(f"{prefix}/{d}.json")
         for sid, rows in ((doc or {}).get("obs") or {}).items():
             have = {r["ep"] for r in obs.get(sid, [])}
             obs.setdefault(sid, []).extend(r for r in rows if r["ep"] not in have)
@@ -106,10 +106,13 @@ def score_station(rows, ref, field):
 
 
 def uptime(rows):
-    if len(rows) < 2:
+    """Share of expected readings present; the cadence is the station's own median gap (5 min or 1 h)."""
+    if len(rows) < 3:
         return 0.0
+    gaps = sorted(b["ep"] - a["ep"] for a, b in zip(rows, rows[1:]))
+    cadence = max(gaps[len(gaps) // 2], 60)
     span = rows[-1]["ep"] - rows[0]["ep"]
-    return min(1.0, len(rows) / (span / 300 + 1))
+    return min(1.0, len(rows) / (span / cadence + 1))
 
 
 def staleness(all_rows, field, lag_min):
@@ -160,9 +163,10 @@ def main():
     ap.add_argument("--days", default=",".join(
         (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in (2, 1, 0)))
     ap.add_argument("--ref", default="tempest", choices=("tempest", "own"))
+    ap.add_argument("--hourly", action="store_true", help="read wu_readings_hourly/ (backfill) instead of wu_readings/")
     a = ap.parse_args()
     days = a.days.split(",")
-    wu = load_wu(days)
+    wu = load_wu(days, "wu_readings_hourly" if a.hourly else "wu_readings")
     ref = tempest_ref(days)
     if a.ref == "own":
         ref = [{"ep": r["ep"], "t": r.get("t"), "rh": r.get("rh"), "p": r.get("p")} for r in wu.get(OWN, [])]

@@ -1,5 +1,5 @@
 <details open>
-<summary><strong>v0.7.110–v0.7.111 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
+<summary><strong>v0.7.110–v0.7.112 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
 
 * **Your own key and station**
   - Weather Underground readings are being collected again with your own key. The old key was never yours and had been refused since October.
@@ -7,6 +7,8 @@
 * **Eight stations every 10 minutes**
   - Your station plus one neighbour per compass direction (the closest healthy one) are collected every 10 minutes, about 1,150 calls a day. The other 27 working neighbours are collected twice a day, since one call returns a whole day. Total is about 1,200 calls a day against a free limit of about 1,500, and a refusal stops the whole run.
   - A liveness check of all 41 neighbours found 35 reporting and 6 silent.
+* **Live set re-picked on history (v0.7.112)**
+  - Weather Underground returns past readings, so a week of hourly history for all 36 working stations was recovered. Three of the eight live picks were replaced by stations that follow the Cove's real conditions more closely, and the choice held on four days it had not seen.
 * **Shadow only**
   - Nothing served or scored reads this data yet. It exists so the best neighbours and the right polling rate can be chosen from a week of real readings, then tested against the served forecast and weather.gov before anything changes.
 

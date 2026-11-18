@@ -26,12 +26,13 @@ WU_ARCHIVE_ENABLED = True
 # neighbours but kept out of wu_scraper_realtime.STATIONS: at ~0.04 mi its 1/d^2 weight would
 # swamp the live aggregate if WU_ENABLED were ever turned back on.
 OWN_STATION = "KMAMARBL124"
-# Provisional live set (11-18): own station + the closest healthy station in each of seven
-# compass octants (N skipped: farthest, sparsest), chosen from a liveness pass of all 41.
-# Polled EVERY tick (~1,150 calls/day). Shadow only: nothing served reads the archive; the
-# set is re-ranked once a week of archive data shows which stations track the Cove best.
-LIVE_STATIONS = (OWN_STATION, "KMAMARBL63", "KMAMARBL108", "KMAMARBL75", "KMAMARBL42",
-                 "KMAMARBL43", "KMAMARBL57", "KMASALEM91")
+# Live set (v0.7.112): own station + the best-tracking station in each of seven compass octants
+# (N skipped: farthest, sparsest). Ranked on 7 days of hourly WU history (backfilled via
+# scripts/wu_backfill.py) by residual vs the Tempest median after a day/night offset, fit on 11-12..15,
+# scored on 11-16..18, confirmed on a 11-08..11 holdout (rank correlation 0.69 over 34 stations).
+# Polled EVERY tick (~1,150 calls/day). Shadow only: nothing served reads the archive.
+LIVE_STATIONS = (OWN_STATION, "KMAMARBL63", "KMAMARBL92", "KMAMARBL76", "KMAMARBL42",
+                 "KMAMARBL8", "KMAMARBL57", "KMASALEM91")
 SLOT_HOURS_UTC = (0, 12)  # the remaining neighbours: twice a day (each call returns 24 h)
 SLOT_MINUTES = 10  # collector ticks at :07; only the first tick of the slot hour polls
 PAUSE_S = 2.5  # slot polls: ~24 calls/min, under WU's 30/min cap
