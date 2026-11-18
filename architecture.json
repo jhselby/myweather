@@ -40,13 +40,13 @@
   {
    "name": "Weather Underground",
    "status": "off",
-   "what": "Key throttled since October; Tempest is the only station feed.",
+   "what": "Off in the live blend: Tempest is the only live station feed. WU is collected in shadow by the archive poller.",
    "flag": "weather_collector/fetchers/wu.py WU_ENABLED"
   },
   {
    "name": "WU archive poller",
    "status": "on",
-   "what": "Dormant until a working key exists.",
+   "what": "Own key since 2026-11-18. Own sensor + 7 chosen neighbours every tick, the other working stations twice a day; shadow only, nothing served reads it.",
    "flag": "weather_collector/processors/wu_archive.py WU_ARCHIVE_ENABLED"
   }
  ],
@@ -244,5 +244,186 @@
    "iso": "2026-11-14",
    "title": "Total Lift chart markers current again"
   }
- ]
+ ],
+ "layers": {
+  "l3_fields": [
+   "ch",
+   "wg"
+  ],
+  "l4_fields": [
+   "ch",
+   "wg"
+  ],
+  "blend_fields": [
+   "h",
+   "sr",
+   "t",
+   "wg",
+   "ws"
+  ],
+  "lsr": {
+   "enabled": true,
+   "sun_up_wm2": 50.0,
+   "skip_regimes": [
+    "calm",
+    "ne_flow"
+   ]
+  },
+  "lc": {
+   "enabled": true,
+   "field_skip": [
+    "cc",
+    "cl"
+   ],
+   "cells": {
+    "cc": {
+     "0-5": {
+      "shift": 7.292,
+      "verdict": "SKIP",
+      "improve_pct": -1.13,
+      "n": 13112
+     },
+     "5-20": {
+      "shift": 9.611,
+      "verdict": "SKIP",
+      "improve_pct": -19.39,
+      "n": 3715
+     },
+     "20-50": {
+      "shift": -2.366,
+      "verdict": "SKIP",
+      "improve_pct": 2.0,
+      "n": 1955
+     },
+     "50-80": {
+      "shift": -28.254,
+      "verdict": "SHIP",
+      "improve_pct": 27.05,
+      "n": 1771
+     },
+     "80-95": {
+      "shift": -47.26,
+      "verdict": "SHIP",
+      "improve_pct": 40.94,
+      "n": 1329
+     },
+     "95-100": {
+      "shift": -39.816,
+      "verdict": "SHIP",
+      "improve_pct": 14.78,
+      "n": 12630
+     }
+    },
+    "cl": {
+     "0-5": {
+      "shift": 2.253,
+      "verdict": "SKIP",
+      "improve_pct": -40.44,
+      "n": 20801
+     },
+     "5-20": {
+      "shift": 3.261,
+      "verdict": "SKIP",
+      "improve_pct": -13.63,
+      "n": 4667
+     },
+     "20-50": {
+      "shift": -4.199,
+      "verdict": "SKIP",
+      "improve_pct": 4.69,
+      "n": 1952
+     },
+     "50-80": {
+      "shift": -28.193,
+      "verdict": "SHIP",
+      "improve_pct": 19.18,
+      "n": 1411
+     },
+     "80-95": {
+      "shift": -34.441,
+      "verdict": "SHIP",
+      "improve_pct": 13.77,
+      "n": 759
+     },
+     "95-100": {
+      "shift": -29.231,
+      "verdict": "SKIP",
+      "improve_pct": -12.32,
+      "n": 4922
+     }
+    },
+    "cm": {
+     "0-5": {
+      "shift": 5.957,
+      "verdict": "SKIP",
+      "improve_pct": -52.26,
+      "n": 22530
+     },
+     "5-20": {
+      "shift": 8.593,
+      "verdict": "SKIP",
+      "improve_pct": -11.77,
+      "n": 2129
+     },
+     "20-50": {
+      "shift": -10.031,
+      "verdict": "SHIP",
+      "improve_pct": 13.31,
+      "n": 1257
+     },
+     "50-80": {
+      "shift": -39.312,
+      "verdict": "SHIP",
+      "improve_pct": 41.44,
+      "n": 1303
+     },
+     "80-95": {
+      "shift": -64.333,
+      "verdict": "SHIP",
+      "improve_pct": 60.77,
+      "n": 848
+     },
+     "95-100": {
+      "shift": -73.036,
+      "verdict": "SHIP",
+      "improve_pct": 61.29,
+      "n": 6445
+     }
+    },
+    "ch": {
+     "0-5": {
+      "shift": 4.438,
+      "verdict": "SKIP",
+      "improve_pct": -38.54,
+      "n": 22195
+     },
+     "5-20": {
+      "shift": -0.115,
+      "verdict": "SKIP",
+      "improve_pct": 0.33,
+      "n": 2506
+     },
+     "20-50": {
+      "shift": -24.275,
+      "verdict": "SHIP",
+      "improve_pct": 47.41,
+      "n": 1380
+     },
+     "50-80": {
+      "shift": -51.194,
+      "verdict": "SHIP",
+      "improve_pct": 68.05,
+      "n": 7668
+     },
+     "80-95": {
+      "shift": -62.229,
+      "verdict": "SHIP",
+      "improve_pct": 71.63,
+      "n": 763
+     }
+    }
+   },
+   "fit_generated_at": "2026-11-18T11:32:25.248760+00:00"
+  }
+ }
 }

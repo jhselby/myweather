@@ -48,9 +48,9 @@ def components():
          "Tiles grade on the pair-log observed: the station network shrunk toward the model, which is L2's own output. "
          "The truth table grades the same rows on station readings and (t) on URMA.", None),
         ("Weather Underground", "on" if _flag("weather_collector/fetchers/wu.py", "WU_ENABLED") else "off",
-         "Key throttled since October; Tempest is the only station feed.", "weather_collector/fetchers/wu.py WU_ENABLED"),
+         "Off in the live blend: Tempest is the only live station feed. WU is collected in shadow by the archive poller.", "weather_collector/fetchers/wu.py WU_ENABLED"),
         ("WU archive poller", "on" if _flag("weather_collector/processors/wu_archive.py", "WU_ARCHIVE_ENABLED") else "off",
-         "Dormant until a working key exists.", "weather_collector/processors/wu_archive.py WU_ARCHIVE_ENABLED"),
+         "Own key since 2026-11-18. Own sensor + 7 chosen neighbours every tick, the other working stations twice a day; shadow only, nothing served reads it.", "weather_collector/processors/wu_archive.py WU_ARCHIVE_ENABLED"),
     ]
     return [{"name": n, "status": s, "what": w, "flag": f} for n, s, w, f in rows], tables
 
@@ -84,10 +84,49 @@ def releases(limit=12):
     return out
 
 
+def _py_literal(rel, name):
+    """Value of a top-level `NAME = <literal>` (set/dict/list/frozenset/number) in a source file, via ast; None if absent."""
+    import ast
+    tree = ast.parse((ROOT / rel).read_text())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name for t in node.targets):
+            v = node.value
+            if isinstance(v, ast.Call) and getattr(v.func, "id", "") == "frozenset" and v.args:
+                v = v.args[0]
+            try:
+                return ast.literal_eval(v)
+            except ValueError:
+                return None
+    return None
+
+
+def layers():
+    """Per-layer live configuration read from the code and the fitted tables, for the debug page's layer sections."""
+    da = "weather_collector/processors/decay_apply.py"
+    sc = "weather_collector/processors/solar_correction.py"
+    cs = "weather_collector/processors/cloud_saturation_correction.py"
+    out = {
+        "l3_fields": sorted(_py_literal(da, "L3_FIELDS") or []),
+        "l4_fields": sorted(_py_literal(da, "L4_FIELDS") or []),
+        "blend_fields": sorted(_py_literal("weather_collector/processors/terminal_static_blend.py", "FIELD_APPLIED") or []),
+        "lsr": {"enabled": _flag(sc, "ENABLED"), "sun_up_wm2": _py_literal(sc, "SUN_UP_THRESHOLD"),
+                "skip_regimes": sorted(_py_literal(sc, "L5_SKIP_REGIMES") or [])},
+        "lc": {"enabled": _flag(cs, "ENABLED"), "field_skip": sorted(_py_literal(cs, "_FIELD_SKIP") or []), "cells": {}},
+    }
+    try:
+        t = json.loads((ROOT / "weather_collector/data/lc_correction_table.json").read_text())
+        out["lc"]["fit_generated_at"] = t.get("generated_at")
+        out["lc"]["cells"] = {f: {b: {"shift": c.get("shift"), "verdict": c.get("verdict"), "improve_pct": c.get("improve_pct"), "n": c.get("n")}
+                                  for b, c in bins.items()} for f, bins in (t.get("cells") or {}).items()}
+    except (OSError, ValueError):
+        pass
+    return out
+
+
 def main():
     comps, tables = components()
     version = json.loads((ROOT / "version.json").read_text())["version"]
-    payload = {"version": version, "components": comps, "refit_tables": tables, "changes": changes(), "releases": releases()}
+    payload = {"version": version, "components": comps, "refit_tables": tables, "changes": changes(), "releases": releases(), "layers": layers()}
     (ROOT / "architecture.json").write_text(json.dumps(payload, indent=1) + "\n")
     print(f"  ✓ architecture.json → {len(comps)} components, {len(payload['changes'])} architecture changes")
 
