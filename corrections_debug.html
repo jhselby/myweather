@@ -1112,7 +1112,8 @@
   .fp-engine { margin-top: 18px; color: #9aa6b6; font-size: 0.88em; }
 </style>
 
-<section class="now-sec" id="sec-now">
+<h2 class="section" id="sec-now" style="margin-top:14px;">Now <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· the current temperature and the app's own briefing</span></h2>
+<section class="now-sec">
   <div class="now-top"><span class="now-temp" id="now-temp">…</span><span class="now-cond" id="now-cond">loading current conditions</span></div>
   <div class="now-head" id="now-head"></div>
   <div class="now-sub" id="now-sub"></div>
@@ -1143,8 +1144,8 @@
 })();
 </script>
 
-<details open id="sec-current-conditions" style="margin:0 0 18px 0;">
-  <summary style="cursor:pointer;color:#7fb3ff;font-weight:600;padding:6px 0;">Current Conditions</summary>
+<h2 class="section" id="sec-current-conditions">Current Conditions <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· what the pipeline is serving this tick, field by field</span></h2>
+<div style="margin:0 0 18px 0;">
 <div id="headlineBox">
   <table class="hb-corr-table">
     <thead>
@@ -1169,10 +1170,10 @@
   </div>
   <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
 </div>
-</details>
+</div>
 
 <section class="fp" id="sec-front">
-  <div class="fp-q">Are we beating the forecast you'd normally get?</div>
+  <h2 class="section" id="sec-front-q">Are we beating the forecast you'd normally get? <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· the scorecard: us vs the forecast a person actually reads</span></h2>
   <div class="fp-sub">
     Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Raw NBM alone is a softer bar: at the Cove it runs ~3°F cold at night. Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.
   </div>
