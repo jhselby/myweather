@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.115 • November 19, 2026 (debug page front: sample size, truth labels, glossary)</strong></summary>
+
+- The headline now says how many days and hourly forecasts the independent scores rest on, and that a window this short is directional.
+- The better / tied / worse count is labelled as a tally of separate per-field tests, each against its own bar and truth.
+- A "different truth, different score" banner sits above the detailed tables, which grade on the model-blended truth and run higher than the scorecard.
+- Roadmap dates are now "earliest decision" dates, not release dates. The temperature item reflects that the new blend is live.
+- A short "terms used here" box explains URMA, NBM, HRRR, the layers and the selector.
+- The rain amount row explains that its red result is a limit of the served pipeline, not a system failure.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.114 • November 19, 2026 (temperature now comes from the new blend)</strong></summary>
 
 - The temperature you see for 6 to 47 hours out now comes from a new blend that corrects each forecast model against an independent analysis of what the air actually did (NOAA's URMA), then weights them. Over the last 5 to 6 days it beat the old temperature by 25% (6-11 h), 30% (12-23 h) and 38% (24-47 h), winning most days in every range.

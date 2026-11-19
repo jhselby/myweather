@@ -1098,6 +1098,9 @@
   .fp-step small { color: #8b97a8; display: block; margin-top: 5px; }
   .fp-arrow { align-self: center; color: #4fb3ff; padding: 0 8px; font-size: 1.3em; }
   .fp-legend { color: #7f8ba0; font-size: 0.8em; margin: 8px 4px 0 4px; line-height: 1.5; }
+  .fp-sample { color:#c9d1dc; font-size:0.84em; margin:2px 4px 12px 4px; line-height:1.5; }
+  .fp-sample b { color:#e8eef6; }
+  .fp-truthbanner { border:1px solid #5a4a1f; background:#1a160b; color:#e6c46a; border-radius:8px; padding:8px 12px; font-size:0.84em; line-height:1.5; margin:10px 0; }
   .fp-engine { margin-top: 18px; color: #9aa6b6; font-size: 0.88em; }
 </style>
 
@@ -1108,6 +1111,12 @@
   </div>
 
   <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
+  <div class="fp-sample" id="fp-sample"></div>
+  <details class="fp-legend" style="margin:0 4px 12px 4px;"><summary style="cursor:pointer;">terms used here</summary><div style="margin-top:6px;line-height:1.6;">
+    <b>weather.gov</b> the NWS forecast a person sees on the weather.gov page. <b>NBM</b> NOAA's National Blend of Models, a public blended forecast. <b>HRRR</b> NOAA's hourly high-resolution model. <b>ECMWF</b> the European model.<br>
+    <b>URMA</b> NOAA's hourly analysis of what the weather actually was, built from satellite and surface reports; independent of our stations and corrections. <b>Stations</b> our local weather stations only. <b>Model-blended truth</b> the logged "observed": station readings pulled toward the model forecast, so it flatters us.<br>
+    <b>L1</b> the raw model. <b>L2</b> local station bias correction (first 5 h). <b>L3</b> lead-time decay. <b>L4</b> time-of-day correction. <b>Selector</b> picks which source or blend is served per field, weather pattern and lead time.<br>
+    <b>Error</b> average absolute miss (MAE) over the same hours. <b>% better</b> is how much smaller our error is than the bar's. <b>Holdout</b> days the fit never saw; a change ships only if it wins there.</div></details>
 
   <style>
     .mm-head { display:flex; gap:10px; flex-wrap:wrap; margin:0 0 12px 0; }
@@ -1146,14 +1155,14 @@
       <ul class="fp-list" id="fp-changes"><li><span class="fp-date">…</span><span>loading</span></li></ul>
     </div>
     <div class="fp-panel">
-      <div class="fp-h">Coming up <span>· each one waits on enough days of data</span></div>
+      <div class="fp-h">Coming up <span>· earliest decision dates, not release dates: each waits on enough days of data and a passing gate</span></div>
       <ul class="fp-list">
-        <li><span class="fp-date">Nov 19–20</span><span><b>Temperature candidate</b> (bias removed against URMA, three models blended): ship if 5 of 7 live days beat what we serve.</span></li>
-        <li><span class="fp-date">Nov 21</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
-        <li><span class="fp-date">Nov 19</span><span><b>Is the homebuilt sensor accurate?</b> Day and night offsets against NOAA's analysis, Tempest and the neighbours (fitted on early days, scored on later ones), plus pressure against the airport. Until it passes it is an input at a capped weight, never the reference.</span></li>
-        <li><span class="fp-date">Nov 21–22</span><span><b>Do the extra stations earn a place in the live forecast?</b> They tighten the network's temperature estimate (0.61 → 0.48°F vs NOAA) but moved the forecast only ~1% so far. Rerun on 3+ days of WU data; flip nothing without a measured gain.</span></li>
-        <li><span class="fp-date">Nov 22</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
-        <li><span class="fp-date">Nov 24</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours.</span></li>
+        <li class="fp-done"><span class="fp-date">Nov 19</span><span><b>Temperature blend is live</b> for 6–47 h (bias removed against URMA, three models blended; v0.7.114). It cleared 5 of 6 or better days in every range. Re-evaluate on unseen days after about Nov 27; a switch turns it off if it scores worse.</span></li>
+        <li><span class="fp-date">Nov 21+</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
+        <li><span class="fp-date">Nov 19+</span><span><b>Is the homebuilt sensor accurate?</b> Day and night offsets against NOAA's analysis, Tempest and the neighbours (fitted on early days, scored on later ones), plus pressure against the airport. Until it passes it is an input at a capped weight, never the reference.</span></li>
+        <li><span class="fp-date">Nov 21–22+</span><span><b>Do the extra stations earn a place in the live forecast?</b> They tighten the network's temperature estimate (0.61 → 0.48°F vs NOAA) but moved the forecast only ~1% so far. Rerun on 3+ days of WU data; flip nothing without a measured gain.</span></li>
+        <li><span class="fp-date">Nov 22+</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
+        <li><span class="fp-date">Nov 24+</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours.</span></li>
       </ul>
       <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">Full detail, killed ideas and what's not built →</a></div>
     </div>
@@ -1175,6 +1184,7 @@
   <div class="fp-engine">
     Below: the <b>engine room</b> (<a href="showcase.html" style="color:#7fb3ff;">showcase</a>): the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
   </div>
+  <div class="fp-truthbanner"><b>Different truth, different score.</b> The scorecard above uses independent or public comparisons (URMA, stations, weather.gov). Most tables below grade on the model-blended truth, which flatters us, so their percentages run higher. Do not compare a number below with one above.</div>
 </section>
 
 <script>
@@ -1198,11 +1208,12 @@
     ["ch", "High cloud",     "cloud above ~20,000 ft",        "%",    1],
   ];
   const NOTES = {
-    t:  "Against weather.gov we win at 0–23h (+49% / +25% / +16%) and tie at 24–47h (+6.5%, interval spans zero); the live candidate that closes it reads out ~Nov 19–20.",
-    h:  "Our stations read drier than URMA; which one is right is settled ~Nov 21.",
-    dp: "On URMA truth we lose to NBM here; which truth is right is settled ~Nov 21.",
-    ws: "Backyard anemometers, not wind on the water; that truth comes ~Nov 22.",
-    wg: "Backyard anemometers, not wind on the water; that truth comes ~Nov 22.",
+    t:  "A new temperature blend went live Nov 19 (6–47 h). The scored window still mostly predates it, so the 24–47 h line should move as days are added.",
+    h:  "Our stations read drier than URMA; which one is right is decided no earlier than ~Nov 21.",
+    dp: "On URMA truth we lose to NBM here; which truth is right is decided no earlier than ~Nov 21.",
+    ws: "Backyard anemometers, not wind on the water; that truth comes no earlier than ~Nov 22.",
+    wg: "Backyard anemometers, not wind on the water; that truth comes no earlier than ~Nov 22.",
+    pa: "Served is raw HRRR passed through; NBM is a hair better, within rounding. A pipeline limit, not a system failure.",
     pp: "Over 78 days NBM ties us at 0–23h and does worse at 24–47h, so we keep HRRR.",
   };
   const TRUTH = {
@@ -1257,6 +1268,7 @@
     const W = main.filter(r => r.bar > 2), L = main.filter(r => r.bar < -2), T = main.filter(r => Math.abs(r.bar) <= 2);
     const names = a => a.map(r => r.name.toLowerCase()).join(", ") || "—";
     document.getElementById("fp-verdict").innerHTML =
+      `<div style="color:#7f8ba0;font-size:0.8em;margin:0 0 4px 0;">Count across the per-field comparisons below. Each field is scored against its own bar and its own truth, so this is a tally of separate tests, not one score.</div>` +
       `<span class="fp-pill fp-win"><b>${W.length}</b>better: ${names(W)}</span>` +
       `<span class="fp-pill fp-tie"><b>${T.length}</b>tied: ${names(T)}</span>` +
       `<span class="fp-pill fp-loss"><b>${L.length}</b>worse: ${names(L)}</span>`;
@@ -1289,6 +1301,17 @@
       </tr>`;
     }).join("");
     const w = tc ? `station/URMA rows ${tc.first_day} → ${tc.last_day}` : "truth_compare.json unavailable";
+    (function () {
+      const t = tc && tc.fields && tc.fields.t && tc.fields.t.lead_2h_plus;
+      const el = document.getElementById("fp-sample");
+      if (!tc || !el) return;
+      const d0 = new Date(tc.first_day + "T12:00:00"), d1 = new Date(tc.last_day + "T12:00:00");
+      const days = Math.round((d1 - d0) / 86400000) + 1;
+      const md = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      el.innerHTML = `<b>Sample:</b> ${days} days of independent scoring (${md(d0)}–${md(d1)})` +
+        (t && t.n_urma ? `, ${t.n_urma.toLocaleString()} hourly temperature forecasts` : "") +
+        `; model-blended rows cover the last 7 days. A window this short is directional: percentages will move as days are added.`;
+    })();
     document.getElementById("fp-stamp").textContent = `Windows: ${w}; model-blended rows = last 7 days. Refreshed hourly.`;
   }).catch(e => { document.getElementById("fp-verdict").innerHTML = `<span style="color:#e08a70;">scorecard unavailable (${e})</span>`; });
 
@@ -1441,6 +1464,7 @@
 <details id="sec-engine-scoreboard" style="margin:0 0 16px 0;padding:10px 14px;border:1px solid #253247;background:#0b1119;border-radius:10px;">
   <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Detailed scoreboard &amp; architecture <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
   <div style="margin-top:12px;">
+  <div class="fp-truthbanner"><b>Different truth, different score.</b> The tiles in this block grade on the model-blended truth (optimistic). The scorecard at the top uses independent truth.</div>
 <!-- ───────────────────── Architecture now (v0.7.99) ─────────────────────
      Rendered from architecture.json, written by build.py on every release:
      component status read from the code flags, plus every CHANGELOG entry
@@ -2739,7 +2763,7 @@
     <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">Being evaluated next</div>
     <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
       <ul style="margin:0 0 8px 16px;padding:0;">
-        <li><strong>t_urmab — the live candidate (shadow since v0.7.97):</strong> per-source bias against URMA removed, then HRRR / NBM / ECMWF blended, 6–47h. Walk-forward over 69 days +12 / +18 / +17% over served at 6–11 / 12–23 / 24–47h; holdout intervals still span zero. Its cloud refit only started working 11-14 (see refitter below). Ship tier: 5 of 7 forward days positive, then the ship rule — about 11-19 to 11-20. Daily read: <code>analysis/urma_shadow_score.py</code>.</li>
+        <li><strong>t_urmab — SERVED since v0.7.114 (Nov 19, 6–47h; shadow from v0.7.97):</strong> per-source bias against URMA removed, then HRRR / NBM / ECMWF blended, 6–47h. Walk-forward over 69 days +12 / +18 / +17% over served at 6–11 / 12–23 / 24–47h; holdout intervals still span zero. Its cloud refit only started working 11-14 (see refitter below). Served after 5 of 6 or better forward days positive in every band; the old served value is logged as t_pre_urmab and a switch (runtime_tables/urma_blend_serve.json) reverts it with no deploy. Still to come: the ship rule at 14 holdout days, about 11-27. Daily read: <code>analysis/urma_shadow_score.py</code>.</li>
         <li><strong>Daily refit was failing — FIXED 11-14 (v0.7.100):</strong> the refitter ran out of memory at 8 GB on 11-13 and 11-14, so the served blend weights were last refit 11-12 and the URMA shadow had never refit in the cloud. Now 16 GB, each table fitted in its own process, status written after every table, and <code>analysis/refitter_status.py</code> fails the digest when any table is more than a day old.</li>
         <li><strong>~11-17 — t station-truth fit, RERUN before any flip:</strong> 11-14 early run, station-fit weights vs today's shrunk-fit weights, scored on station truth: −4.7% [−14.3, +0.9], 3/8 days (−5.7% on URMA). The station fit had only 5–13 days against 14; rerun with a full 14-day window (<code>analysis/t_station_truth_wf.py</code>). Flip only if it passes the ship rule.</li>
         <li><strong>~11-21 — moisture truth tie-breaker (gates h):</strong> on the same rows the stations read 2.5% RH and 0.6°F dew point drier than URMA, and the dp verdict flips with the truth (served dp beats NBM +5..13% on stations, loses −19..−36% on URMA; NBM is calibrated to URMA). KBVY dew point logs since v0.7.98; compare Tempest / KBVY / URMA after a week. h stays on today's truth until then.</li>
