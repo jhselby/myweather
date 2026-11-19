@@ -48,9 +48,8 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 16px;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #242833;
+    margin-bottom: 4px;
+    padding-bottom: 0;
   }
   h1 { font-size: 18px; margin: 0; font-weight: 600; }
   html { scroll-padding-top: 72px; }
@@ -868,6 +867,7 @@
     margin: 0 -12px 16px;
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 6px;
   }
   nav.toc a {
@@ -881,6 +881,11 @@
     white-space: nowrap;
   }
   nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
+  nav.toc a.now { white-space: normal; max-width: 560px; min-width: 240px; line-height: 1.3; padding: 5px 10px; border-color: #2a3a52; background: #101a27; }
+  nav.toc a.now b { color: #e8eef6; font-size: 12.5px; display: block; }
+  nav.toc a.now .nh { color: #cfd8e3; display: block; }
+  nav.toc a.now .ns { color: #8b97a8; display: block; font-size: 10.5px; }
+  @media (max-width: 640px) { nav.toc a.now { min-width: 260px; max-width: 82vw; } }
   nav.toc a.research { color: #d4a373; border-color: #3a2d1f; background: #1c1813; }
   nav.toc a.accuracy { color: #74c38b; border-color: #1f3a25; background: #131c16; }
   /* v0.6.580: on mobile, TOC becomes a single horizontally-scrollable row
@@ -1035,6 +1040,7 @@
 
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← App</a>
+  <a href="/" class="now" id="nav-now" title="Open the app"><b>Now: loading…</b></a>
   <a href="#sec-front">Scorecard</a>
   <a href="#sec-engine-scoreboard">Detailed scoreboard</a>
   <a href="#sec-stack-health" class="accuracy">Trend</a>
@@ -1049,6 +1055,27 @@
   <a href="#sec-research" class="research">Research</a>
   <a href="#sec-archive">Archive</a>
 </nav>
+<script>
+(function () {
+  // Now chip: current conditions + the app's own briefing headline/subheadline, from the same
+  // feed the app reads (weather_data.json). No new source; failure leaves the chip as a plain App link.
+  const el = document.getElementById("nav-now");
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const dir = d => ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(d / 22.5) % 16];
+  const load = () => fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(d => {
+      const c = d.current || {}, b = d.briefing || {};
+      if (c.temperature == null) throw new Error("no current");
+      const wind = c.wind_speed != null ? ` · wind ${Math.round(c.wind_speed)} mph${c.wind_direction != null ? " " + dir(c.wind_direction) : ""}` : "";
+      el.innerHTML = `<b>${esc(c.weather_emoji || "")} ${Math.round(c.temperature)}° ${esc(c.weather_description || "")}${wind}</b>` +
+        (b.headline ? `<span class="nh">${esc(b.headline)}</span>` : "") +
+        (b.subheadline ? `<span class="ns">${esc(b.subheadline)}</span>` : "");
+    })
+    .catch(() => { el.innerHTML = "<b>Now</b>"; });
+  if (el) { load(); setInterval(load, 600000); }
+})();
+</script>
 <!-- ───────────────────── Front page (v0.7.107) ─────────────────────
      The one question this project answers: are we beating the forecast a normal
      user already gets? Scorecard is live (truth_compare.json + per_field_scoring.json,
