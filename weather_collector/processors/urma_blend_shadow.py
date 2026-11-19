@@ -1,4 +1,4 @@
-"""URMA-truth bias-then-blend, SHADOW ONLY (v0.8.0 rebuild branch).
+"""URMA-truth bias-then-blend for t (v0.8.0 rebuild branch). Stamps `t_urmab`; SERVED since v0.7.114.
 
 For t at leads 6-47h: per source (HRRR L1, NBM raw, ECMWF raw) subtract its trailing bias against
 URMA (independent truth, not built from our forecast), then blend with weights fit on those
@@ -10,7 +10,11 @@ URMA truth, both halves positive; holdout (9 days) intervals still span zero, so
 
 Ship tiers (fixed 11-12): forward shadow days only; >= 5 of 7 days beating served with a positive
 median, 6-47h only, auto-revert tripwire, then analysis/ship_rule.py at >= 14 holdout days.
-Reversal: ENABLED = False.
+Reversal: ENABLED = False (stamps nothing) or serving off. Serving is gated by SERVE and by the
+runtime doc urma_blend_serve.json {"serve": bool} (gs://myweather-data/runtime_tables/, bundled copy
+in data/), so a revert needs no deploy: gsutil cp a {"serve": false} doc. When served, the old served
+t is kept as `t_pre_urmab` (pair log error_pre_urmab) so analysis/urma_shadow_score.py keeps scoring
+the blend against what users would have seen without it.
 """
 import logging
 from datetime import datetime, timezone
@@ -19,6 +23,9 @@ from pathlib import Path
 ENABLED = True
 TABLE_NAME = "urma_blend_shadow_curated.json"
 TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / TABLE_NAME
+SERVE = True
+SERVE_TABLE = "urma_blend_serve.json"
+SERVE_PATH = Path(__file__).resolve().parent.parent / "data" / SERVE_TABLE
 STALE_DAYS = 4
 BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
 
@@ -77,3 +84,33 @@ def stamp(entry, lead_h):
         return
     w, bias = cell["w"], cell["bias"]
     entry["t_urmab"] = round(sum(wi * (float(x) - bi) for wi, x, bi in zip(w, (hr, nb, ec), bias)), 1)
+
+
+def _valid_serve(doc):
+    return None if isinstance(doc, dict) and isinstance(doc.get("serve"), bool) else "serve must be a bool"
+
+
+def serving():
+    """True when t_urmab replaces served t. Fails closed (False) if the switch doc cannot be read."""
+    if not (ENABLED and SERVE):
+        return False
+    try:
+        from .. import runtime_tables
+        doc = runtime_tables.get(SERVE_TABLE, SERVE_PATH, _valid_serve)
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"  ⚠  urma_blend_shadow: serve switch unreadable ({e}); not serving")
+        return False
+    return bool(doc and doc.get("serve"))
+
+
+def apply(entry):
+    """Serve t_urmab in place of t. Keeps the replaced value as t_pre_urmab. True when it fired."""
+    tu, told = entry.get("t_urmab"), entry.get("t")
+    if tu is None or told is None or not serving():
+        return False
+    entry["t_pre_urmab"] = told
+    entry["t_preempted_source_shadow"] = entry.get("t_selector_source")
+    entry["t"] = tu
+    entry["t_applied"] = "urmab"
+    entry["t_selector_source"] = "urmab"
+    return True

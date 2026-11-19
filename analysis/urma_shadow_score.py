@@ -1,6 +1,6 @@
 """Forward scoring of the t_urmab shadow blend against URMA truth (rebuild tier-2 ship test).
 
-Reads GCS forecast_log.json snapshots (each tick: hourly `t` = served, `t_urmab` = shadow), keeps
+Reads GCS forecast_log.json snapshots (each tick: hourly `t` = served, `t_urmab` = shadow; once served (v0.7.114) the old served value is `t_pre_urmab`), keeps
 only ticks stamped with t_urmab (collector v0.7.97, first tick 2026-11-13 11:47Z), leads 6-47h,
 and scores served vs shadow on IDENTICAL rows against the URMA idw truth at the valid hour.
 Per valid day: sum|err| served / shadow. Tier-2 bar: shadow beats served on >= 5 of the last 7
@@ -53,7 +53,7 @@ def score(snaps):
             if tr is None or band is None or h.get("t") is None:
                 continue
             a = per[band][h["v"][:10]]
-            a[0] += abs(h["t"] - tr)
+            a[0] += abs(h.get("t_pre_urmab", h["t"]) - tr)
             a[1] += abs(h["t_urmab"] - tr)
             a[2] += 1
             scored += 1

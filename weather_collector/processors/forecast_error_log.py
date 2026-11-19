@@ -353,6 +353,12 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 if _v is not None:
                     pair[f"forecast_{_lay}"] = round(float(_v), 3)
                     pair[f"error_{_lay}"] = round(float(_v) - obs_f, 3)
+            # v0.7.114 — t served from t_urmab: keep what would have been served, so the
+            # forward score and tripwire still compare against it.
+            _pre = target_hour.get(f"{short}_pre_urmab")
+            if _pre is not None:
+                pair["forecast_pre_urmab"] = round(float(_pre), 3)
+                pair["error_pre_urmab"] = round(float(_pre) - obs_f, 3)
             # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
             # we can compare against Tempest's total-shortwave obs on the same
             # units. `forecast` (direct-beam only) stays the primary forecast —

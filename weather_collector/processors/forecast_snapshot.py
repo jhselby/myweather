@@ -1345,6 +1345,15 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # Rebuild branch — URMA-truth bias-then-blend t, shadow only (stamps t_urmab).
         try:
             urma_blend_shadow.stamp(entry, i)
+            # v0.7.114 — serve it (6-47h). dp follows the new t: Magnus(t, h), same rule as v0.7.72,
+            # so collector.main()'s RH rebuild from (t, dp) still equals the served h.
+            if urma_blend_shadow.apply(entry):
+                if entry.get("h_tblend_scope_shadow") == "field" and entry.get("dp_tblend_scope_shadow") == "field":
+                    _dpv2 = magnus_dew_point_f(entry.get("t"), entry.get("h"))
+                    if _dpv2 is not None:
+                        entry["dp_pre_urmab"] = entry.get("dp")
+                        entry["dp_tblend_shadow"] = _dpv2
+                        entry["dp"] = _dpv2
         except Exception as _e:  # noqa: BLE001
             logging.warning(f"  ⚠  urma_blend_shadow stamp failed ({_e})")
         hours.append(entry)
@@ -1426,7 +1435,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     # was biting yet, but both would have shipped the same
     # scored-a-value-users-never-saw bug the moment a cell cleared.
     # v0.7.57 — + "tblend" (terminal static blend).
-    _WRITEBACK_SOURCES = ("nbm", "l1_blend", "nws", "blend", "tblend")
+    _WRITEBACK_SOURCES = ("nbm", "l1_blend", "nws", "blend", "tblend", "urmab")
     for _f, _array_name in _SELECTOR_WRITEBACK.items():
         _arr = hourly.get(_array_name)
         if not isinstance(_arr, list):

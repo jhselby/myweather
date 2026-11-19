@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.114 • November 19, 2026 (temperature now comes from the new blend)</strong></summary>
+
+- The temperature you see for 6 to 47 hours out now comes from a new blend that corrects each forecast model against an independent analysis of what the air actually did (NOAA's URMA), then weights them. Over the last 5 to 6 days it beat the old temperature by 25% (6-11 h), 30% (12-23 h) and 38% (24-47 h), winning most days in every range.
+- The dew point and humidity follow the new temperature, so they stay consistent.
+- The old temperature is still logged, so the check against it keeps running. A switch can turn the new blend off without a release if it ever scores worse.
+- Nothing changes for the first 5 hours.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.110–v0.7.113 • November 18, 2026 (Weather Underground collection back on, with your own station)</strong></summary>
 
 * **Your own key and station**

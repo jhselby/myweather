@@ -32,6 +32,7 @@ def components():
     tables = _refit_tables()
     station_truth = _flag("analysis/terminal_blend_field_fit.py", "STATION_TRUTH")
     urmab = _flag("weather_collector/processors/urma_blend_shadow.py", "ENABLED")
+    urmab_serve = urmab and _flag("weather_collector/processors/urma_blend_shadow.py", "SERVE")
     rows = [
         ("HRRR cascade", "served", "L1 raw HRRR, L2 station bias, L3 decay, L4 diurnal, specialists.", None),
         ("NBM cascade", "served", "raw NBM, L2_nbm, L3_nbm, L4_nbm, wdp_nbm; runs beside the HRRR cascade.", None),
@@ -40,10 +41,12 @@ def components():
          f"Fit truth: {'station readings (t, h)' if station_truth else 'shrunk observed (station bias toward the model)'}.",
          "analysis/terminal_blend_field_fit.py STATION_TRUTH"),
         ("Selector", "served", "Picks HRRR side, NBM side or blend per field x regime x lead band and writes it into the served arrays.", None),
-        ("t_urmab (URMA-truth blend)", "shadow" if urmab else "off",
-         "Per-source bias vs URMA removed, then HRRR/NBM/ECMWF blended, 6 to 47 h. Logged as forecast_urmab; never served. "
+        ("t_urmab (URMA-truth blend)", "served" if urmab_serve else ("shadow" if urmab else "off"),
+         "Per-source bias vs URMA removed, then HRRR/NBM/ECMWF blended, 6 to 47 h. "
+         + ("Served for t since v0.7.114 (kill switch: runtime_tables/urma_blend_serve.json); the old served t is logged as t_pre_urmab. " if urmab_serve else "Logged as forecast_urmab; never served. ")
+         +
          f"Refit table {'registered' if 'urma_blend_shadow_curated.json' in tables else 'NOT registered'} with the refitter.",
-         "weather_collector/processors/urma_blend_shadow.py ENABLED"),
+         "weather_collector/processors/urma_blend_shadow.py SERVE"),
         ("Scoreboard truth", "served",
          "Tiles grade on the pair-log observed: the station network shrunk toward the model, which is L2's own output. "
          "The truth table grades the same rows on station readings and (t) on URMA.", None),
