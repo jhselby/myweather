@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write mesonet.json: the station map's data (debug page front + section 2f, showcase).
+"""Write mesonet.json: the station map's data (debug page front + section 2f).
 
 Public-safe by construction: neighbour stations carry NO id or name and their position is ROUNDED to
 0.005 deg (~400 m). The homebuilt station is counted and listed in `own`, never placed. Only the live

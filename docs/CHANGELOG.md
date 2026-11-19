@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.122 • November 19, 2026 (showcase page removed)</strong></summary>
+
+- Removed `showcase.html`; it was a parked draft and is no longer published. The station map data (`mesonet.json`) stays, because the debug page reads it.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.115–v0.7.121 • November 19, 2026 (debug page front: Current Conditions, sample size, truth labels, glossary)</strong></summary>
 
 - The headline now says how many days and hourly forecasts the independent scores rest on, and that a window this short is directional.
