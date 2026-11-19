@@ -1143,6 +1143,34 @@
 })();
 </script>
 
+<details open id="sec-current-conditions" style="margin:0 0 18px 0;">
+  <summary style="cursor:pointer;color:#7fb3ff;font-weight:600;padding:6px 0;">Current Conditions</summary>
+<div id="headlineBox">
+  <table class="hb-corr-table">
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Base forecast (L1)</th>
+        <th>Production</th>
+        <th>Correction</th>
+        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
+        <th>Base forecast (L1)</th>
+        <th>Production</th>
+        <th>Correction</th>
+      </tr>
+    </thead>
+    <tbody id="hbCorrRows">
+      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
+    </tbody>
+  </table>
+  <div class="hb-ops-row">
+    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
+    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
+  </div>
+  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
+</div>
+</details>
+
 <section class="fp" id="sec-front">
   <div class="fp-q">Are we beating the forecast you'd normally get?</div>
   <div class="fp-sub">
@@ -1408,34 +1436,7 @@
      One-line headline computed from time_series_diagnostic.json:
      stack-vs-raw MAE delta averaged across fields, net-positive count,
      worst regression called out. Auto-computed each Fitter cycle. -->
-<details style="margin-bottom:14px;">
-  <summary style="cursor:pointer;color:#7fb3ff;font-weight:600;padding:6px 0;">Right now — current conditions <span style="opacity:0.6;font-weight:400;font-size:0.85em;">(click to expand)</span></summary>
-<div id="headlineBox">
-  <div class="hb-title">Right now — current conditions</div>
-  <table class="hb-corr-table">
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-      </tr>
-    </thead>
-    <tbody id="hbCorrRows">
-      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
-    </tbody>
-  </table>
-  <div class="hb-ops-row">
-    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
-    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
-  </div>
-  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
-</div>
-</details>
+
 
 <!-- ============================================================
      SCOREBOARD (2026-08-25 redesign) — replaces old #scorecard-banner
