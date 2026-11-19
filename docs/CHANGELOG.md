@@ -1,5 +1,5 @@
 <details open>
-<summary><strong>v0.7.115–v0.7.116 • November 19, 2026 (debug page front: sample size, truth labels, glossary, a "Now" chip)</strong></summary>
+<summary><strong>v0.7.115–v0.7.117 • November 19, 2026 (debug page front: a Now section, sample size, truth labels, glossary)</strong></summary>
 
 - The headline now says how many days and hourly forecasts the independent scores rest on, and that a window this short is directional.
 - The better / tied / worse count is labelled as a tally of separate per-field tests, each against its own bar and truth.
@@ -7,7 +7,7 @@
 - Roadmap dates are now "earliest decision" dates, not release dates. The temperature item reflects that the new blend is live.
 - A short "terms used here" box explains URMA, NBM, HRRR, the layers and the selector.
 - The rain amount row explains that its red result is a limit of the served pipeline, not a system failure.
-- The empty strip under the page title is gone, and a "Now" chip sits between "← App" and "Scorecard": the current temperature, conditions and wind, with the app's headline and subheadline. It reads the same feed as the app and opens the app when tapped.
+- A new "Now" section opens the debug page, with a "Now" button in the top bar: the current temperature, conditions and wind, with the app's headline and subheadline. It reads the same feed as the app and links to it. The empty strip under the page title is gone.
 
 </details>
 
