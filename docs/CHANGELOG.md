@@ -1,5 +1,5 @@
 <details open>
-<summary><strong>v0.7.115–v0.7.120 • November 19, 2026 (debug page front: Current Conditions, sample size, truth labels, glossary)</strong></summary>
+<summary><strong>v0.7.115–v0.7.121 • November 19, 2026 (debug page front: Current Conditions, sample size, truth labels, glossary)</strong></summary>
 
 - The headline now says how many days and hourly forecasts the independent scores rest on, and that a window this short is directional.
 - The better / tied / worse count is labelled as a tally of separate per-field tests, each against its own bar and truth.
@@ -7,7 +7,7 @@
 - Roadmap dates are now "earliest decision" dates, not release dates. The temperature item reflects that the new blend is live.
 - A short "terms used here" box explains URMA, NBM, HRRR, the layers and the selector.
 - The rain amount row explains that its red result is a limit of the served pipeline, not a system failure.
-- A "Current Conditions" section opens the debug page: the current temperature, conditions and wind with the app's headline and subheadline, then the table of current values (base forecast, production, correction per field). Its section header matches the rest of the page, and so does the scorecard question's. The empty strip under the page title is gone.
+- A "Current Conditions" section opens the debug page: the current temperature, conditions and wind with the app's headline and subheadline, then the table of current values (base forecast, production, correction per field). Its section header matches the rest of the page, and so does the scorecard's (now just "Scorecard", with the 8 better / 1 tied / 1 worse tally directly under it and the explainer behind a caret). "What's new & next" and "How it works" are their own sections, no longer inside the scorecard. The empty strip under the page title is gone.
 
 </details>
 
