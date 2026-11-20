@@ -284,12 +284,16 @@ def main():
     with open(OUT_JSON, "w") as fout:
         json.dump(payload, fout, indent=2)
     print(f"wrote {OUT_JSON} (days {payload['first_day']}..{payload['last_day']})")
-    try:
-        from weather_collector.gcs_io import upload_json
-        upload_json(payload, "truth_compare.json", "truth_compare.json")
-        print("  ✓ Published to gs://myweather-data/truth_compare.json")
-    except Exception as e:
-        print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
+    if os.environ.get("MYWEATHER_CACHE_MODE") != "gcs":
+        # 11-20: the local digest run overwrote the publisher's hourly copy with local truth.
+        print("  · local run: not published (the publisher owns gs://myweather-data/truth_compare.json)")
+    else:
+        try:
+            from weather_collector.gcs_io import upload_json
+            upload_json(payload, "truth_compare.json", "truth_compare.json")
+            print("  ✓ Published to gs://myweather-data/truth_compare.json")
+        except Exception as e:
+            print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
     for f, v in payload["fields"].items():
         two, now, l2w = v["lead_2h_plus"], v["nowcast_0_1h"], v["lead_2_5h"]
         if not two:

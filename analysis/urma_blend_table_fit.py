@@ -77,10 +77,47 @@ def _save_cloud(new, name=GCS_STORE):
     upload_json(store, name, "urma truth store")
 
 
+LOCAL_AUX_VARS = ("DPT", "TCDC", "WIND")   # urma_field_score + truth_compare read these locally
+
+
 def update_aux():
-    """Cloud only: keep the URMA dew point and cloud cover stores current."""
+    """Keep the URMA dew point and cloud cover stores current (cloud), or append DPT/TCDC/WIND
+    to urma_cell.jsonl (local digest; before 11-20 only TMP advanced, so local h/dp/ws/cc
+    scores on URMA froze at the last manual backfill, 11-13)."""
+    if not _cloud():
+        for var in LOCAL_AUX_VARS:
+            _update_aux_local(var)
+        return
     for var, store in AUX_STORES:
         _update_aux(var, store)
+
+
+def _update_aux_local(var):
+    """Append missing hours of `var` to URMA_FILE, same window/lag/cap as TMP. Best effort."""
+    try:
+        from analysis.urma_truth_backfill import fetch
+        have = set()
+        if URMA_FILE.exists():
+            for line in open(URMA_FILE):
+                if f'"{var}"' in line:
+                    have.add(json.loads(line)["valid"][:13])
+        now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        t = now - timedelta(days=WIN + 2)
+        if have:
+            t = max(t, datetime.strptime(max(have) + ":00", "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc) + timedelta(hours=1))
+        n = 0
+        while t <= now - timedelta(hours=URMA_LAG_H) and n < MAX_FETCH_H:
+            k = t.strftime("%Y-%m-%dT%H")
+            if k not in have:
+                nb = fetch(t, var)
+                if nb is not None:
+                    with open(URMA_FILE, "a") as f:
+                        f.write(json.dumps({"valid": t.strftime("%Y-%m-%dT%H:00Z"), "var": var, "nb": nb}) + "\n")
+                    n += 1
+            t += timedelta(hours=1)
+        print(f"  URMA {var} (local): fetched {n} new hours")
+    except Exception as e:  # noqa: BLE001
+        print(f"  URMA {var} local update failed ({type(e).__name__}: {e})")
 
 
 def _update_aux(var, store):
