@@ -939,6 +939,54 @@ def sustained_vs_fresh(series_for_field, tail_days, window_days):
     return pct, n_tot
 
 
+def urma_t_sentry_series():
+    """t Prod-vs-Raw per valid day on URMA truth, from the local pair log.
+
+    Returns ({"raw": {day: {mae, n}}, "prod_real": {...}}, sorted days) or None
+    when the pair log or URMA truth is missing. Raw = forecast_l1 (raw HRRR),
+    prod = forecast_{applied_layer}, same rows, truth = URMA 2 m TMP at the
+    valid hour (analysis/truth_compare._urma_t)."""
+    log = Path.home() / ".cache" / "myweather" / "forecast_error_log.jsonl"
+    if not log.exists():
+        return None
+    try:
+        sys.path.insert(0, str(HERE.parent.parent))
+        from analysis.truth_compare import _urma_t, _utc_hour
+        truth = _urma_t()
+    except Exception:
+        return None
+    if not truth:
+        return None
+    acc = {"raw": {}, "prod_real": {}}
+    rx = re.compile(r'"field": ?"t"')
+    with open(log) as fh:
+        for line in fh:
+            if not rx.search(line):
+                continue
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            tr = truth.get(_utc_hour(r.get("valid_time") or ""))
+            ap = r.get("applied_layer")
+            prod = r.get(f"forecast_{ap}") if ap else None
+            if prod is None:
+                prod = r.get("forecast")
+            raw = r.get("forecast_l1")
+            if tr is None or prod is None or raw is None:
+                continue
+            day = r["valid_time"][:10]
+            for key, v in (("raw", raw), ("prod_real", prod)):
+                a = acc[key].setdefault(day, {"sum": 0.0, "n": 0})
+                a["sum"] += abs(v - tr)
+                a["n"] += 1
+    for s in acc.values():
+        for a in s.values():
+            a["mae"] = a.pop("sum") / a["n"]
+    days = sorted(acc["raw"])
+    return (acc, days) if days else None
+
+
 def regression_sentry():
     """Return list of alert lines classifying each field's Prod-vs-Raw state
     into one of four verdicts by comparing a sustained (7d) vs fresh (3d)
@@ -967,10 +1015,17 @@ def regression_sentry():
     lines = []
     healing = []
     watch = []
+    urma_t = urma_t_sentry_series()
     for field in sorted(series.keys()):
         sf = series.get(field) or {}
-        s_pct, s_n = sustained_vs_fresh(sf, days, SENTRY_SUSTAINED_DAYS)
-        f_pct, f_n = sustained_vs_fresh(sf, days, SENTRY_FRESH_DAYS)
+        if field == "t" and urma_t:
+            # v0.7.123: t is served from t_urmab (fit to URMA) since v0.7.114; the pair log's
+            # observed blend is partly model, so scoring t on it fired a false FRESH FIRE (11-20).
+            sf, days_f, field = urma_t[0], urma_t[1], "t (URMA truth)"
+        else:
+            days_f = days
+        s_pct, s_n = sustained_vs_fresh(sf, days_f, SENTRY_SUSTAINED_DAYS)
+        f_pct, f_n = sustained_vs_fresh(sf, days_f, SENTRY_FRESH_DAYS)
         if s_pct is None and f_pct is None:
             continue
 
