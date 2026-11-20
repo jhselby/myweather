@@ -1,5 +1,5 @@
 {
- "version": "v0.7.125",
+ "version": "v0.7.126",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.126",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "wind shadow extended to 0-5h",
+   "change": "ws_urmab shadow extended to 0-47h (was 6-47h), not served."
+  },
   {
    "version": "v0.7.125",
    "date": "November 20, 2026",
@@ -194,6 +201,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.126",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "wind shadow extended to 0-5h"
+  },
+  {
    "version": "v0.7.125",
    "date": "November 20, 2026",
    "iso": "2026-11-20",
@@ -258,12 +271,6 @@
    "date": "November 15, 2026",
    "iso": "2026-11-15",
    "title": "debug page brought current"
-  },
-  {
-   "version": "v0.7.105",
-   "date": "November 15, 2026",
-   "iso": "2026-11-15",
-   "title": "NBM one hour fresher"
   }
  ],
  "layers": {

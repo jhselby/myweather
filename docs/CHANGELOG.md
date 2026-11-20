@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.126 • November 20, 2026 (wind shadow extended to 0-5h)</strong></summary>
+
+- The shadow wind forecast `ws_urmab` now covers 0-5h as well as 6-47h. On URMA wind over the 18 holdout days, the 0-5h blend beat served wind by 10.6% and raw NBM by 9.7%, both clearing the bar; served wind at 0-5h (corrected with our sheltered stations) only ties raw NBM. Still shadow: nothing served changes.
+- Humidity re-checked on current URMA dew point truth (18 holdout days): the URMA humidity blend still loses to served humidity in every band, so humidity stays as it is.
+- Architecture: ws_urmab shadow extended to 0-47h (was 6-47h), not served.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.125 • November 20, 2026 (gust blend fitted to URMA, shadow)</strong></summary>
 
 - Scored against URMA's 10 m gust analysis (the independent truth Joe approved for wind on 11-20), the served gust is 20-50% worse than raw NBM and runs about 3 mph low. Served gusts are trained on our station gusts, and those anemometers are sheltered (they read 0.77x URMA).

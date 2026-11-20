@@ -1,12 +1,12 @@
 {
-  "fitted_at": "2026-11-20T13:18",
+  "fitted_at": "2026-11-20T22:32",
   "window_days": 14,
   "truth": "urma_idw_4cell",
   "days": [
     "2026-11-06",
     "2026-11-19"
   ],
-  "n_rows_kept": 41843,
+  "n_rows_kept": 43853,
   "fields": {
     "t": {
       "bands": {
@@ -56,6 +56,20 @@
     },
     "ws": {
       "bands": {
+        "0-5": {
+          "bias": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "w": [
+            0.5,
+            0.4,
+            0.1
+          ],
+          "n": 2010,
+          "mae_corrected_blend": 1.348
+        },
         "6-11": {
           "bias": [
             0.0,

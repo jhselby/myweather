@@ -28,7 +28,7 @@ SERVE_TABLE = "urma_blend_serve.json"
 SERVE_PATH = Path(__file__).resolve().parent.parent / "data" / SERVE_TABLE
 STALE_DAYS = 4
 BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
-WG_BANDS = (("0-5", 0, 6),) + BANDS   # v0.7.125: the wg shadow also covers 0-5h
+WG_BANDS = (("0-5", 0, 6),) + BANDS   # v0.7.125 wg / v0.7.126 ws: the wind shadows also cover 0-5h
 
 
 def validate_table(doc):
@@ -80,7 +80,7 @@ def stamp(entry, lead_h):
         return
     if not doc or not _fresh(doc):
         return
-    for f, floor, bands in (("t", None, BANDS), ("ws", 0.0, BANDS), ("wg", 0.0, WG_BANDS)):
+    for f, floor, bands in (("t", None, BANDS), ("ws", 0.0, WG_BANDS), ("wg", 0.0, WG_BANDS)):
         band = _band(lead_h, bands)
         cell = ((doc["fields"].get(f) or {}).get("bands") or {}).get(band) if band else None
         if not cell:

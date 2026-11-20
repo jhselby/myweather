@@ -39,7 +39,7 @@ def snapshots(path):
 
 def score(snaps, field="t"):
     U = urma_idw() if field == "t" else urma_wind("GUST" if field == "wg" else "WIND")
-    bands = ((("0-5", 0, 6),) + BANDS) if field == "wg" else BANDS
+    bands = ((("0-5", 0, 6),) + BANDS) if field in ("ws", "wg") else BANDS
     per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
     ticks = scored = 0
     for s in snaps:

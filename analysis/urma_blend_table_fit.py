@@ -251,10 +251,10 @@ def _fit_bands_2way(field, rows, bands_def):
     return bands, used
 
 
-def _fit_bands(field, rows, eh, use_bias):
+def _fit_bands(field, rows, eh, use_bias, bands_def=BANDS):
     """Per band: bias (or zeros) and simplex weights on (HRRR, NBM, ECMWF) errors vs URMA."""
     bands, used = {}, 0
-    for b, lo, hi in BANDS:
+    for b, lo, hi in bands_def:
         e = []
         for vt, lead, hr, nb, tr in rows:
             if not lo <= lead < hi:
@@ -292,10 +292,11 @@ def fit():
     fields = {}
     bands, used = _fit_bands("t", _rows("t", truth, dset), eh, use_bias=True)
     fields["t"] = {"bands": bands}
+    # v0.7.126: ws shadow also covers 0-5h (holdout vs served +10.6%, vs raw NBM +9.7%, both pass).
     # v0.7.123 ws shadow (ws_urmab): weights only on URMA 10 m wind. Walk-forward 76 days
     # (analysis/urma_blend_wf_ws.py): +10..+15% vs served every band; bias step lost on holdout.
     wind = load_wind()
-    wbands, wused = _fit_bands("ws", _rows("ws", wind, dset), eh, use_bias=False) if wind else ({}, 0)
+    wbands, wused = _fit_bands("ws", _rows("ws", wind, dset), eh, use_bias=False, bands_def=WG_BANDS) if wind else ({}, 0)
     if wbands:
         fields["ws"] = {"bands": wbands}
     # v0.7.125 wg shadow (wg_urmab): debiased HRRR/NBM 2-way on URMA 10 m gust, 0-47h. Walk-forward
