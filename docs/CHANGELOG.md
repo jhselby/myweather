@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.124 • November 20, 2026 (rain truth: hour totals, not a one-minute snapshot)</strong></summary>
+
+- Rain is now scored on how much fell in the past hour at the Tempest stations (median of the wet stations, wet when at least 3 and a quarter of reporters are wet). Before, "did it rain" was the rain rate at the moment of the :07 collector run, and the amount was the highest instantaneous rate at any one station.
+- The old truth missed rain outside that minute. Over 11-08..11-20 it saw 5 wet hours where hour totals show 13, so the rain-chance forecast looked badly overconfident (60-80% forecasts verified 26%); on hour totals they verify 70%.
+- Scores for rain chance and rain amount will move over the next two weeks as old rows roll off. That change comes from fixing the measurement, not from a better forecast. Nothing served changes.
+- Architecture: rain truth (pp, pa) = Tempest past-hour accumulation, median of wet stations; was the instantaneous rate at the tick.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.123 • November 20, 2026 (wind blend fitted to URMA, shadow; analysis truth fixes)</strong></summary>
 
 - New shadow wind forecast `ws_urmab` at 6-47h: HRRR, NBM and ECMWF wind blended with weights fitted daily on URMA 10 m wind (the independent NOAA analysis), not on our own observed blend. It is logged and scored, not served. Walk-forward over 76 days beat the served wind by 10-15% in every lead band; on the 18 holdout days the gain was +3-5% (6-11h passes the bar). It ships only after forward days beat served, the way t_urmab did.

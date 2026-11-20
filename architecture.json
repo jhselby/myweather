@@ -1,5 +1,5 @@
 {
- "version": "v0.7.123",
+ "version": "v0.7.124",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.124",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "rain truth: hour totals, not a one-minute snapshot",
+   "change": "rain truth (pp, pa) = Tempest past-hour accumulation, median of wet stations; was the instantaneous rate at the tick."
+  },
   {
    "version": "v0.7.123",
    "date": "November 20, 2026",
@@ -180,6 +187,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.124",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "rain truth: hour totals, not a one-minute snapshot"
+  },
+  {
    "version": "v0.7.123",
    "date": "November 20, 2026",
    "iso": "2026-11-20",
@@ -244,12 +257,6 @@
    "date": "November 15, 2026",
    "iso": "2026-11-15",
    "title": "solar forecast past 33 hours no longer drops NBM"
-  },
-  {
-   "version": "v0.7.103",
-   "date": "November 15, 2026",
-   "iso": "2026-11-15",
-   "title": "NBM now reaches the full 47-hour forecast"
   }
  ],
  "layers": {

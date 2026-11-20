@@ -33,11 +33,41 @@ def _tempest_precip_rates_in_hr(weather_data):
     return rates
 
 
+def _tempest_accum_1h_in(weather_data):
+    """Fresh valid Tempest stations' rain over the past hour, inches (precip_accum_last_1hr).
+    Read at the :07 tick it covers ~the hour ending at the valid hour, the same window the
+    hourly forecast (precipitation, precipitation_probability) describes."""
+    out = []
+    for st in ((weather_data.get("tempest") or {}).get("stations") or []):
+        if (st.get("valid") is not False and st.get("precip_accum_1hr_in") is not None
+                and not ((st.get("age_minutes") or 0) > 10)):
+            out.append(st["precip_accum_1hr_in"])
+    return out
+
+
+def hour_rain_in(weather_data):
+    """v0.7.124 rain truth for pp (occurrence) and pa (amount): past-hour accumulation, wet when
+    >= 3 stations and >= 25% of reporters are wet, value = median wet accumulation; 0.0 dry;
+    None with < 3 reporting. The old truth was the instantaneous rate at the tick (pp) and the
+    max instantaneous rate over stations (pa): it missed rain outside minute :07, so served pp
+    looked ~2x overconfident (60-80% forecasts verified 26% vs 70% on hour totals, 11-08..11-20)."""
+    acc = _tempest_accum_1h_in(weather_data)
+    if len(acc) < 3:
+        return None
+    pos = sorted(a for a in acc if a > 0)
+    if len(pos) >= 3 and len(pos) >= 0.25 * len(acc):
+        return pos[len(pos) // 2]
+    return 0.0
+
+
 def _current_hour_precip_in(weather_data, current_hour_iso):
     """Observed precip rate from WU rain gauges (real), falling back to
     the forecast hourly precipitation array (already in inches — OM_UNITS
     requests precipitation_unit="inch"; a stale /25.4 here used to
     under-report the fallback 25×)."""
+    hr = hour_rain_in(weather_data)
+    if hr is not None:
+        return hr
     wu_rate = weather_data.get("wu_stations", {}).get("precip_rate_in")
     if wu_rate is not None:
         return wu_rate
@@ -136,7 +166,9 @@ def _gather_current_observation(weather_data, current_hour_iso):
     pr_rates = [s.get("precip_rate_in") for s in (wu.get("stations") or [])
                 if s.get("precip_rate_in") is not None]
     pr_rates = pr_rates + _tempest_precip_rates_in_hr(weather_data)
-    precip_amount_in = max(pr_rates) if pr_rates else None
+    precip_amount_in = hour_rain_in(weather_data)
+    if precip_amount_in is None:   # < 3 Tempest reporting: old instantaneous-rate fallback
+        precip_amount_in = max(pr_rates) if pr_rates else None
     return {
         "corrected_temp": hyp.get("corrected_temp"),
         "temp_stations": hyp.get("station_temp"),
