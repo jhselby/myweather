@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.123 • November 20, 2026 (wind blend fitted to URMA, shadow; analysis truth fixes)</strong></summary>
+
+- New shadow wind forecast `ws_urmab` at 6-47h: HRRR, NBM and ECMWF wind blended with weights fitted daily on URMA 10 m wind (the independent NOAA analysis), not on our own observed blend. It is logged and scored, not served. Walk-forward over 76 days beat the served wind by 10-15% in every lead band; on the 18 holdout days the gain was +3-5% (6-11h passes the bar). It ships only after forward days beat served, the way t_urmab did.
+- Wind is now scored on URMA. The one live waterfront anemometer (Neptune Rd) agreed with URMA worst of 17 stations (correlation 0.35), so it cannot serve as the truth on its own.
+- The refitter keeps a cloud URMA wind store (`urma_truth_wind.json`) alongside temperature, dew point and cloud cover.
+- Digest fixes: the t regression alarm is scored on URMA; the local digest keeps URMA dew point, wind and cloud cover current (they had frozen on 11-13/14); a local run no longer overwrites the published truth_compare.json.
+- Architecture: ws_urmab shadow (HRRR/NBM/ECMWF wind weights fitted on URMA 10 m wind, 6-47h, not served); wind scored on URMA.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.122 • November 19, 2026 (showcase page removed)</strong></summary>
 
 - Removed `showcase.html`; it was a parked draft and is no longer published. The station map data (`mesonet.json`) stays, because the debug page reads it.

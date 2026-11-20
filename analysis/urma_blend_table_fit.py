@@ -1,4 +1,4 @@
-"""Daily fit of the URMA-truth bias-then-blend table for t (shadow; see
+"""Daily fit of the URMA-truth blend table for t (bias-then-blend, served) and ws (weights only, shadow; see
 weather_collector/processors/urma_blend_shadow.py).
 
 Per lead band (6-11, 12-23, 24-47h): over the last 14 valid days that have URMA truth,
@@ -36,6 +36,11 @@ BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
 GRID3 = np.asarray(tb.GRID3)
 
 
+def _idw_raw(nb):
+    w = np.array([1 / max(x[2], 0.1) ** 2 for x in nb])
+    return float(sum(wi * x[3] for wi, x in zip(w, nb)) / w.sum())
+
+
 def _idw_f(nb):
     w = np.array([1 / max(x[2], 0.1) ** 2 for x in nb])
     return ((sum(wi * x[3] for wi, x in zip(w, nb)) / w.sum()) - 273.15) * 9 / 5 + 32
@@ -44,7 +49,9 @@ def _idw_f(nb):
 GCS_STORE = "urma_truth_t.json"   # cloud mode: {"YYYY-MM-DDTHH": [[lat, lon, km, K] x4]}, ~50 KB for 14 days
 GCS_STORE_DPT = "urma_truth_dpt.json"   # same shape, dew point (v0.7.100): h/dp scored on URMA; not used by the fit
 GCS_STORE_TCDC = "urma_truth_tcdc.json"   # same shape, total cloud cover % (v0.7.102): cc scored on URMA; not used by the fit
-AUX_STORES = (("DPT", GCS_STORE_DPT), ("TCDC", GCS_STORE_TCDC))
+GCS_STORE_WIND = "urma_truth_wind.json"   # same shape, 10 m wind m/s (v0.7.123): ws_urmab fit + ws scored on URMA
+AUX_STORES = (("DPT", GCS_STORE_DPT), ("TCDC", GCS_STORE_TCDC), ("WIND", GCS_STORE_WIND))
+MS_TO_MPH = 2.23694
 KEEP_DAYS = 25
 
 
@@ -182,6 +189,70 @@ def best_w(e3):
     return [float(x) for x in GRID3[int(np.abs(e3 @ GRID3.T).sum(0).argmin())]]
 
 
+def load_wind():
+    """{UTC 'YYYY-MM-DDTHH': URMA 10 m wind, mph} from the cloud store or the local file."""
+    out = {}
+    if _cloud():
+        from weather_collector.gcs_io import load_json
+        for k, nb in (load_json(GCS_STORE_WIND) or {}).items():
+            out[k] = _idw_raw(nb) * MS_TO_MPH
+    elif URMA_FILE.exists():
+        for line in open(URMA_FILE):
+            if '"WIND"' in line:
+                r = json.loads(line)
+                out[r["valid"][:13]] = _idw_raw(r["nb"]) * MS_TO_MPH
+    return out
+
+
+def _rows(field, truth, dset):
+    """(valid_time, lead, hrrr, nbm, truth) for `field` pair-log rows on the fit days."""
+    rows = []
+    with open(cached_path(PAIR_LOG_URL)) as fin:
+        for line in fin:
+            if f'"field": "{field}"' not in line and f'"field":"{field}"' not in line:
+                continue
+            r = json.loads(line)
+            vt = r.get("valid_time") or ""
+            if r.get("field") != field or vt[:10] not in dset or r.get("lead_h") is None:
+                continue
+            hr, nb = r.get("forecast_l1"), r.get("forecast_raw_nbm")
+            if hr is None or nb is None:
+                continue
+            u = datetime.strptime(vt[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=ET).astimezone(timezone.utc)
+            tr = truth.get(u.strftime("%Y-%m-%dT%H"))
+            if tr is None:
+                continue
+            rows.append((vt, int(r["lead_h"]), float(hr), float(nb), tr))
+    return rows
+
+
+def _fit_bands(field, rows, eh, use_bias):
+    """Per band: bias (or zeros) and simplex weights on (HRRR, NBM, ECMWF) errors vs URMA."""
+    bands, used = {}, 0
+    for b, lo, hi in BANDS:
+        e = []
+        for vt, lead, hr, nb, tr in rows:
+            if not lo <= lead < hi:
+                continue
+            fe = (eh.get(tb._ecmwf_key(vt)) or {}).get(field)
+            fe = fe[tb._ecmwf_day(lead)] if fe else None
+            if fe is None:
+                continue
+            e.append((hr - tr, nb - tr, float(fe) - tr))
+        if len(e) < MIN_N:
+            print(f"  {field} {b}: n={len(e)} < {MIN_N}, no cell")
+            continue
+        e = np.asarray(e)
+        bias = e.mean(0) if use_bias else np.zeros(3)
+        w = best_w(e - bias)
+        used += len(e)
+        bands[b] = {"bias": [round(float(x), 3) for x in bias], "w": w, "n": len(e),
+                    "mae_corrected_blend": round(float(np.abs((e - bias) @ np.asarray(w)).mean()), 3)}
+        print(f"  {field} {b}: n={len(e):,} bias(h,n,e)={[round(float(x), 2) for x in bias]} w={w} "
+              f"in-sample MAE {bands[b]['mae_corrected_blend']}")
+    return bands, used
+
+
 def fit():
     truth = load_truth()
     update_truth(truth)
@@ -192,52 +263,21 @@ def fit():
         by_day[d] = by_day.get(d, 0) + 1
     days = sorted(d for d, n in by_day.items() if n >= MIN_HOURS_PER_DAY)[-WIN:]
     dset = set(days)
-    rows = []
-    with open(cached_path(PAIR_LOG_URL)) as fin:
-        for line in fin:
-            if '"field": "t"' not in line and '"field":"t"' not in line:
-                continue
-            r = json.loads(line)
-            vt = r.get("valid_time") or ""
-            if r.get("field") != "t" or vt[:10] not in dset or r.get("lead_h") is None:
-                continue
-            hr, nb = r.get("forecast_l1"), r.get("forecast_raw_nbm")
-            if hr is None or nb is None:
-                continue
-            u = datetime.strptime(vt[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=ET).astimezone(timezone.utc)
-            tr = truth.get(u.strftime("%Y-%m-%dT%H"))
-            if tr is None:
-                continue
-            rows.append((vt, int(r["lead_h"]), float(hr), float(nb), tr))
     eh = tb.ecmwf_history(days[0], days[-1]) if days else {}
-    bands = {}
-    used = 0
-    for b, lo, hi in BANDS:
-        e = []
-        for vt, lead, hr, nb, tr in rows:
-            if not lo <= lead < hi:
-                continue
-            fe = (eh.get(tb._ecmwf_key(vt)) or {}).get("t")
-            fe = fe[tb._ecmwf_day(lead)] if fe else None
-            if fe is None:
-                continue
-            e.append((hr - tr, nb - tr, float(fe) - tr))
-        if len(e) < MIN_N:
-            print(f"  {b}: n={len(e)} < {MIN_N}, no cell")
-            continue
-        e = np.asarray(e)
-        bias = e.mean(0)
-        w = best_w(e - bias)
-        used += len(e)
-        bands[b] = {"bias": [round(float(x), 3) for x in bias], "w": w, "n": len(e),
-                    "mae_corrected_blend": round(float(np.abs((e - bias) @ np.asarray(w)).mean()), 3)}
-        print(f"  {b}: n={len(e):,} bias(h,n,e)={[round(float(x), 2) for x in bias]} w={w} "
-              f"in-sample MAE {bands[b]['mae_corrected_blend']}")
+    fields = {}
+    bands, used = _fit_bands("t", _rows("t", truth, dset), eh, use_bias=True)
+    fields["t"] = {"bands": bands}
+    # v0.7.123 ws shadow (ws_urmab): weights only on URMA 10 m wind. Walk-forward 76 days
+    # (analysis/urma_blend_wf_ws.py): +10..+15% vs served every band; bias step lost on holdout.
+    wind = load_wind()
+    wbands, wused = _fit_bands("ws", _rows("ws", wind, dset), eh, use_bias=False) if wind else ({}, 0)
+    if wbands:
+        fields["ws"] = {"bands": wbands}
     out = {"fitted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"), "window_days": WIN,
            "truth": "urma_idw_4cell", "days": [days[0], days[-1]] if days else None,
-           "n_rows_kept": used, "fields": {"t": {"bands": bands}},
-           "notes": "SHADOW: stamps t_urmab only. Sources: HRRR L1, NBM raw, ECMWF raw; "
-                    "out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."}
+           "n_rows_kept": used + wused, "fields": fields,
+           "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0). "
+                    "Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."}
     with open(OUT_PATH, "w") as f:
         json.dump(out, f, indent=2)
     print(f"  wrote {OUT_PATH}")

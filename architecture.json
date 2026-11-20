@@ -1,5 +1,5 @@
 {
- "version": "v0.7.122",
+ "version": "v0.7.123",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.123",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "wind blend fitted to URMA, shadow; analysis truth fixes",
+   "change": "ws_urmab shadow (HRRR/NBM/ECMWF wind weights fitted on URMA 10 m wind, 6-47h, not served); wind scored on URMA."
+  },
   {
    "version": "v0.7.104",
    "date": "November 15, 2026",
@@ -173,6 +180,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.123",
+   "date": "November 20, 2026",
+   "iso": "2026-11-20",
+   "title": "wind blend fitted to URMA, shadow; analysis truth fixes"
+  },
+  {
    "version": "v0.7.122",
    "date": "November 19, 2026",
    "iso": "2026-11-19",
@@ -237,12 +250,6 @@
    "date": "November 15, 2026",
    "iso": "2026-11-15",
    "title": "NBM now reaches the full 47-hour forecast"
-  },
-  {
-   "version": "v0.7.102",
-   "date": "November 15, 2026",
-   "iso": "2026-11-15",
-   "title": "cloud cover scored on an independent truth"
   }
  ],
  "layers": {
@@ -278,66 +285,66 @@
    "cells": {
     "cc": {
      "0-5": {
-      "shift": 7.36,
+      "shift": 7.176,
       "verdict": "SKIP",
-      "improve_pct": -0.38,
-      "n": 13088
+      "improve_pct": -0.02,
+      "n": 13259
      },
      "5-20": {
-      "shift": 9.332,
+      "shift": 8.893,
       "verdict": "SKIP",
-      "improve_pct": -19.09,
-      "n": 3825
+      "improve_pct": -19.75,
+      "n": 3965
      },
      "20-50": {
-      "shift": -3.252,
+      "shift": -3.932,
       "verdict": "SKIP",
-      "improve_pct": 3.07,
-      "n": 2074
+      "improve_pct": 3.93,
+      "n": 2130
      },
      "50-80": {
-      "shift": -29.224,
+      "shift": -29.573,
       "verdict": "SHIP",
-      "improve_pct": 29.06,
-      "n": 1860
+      "improve_pct": 29.45,
+      "n": 1877
      },
      "80-95": {
-      "shift": -48.771,
+      "shift": -49.404,
       "verdict": "SHIP",
-      "improve_pct": 43.08,
-      "n": 1400
+      "improve_pct": 43.83,
+      "n": 1428
      },
      "95-100": {
-      "shift": -38.324,
+      "shift": -36.489,
       "verdict": "SHIP",
-      "improve_pct": 13.07,
-      "n": 12313
+      "improve_pct": 10.38,
+      "n": 11853
      }
     },
     "cl": {
      "0-5": {
-      "shift": 2.234,
+      "shift": 2.241,
       "verdict": "SKIP",
-      "improve_pct": -43.46,
-      "n": 21353
+      "improve_pct": -44.68,
+      "n": 21521
      },
      "5-20": {
-      "shift": 4.339,
+      "shift": 5.071,
       "verdict": "SKIP",
-      "improve_pct": -16.5,
-      "n": 4223
+      "improve_pct": -18.42,
+      "n": 4010
      },
      "20-50": {
-      "shift": -3.683,
+      "shift": -3.67,
       "verdict": "SKIP",
-      "improve_pct": 3.93,
-      "n": 1904
+      "improve_pct": 3.91,
+      "n": 1903
      },
      "50-80": {
-      "shift": -27.981,
+      "shift": -27.945,
       "verdict": "SHIP",
-      "improve_pct": 18.72,
-      "n": 1399
+      "improve_pct": 18.68,
+      "n": 1398
      },
      "80-95": {
       "shift": -34.441,
@@ -346,84 +353,84 @@
       "n": 759
      },
      "95-100": {
-      "shift": -29.231,
+      "shift": -29.216,
       "verdict": "SKIP",
-      "improve_pct": -12.32,
-      "n": 4922
+      "improve_pct": -12.34,
+      "n": 4921
      }
     },
     "cm": {
      "0-5": {
-      "shift": 5.888,
+      "shift": 5.874,
       "verdict": "SKIP",
-      "improve_pct": -53.04,
-      "n": 22684
+      "improve_pct": -53.07,
+      "n": 22727
      },
      "5-20": {
-      "shift": 8.186,
+      "shift": 8.124,
       "verdict": "SKIP",
-      "improve_pct": -11.9,
-      "n": 2174
+      "improve_pct": -11.75,
+      "n": 2175
      },
      "20-50": {
-      "shift": -10.37,
+      "shift": -10.538,
       "verdict": "SHIP",
-      "improve_pct": 13.83,
-      "n": 1272
+      "improve_pct": 14.06,
+      "n": 1278
      },
      "50-80": {
-      "shift": -39.417,
+      "shift": -39.401,
       "verdict": "SHIP",
-      "improve_pct": 41.08,
-      "n": 1295
+      "improve_pct": 40.73,
+      "n": 1286
      },
      "80-95": {
-      "shift": -63.848,
+      "shift": -63.655,
       "verdict": "SHIP",
-      "improve_pct": 60.14,
-      "n": 830
+      "improve_pct": 59.94,
+      "n": 824
      },
      "95-100": {
-      "shift": -72.448,
+      "shift": -72.081,
       "verdict": "SHIP",
-      "improve_pct": 60.73,
-      "n": 6305
+      "improve_pct": 60.41,
+      "n": 6222
      }
     },
     "ch": {
      "0-5": {
-      "shift": 4.477,
+      "shift": 4.377,
       "verdict": "SKIP",
-      "improve_pct": -37.87,
-      "n": 22163
+      "improve_pct": -38.11,
+      "n": 22392
      },
      "5-20": {
-      "shift": 0.018,
+      "shift": -0.055,
       "verdict": "SKIP",
-      "improve_pct": -0.07,
-      "n": 2730
+      "improve_pct": 0.14,
+      "n": 2879
      },
      "20-50": {
-      "shift": -23.512,
+      "shift": -23.58,
       "verdict": "SHIP",
-      "improve_pct": 45.54,
-      "n": 1388
+      "improve_pct": 46.37,
+      "n": 1390
      },
      "50-80": {
-      "shift": -50.921,
+      "shift": -51.04,
       "verdict": "SHIP",
-      "improve_pct": 67.2,
-      "n": 7438
+      "improve_pct": 66.49,
+      "n": 7005
      },
      "80-95": {
-      "shift": -62.894,
+      "shift": -62.962,
       "verdict": "SHIP",
-      "improve_pct": 72.56,
-      "n": 841
+      "improve_pct": 72.65,
+      "n": 846
      }
     }
    },
-   "fit_generated_at": "2026-11-19T12:09:19.680361+00:00"
+   "fit_generated_at": "2026-11-20T11:34:57.993803+00:00"
   }
  }
 }

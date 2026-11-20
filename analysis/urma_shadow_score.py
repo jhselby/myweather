@@ -1,4 +1,5 @@
-"""Forward scoring of the t_urmab shadow blend against URMA truth (rebuild tier-2 ship test).
+"""Forward scoring of the t_urmab blend (served since v0.7.114) and the ws_urmab shadow (v0.7.123,
+URMA 10 m wind) against URMA truth (rebuild tier-2 ship test).
 
 Reads GCS forecast_log.json snapshots (each tick: hourly `t` = served, `t_urmab` = shadow; once served (v0.7.114) the old served value is `t_pre_urmab`), keeps
 only ticks stamped with t_urmab (collector v0.7.97, first tick 2026-11-13 11:47Z), leads 6-47h,
@@ -21,6 +22,7 @@ from zoneinfo import ZoneInfo
 
 from analysis.ship_rule import day_block_gain
 from analysis.urma_blend_wf import urma_idw
+from analysis.urma_blend_wf_ws import urma_wind
 
 ET = ZoneInfo("America/New_York")
 BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
@@ -35,12 +37,12 @@ def snapshots(path):
         return json.load(open(dst))["snapshots"]
 
 
-def score(snaps):
-    U = urma_idw()
+def score(snaps, field="t"):
+    U = urma_idw() if field == "t" else urma_wind()
     per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in BANDS}
     ticks = scored = 0
     for s in snaps:
-        hs = [h for h in s["hours"] if "t_urmab" in h]
+        hs = [h for h in s["hours"] if f"{field}_urmab" in h]
         if not hs:
             continue
         ticks += 1
@@ -50,19 +52,24 @@ def score(snaps):
             lead = (v - run).total_seconds() / 3600
             tr = U.get(v.astimezone(timezone.utc).strftime("%Y-%m-%dT%H"))
             band = next((n for n, lo, hi in BANDS if lo <= lead < hi), None)
-            if tr is None or band is None or h.get("t") is None:
+            if tr is None or band is None or h.get(field) is None:
                 continue
             a = per[band][h["v"][:10]]
-            a[0] += abs(h.get("t_pre_urmab", h["t"]) - tr)
-            a[1] += abs(h["t_urmab"] - tr)
+            a[0] += abs(h.get(f"{field}_pre_urmab", h[field]) - tr)
+            a[1] += abs(h[f"{field}_urmab"] - tr)
             a[2] += 1
             scored += 1
     return ticks, scored, per
 
 
 def main():
-    ticks, scored, per = score(snapshots(sys.argv[1] if len(sys.argv) > 1 else None))
-    print(f"t_urmab shadow vs URMA truth: {ticks} stamped ticks, {scored} scored hour-rows")
+    snaps = snapshots(sys.argv[1] if len(sys.argv) > 1 else None)
+    for field in ("t", "ws"):
+        report(field, *score(snaps, field))
+
+
+def report(field, ticks, scored, per):
+    print(f"{field}_urmab shadow vs URMA truth: {ticks} stamped ticks, {scored} scored hour-rows")
     for band, days in per.items():
         d = {k: tuple(v) for k, v in days.items()}
         if not d:

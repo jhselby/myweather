@@ -1,59 +1,105 @@
 {
-  "fitted_at": "2026-11-12T23:26",
+  "fitted_at": "2026-11-20T12:26",
   "window_days": 14,
   "truth": "urma_idw_4cell",
   "days": [
-    "2026-10-29",
-    "2026-11-11"
+    "2026-11-06",
+    "2026-11-19"
   ],
-  "n_rows_kept": 13020,
+  "n_rows_kept": 26525,
   "fields": {
     "t": {
       "bands": {
         "6-11": {
           "bias": [
-            -1.128,
-            -2.483,
-            -1.119
+            -1.183,
+            -3.366,
+            -0.923
           ],
           "w": [
             0.65,
-            0.15,
-            0.2
+            0.1,
+            0.25
           ],
           "n": 2010,
-          "mae_corrected_blend": 1.352
+          "mae_corrected_blend": 1.223
         },
         "12-23": {
           "bias": [
-            -1.402,
-            -2.515,
-            -1.294
+            -1.275,
+            -3.545,
+            -1.085
           ],
           "w": [
-            0.5,
-            0.2,
+            0.55,
+            0.15,
             0.3
           ],
           "n": 4020,
-          "mae_corrected_blend": 1.463
+          "mae_corrected_blend": 1.432
         },
         "24-47": {
           "bias": [
-            -1.887,
-            -2.55,
-            -1.539
+            -1.648,
+            -3.584,
+            -1.388
+          ],
+          "w": [
+            0.45,
+            0.3,
+            0.25
+          ],
+          "n": 7233,
+          "mae_corrected_blend": 1.576
+        }
+      }
+    },
+    "ws": {
+      "bands": {
+        "6-11": {
+          "bias": [
+            0.0,
+            0.0,
+            0.0
           ],
           "w": [
             0.3,
-            0.35,
-            0.35
+            0.55,
+            0.15
           ],
-          "n": 6990,
-          "mae_corrected_blend": 1.5
+          "n": 2010,
+          "mae_corrected_blend": 1.446
+        },
+        "12-23": {
+          "bias": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "w": [
+            0.2,
+            0.5,
+            0.3
+          ],
+          "n": 4020,
+          "mae_corrected_blend": 1.485
+        },
+        "24-47": {
+          "bias": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "w": [
+            0.15,
+            0.4,
+            0.45
+          ],
+          "n": 7232,
+          "mae_corrected_blend": 1.562
         }
       }
     }
   },
-  "notes": "SHADOW: stamps t_urmab only. Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."
+  "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0). Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."
 }

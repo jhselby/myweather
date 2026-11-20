@@ -31,21 +31,25 @@ BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
 
 
 def validate_table(doc):
-    """None when usable, else the reason."""
+    """None when usable, else the reason. fields.t is required; fields.ws (v0.7.123) is optional."""
     try:
-        cells = doc["fields"]["t"]["bands"]
+        fields = doc["fields"]
+        cells = fields["t"]["bands"]
     except (KeyError, TypeError):
         return "missing fields.t.bands"
     if not cells:
         return "no bands"
-    for b, c in cells.items():
-        w, bias = c.get("w"), c.get("bias")
-        if not (isinstance(w, list) and len(w) == 3 and isinstance(bias, list) and len(bias) == 3):
-            return f"band {b}: w/bias must be length-3 lists"
-        if abs(sum(w) - 1.0) > 0.01 or min(w) < -1e-9:
-            return f"band {b}: weights not on the simplex"
-        if any(abs(x) > 15 for x in bias):
-            return f"band {b}: |bias| > 15 F"
+    for f in ("t", "ws"):
+        if f not in fields:
+            continue
+        for b, c in (fields[f].get("bands") or {}).items():
+            w, bias = c.get("w"), c.get("bias")
+            if not (isinstance(w, list) and len(w) == 3 and isinstance(bias, list) and len(bias) == 3):
+                return f"{f} band {b}: w/bias must be length-3 lists"
+            if abs(sum(w) - 1.0) > 0.01 or min(w) < -1e-9:
+                return f"{f} band {b}: weights not on the simplex"
+            if any(abs(x) > 15 for x in bias):
+                return f"{f} band {b}: |bias| > 15"
     return None
 
 
@@ -62,14 +66,12 @@ def _fresh(doc):
 
 
 def stamp(entry, lead_h):
-    """Stamp entry['t_urmab'] for t at 6-47h when all three inputs and a fresh table exist."""
+    """Stamp entry['t_urmab'] (and, v0.7.123, the shadow entry['ws_urmab']) at 6-47h when all three
+    inputs and a fresh table exist. ws_urmab is never served; the pair log scores it as forecast_urmab."""
     if not ENABLED:
         return
     band = _band(lead_h)
     if band is None:
-        return
-    hr, nb, ec = entry.get("t_l1"), entry.get("t_raw_nbm"), entry.get("t_ecmwf")
-    if hr is None or nb is None or ec is None:
         return
     try:
         from .. import runtime_tables
@@ -79,11 +81,16 @@ def stamp(entry, lead_h):
         return
     if not doc or not _fresh(doc):
         return
-    cell = doc["fields"]["t"]["bands"].get(band)
-    if not cell:
-        return
-    w, bias = cell["w"], cell["bias"]
-    entry["t_urmab"] = round(sum(wi * (float(x) - bi) for wi, x, bi in zip(w, (hr, nb, ec), bias)), 1)
+    for f, floor in (("t", None), ("ws", 0.0)):
+        hr, nb, ec = entry.get(f"{f}_l1"), entry.get(f"{f}_raw_nbm"), entry.get(f"{f}_ecmwf")
+        if hr is None or nb is None or ec is None:
+            continue
+        cell = ((doc["fields"].get(f) or {}).get("bands") or {}).get(band)
+        if not cell:
+            continue
+        w, bias = cell["w"], cell["bias"]
+        v = sum(wi * (float(x) - bi) for wi, x, bi in zip(w, (hr, nb, ec), bias))
+        entry[f"{f}_urmab"] = round(v if floor is None else max(floor, v), 1)
 
 
 def _valid_serve(doc):
