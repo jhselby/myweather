@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.125 • November 20, 2026 (gust blend fitted to URMA, shadow)</strong></summary>
+
+- Scored against URMA's 10 m gust analysis (the independent truth Joe approved for wind on 11-20), the served gust is 20-50% worse than raw NBM and runs about 3 mph low. Served gusts are trained on our station gusts, and those anemometers are sheltered (they read 0.77x URMA).
+- New shadow gust forecast `wg_urmab` at 0-47h: HRRR and NBM gusts each corrected for their recent bias against URMA, then blended. Walk-forward over 20 days it beat served gusts by 42% (0-5h), 27% (6-11h), 22% (12-23h) and 17% (24-47h), passing on the holdout days in every band; it beat raw NBM by 15% at 0-5h. Logged and scored, not served, until forward days confirm it.
+- The refitter keeps a cloud URMA gust store (`urma_truth_gust.json`).
+- Architecture: wg_urmab shadow (bias-corrected HRRR/NBM gust blend fitted on URMA 10 m gust, 0-47h, not served).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.124 • November 20, 2026 (rain truth: hour totals, not a one-minute snapshot)</strong></summary>
 
 - Rain is now scored on how much fell in the past hour at the Tempest stations (median of the wet stations, wet when at least 3 and a quarter of reporters are wet). Before, "did it rain" was the rain rate at the moment of the :07 collector run, and the amount was the highest instantaneous rate at any one station.

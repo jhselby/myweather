@@ -28,6 +28,7 @@ SERVE_TABLE = "urma_blend_serve.json"
 SERVE_PATH = Path(__file__).resolve().parent.parent / "data" / SERVE_TABLE
 STALE_DAYS = 4
 BANDS = (("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
+WG_BANDS = (("0-5", 0, 6),) + BANDS   # v0.7.125: the wg shadow also covers 0-5h
 
 
 def validate_table(doc):
@@ -39,7 +40,7 @@ def validate_table(doc):
         return "missing fields.t.bands"
     if not cells:
         return "no bands"
-    for f in ("t", "ws"):
+    for f in ("t", "ws", "wg"):
         if f not in fields:
             continue
         for b, c in (fields[f].get("bands") or {}).items():
@@ -53,8 +54,8 @@ def validate_table(doc):
     return None
 
 
-def _band(lead_h):
-    return next((b for b, lo, hi in BANDS if lo <= lead_h < hi), None)
+def _band(lead_h, bands=BANDS):
+    return next((b for b, lo, hi in bands if lo <= lead_h < hi), None)
 
 
 def _fresh(doc):
@@ -66,12 +67,10 @@ def _fresh(doc):
 
 
 def stamp(entry, lead_h):
-    """Stamp entry['t_urmab'] (and, v0.7.123, the shadow entry['ws_urmab']) at 6-47h when all three
-    inputs and a fresh table exist. ws_urmab is never served; the pair log scores it as forecast_urmab."""
-    if not ENABLED:
-        return
-    band = _band(lead_h)
-    if band is None:
+    """Stamp entry['t_urmab'] at 6-47h, and the shadows entry['ws_urmab'] (6-47h, v0.7.123) and
+    entry['wg_urmab'] (0-47h, v0.7.125; HRRR/NBM only, ECMWF weight 0) when the inputs and a fresh
+    table exist. Only t is ever served; the pair log scores the others as forecast_urmab."""
+    if not ENABLED or _band(lead_h, WG_BANDS) is None:
         return
     try:
         from .. import runtime_tables
@@ -81,15 +80,16 @@ def stamp(entry, lead_h):
         return
     if not doc or not _fresh(doc):
         return
-    for f, floor in (("t", None), ("ws", 0.0)):
-        hr, nb, ec = entry.get(f"{f}_l1"), entry.get(f"{f}_raw_nbm"), entry.get(f"{f}_ecmwf")
-        if hr is None or nb is None or ec is None:
-            continue
-        cell = ((doc["fields"].get(f) or {}).get("bands") or {}).get(band)
+    for f, floor, bands in (("t", None, BANDS), ("ws", 0.0, BANDS), ("wg", 0.0, WG_BANDS)):
+        band = _band(lead_h, bands)
+        cell = ((doc["fields"].get(f) or {}).get("bands") or {}).get(band) if band else None
         if not cell:
             continue
         w, bias = cell["w"], cell["bias"]
-        v = sum(wi * (float(x) - bi) for wi, x, bi in zip(w, (hr, nb, ec), bias))
+        xs = (entry.get(f"{f}_l1"), entry.get(f"{f}_raw_nbm"), entry.get(f"{f}_ecmwf"))
+        if any(x is None and wi > 0 for x, wi in zip(xs, w)):
+            continue
+        v = sum(wi * (float(x) - bi) for wi, x, bi in zip(w, xs, bias) if wi > 0)
         entry[f"{f}_urmab"] = round(v if floor is None else max(floor, v), 1)
 
 

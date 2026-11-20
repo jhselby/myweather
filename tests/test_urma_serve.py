@@ -74,3 +74,13 @@ def test_validate_ws_band():
     assert u.validate_table(d) is None
     d["fields"]["ws"]["bands"]["6-11"]["w"] = [0.5, 0.5, 0.5]
     assert "ws band" in u.validate_table(d)
+
+
+def test_wg_shadow_two_way_no_ecmwf(monkeypatch):
+    d = _doc()
+    d["fields"]["wg"] = {"bands": {"0-5": {"w": [0.5, 0.5, 0.0], "bias": [2.0, -1.0, 0.0]}}}
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: d)
+    e = {"wg": 9.0, "wg_l1": 14.0, "wg_raw_nbm": 10.0, "t_l1": 50, "t_raw_nbm": 51, "t_ecmwf": 49}
+    u.stamp(e, 2)
+    assert e["wg_urmab"] == round(0.5 * 12 + 0.5 * 11, 1)
+    assert "t_urmab" not in e and e["wg"] == 9.0

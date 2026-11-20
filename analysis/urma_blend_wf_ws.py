@@ -34,10 +34,10 @@ ET = ZoneInfo("America/New_York")
 MS_TO_MPH = 2.23694
 
 
-def urma_wind():
+def urma_wind(var="WIND"):
     out = {}
     for line in open(URMA):
-        if '"WIND"' not in line:
+        if f'"{var}"' not in line:
             continue
         r = json.loads(line)
         nb = r["nb"]

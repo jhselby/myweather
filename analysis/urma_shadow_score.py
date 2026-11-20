@@ -38,8 +38,9 @@ def snapshots(path):
 
 
 def score(snaps, field="t"):
-    U = urma_idw() if field == "t" else urma_wind()
-    per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in BANDS}
+    U = urma_idw() if field == "t" else urma_wind("GUST" if field == "wg" else "WIND")
+    bands = ((("0-5", 0, 6),) + BANDS) if field == "wg" else BANDS
+    per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
     ticks = scored = 0
     for s in snaps:
         hs = [h for h in s["hours"] if f"{field}_urmab" in h]
@@ -51,7 +52,7 @@ def score(snaps, field="t"):
             v = datetime.strptime(h["v"], "%Y-%m-%dT%H:%M").replace(tzinfo=ET)
             lead = (v - run).total_seconds() / 3600
             tr = U.get(v.astimezone(timezone.utc).strftime("%Y-%m-%dT%H"))
-            band = next((n for n, lo, hi in BANDS if lo <= lead < hi), None)
+            band = next((n for n, lo, hi in bands if lo <= lead < hi), None)
             if tr is None or band is None or h.get(field) is None:
                 continue
             a = per[band][h["v"][:10]]
@@ -64,7 +65,7 @@ def score(snaps, field="t"):
 
 def main():
     snaps = snapshots(sys.argv[1] if len(sys.argv) > 1 else None)
-    for field in ("t", "ws"):
+    for field in ("t", "ws", "wg"):
         report(field, *score(snaps, field))
 
 
