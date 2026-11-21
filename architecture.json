@@ -1,5 +1,5 @@
 {
- "version": "v0.7.127",
+ "version": "v0.7.128",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.128",
+   "date": "November 21, 2026",
+   "iso": "2026-11-21",
+   "title": "Stack health chart reaches back to August 25",
+   "change": "truth_compare_daily_history.json in the bucket (seeded once from the backstamped log with `python -m analysis.truth_compare --seed-history`; the publisher adds each day once it is 3 days old); truth_compare reads both the live and backstamped row formats."
+  },
   {
    "version": "v0.7.127",
    "date": "November 21, 2026",
@@ -208,6 +215,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.128",
+   "date": "November 21, 2026",
+   "iso": "2026-11-21",
+   "title": "Stack health chart reaches back to August 25"
+  },
+  {
    "version": "v0.7.127",
    "date": "November 21, 2026",
    "iso": "2026-11-21",
@@ -272,12 +285,6 @@
    "date": "November 15, 2026",
    "iso": "2026-11-15",
    "title": "weather.gov is now the bar"
-  },
-  {
-   "version": "v0.7.107",
-   "date": "November 15, 2026",
-   "iso": "2026-11-15",
-   "title": "debug page opens with a plain-English scorecard"
   }
  ],
  "layers": {

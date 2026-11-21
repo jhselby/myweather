@@ -2230,7 +2230,7 @@
      stays in Forecast accuracy below. -->
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health <span style="font-weight:normal;opacity:0.75;">— are we beating what a person reads, field by field?</span></summary>
-  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; stations for h; logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Click a field in the legend to hide it. The old 10-field median (logged truth, raw NBM bar) is hidden in the legend as "old".</div>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; stations for h; logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Field lines start 08-25 (the oldest forecast rows we kept, with weather.gov's forecast saved alongside). The grey dashed "old score" measures something weaker: the median across 10 fields, on our own blended truth, against the raw model rather than weather.gov. Click any legend entry to hide it.</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
   </div>
@@ -10659,6 +10659,7 @@ load();
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     const set = new Set();
     Object.values(F).forEach(v => Object.keys(v.days || {}).forEach(d => { if (d < today) set.add(d); }));
+    if (payload && payload.days) payload.days.forEach(d => { if (d < today) set.add(d); });   // old line reaches back to 06-16
     const labels = [...set].sort();
     stackHealthLabels = labels;
     const datasets = [];
@@ -10678,11 +10679,17 @@ load();
       const idx = new Map(payload.days.map((d, i) => [d, i]));
       const med = rollingMean(agg.median);
       datasets.push({
-        label: "old: 10-field median (logged truth, vs raw NBM)", hidden: true,
+        label: "old score (10-field median, our own truth, vs raw model)",
         data: labels.map(d => idx.has(d) ? med[idx.get(d)] : null),
-        borderColor: "rgba(207,216,227,0.45)", backgroundColor: "rgba(0,0,0,0)",
-        borderWidth: 1.25, borderDash: [5, 4], pointRadius: 0, tension: 0.25, spanGaps: true,
+        borderColor: "rgba(207,216,227,0.35)", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 1.25, borderDash: [5, 4], pointRadius: 0, tension: 0.25, spanGaps: true, order: 30,
       });
+    }
+    // Start the axis at the first day any line has a value (no empty lead-in).
+    const first = Math.min(...datasets.map(ds => { const i = ds.data.findIndex(v => v !== null); return i < 0 ? labels.length : i; }));
+    if (first > 0 && first < labels.length) {
+      labels.splice(0, first);
+      datasets.forEach(ds => ds.data.splice(0, first));
     }
     if (stackHealthChart) stackHealthChart.destroy();
     stackHealthChart = new Chart(stackHealthCanvas, {

@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.128 • November 21, 2026 (Stack health chart reaches back to August 25)</strong></summary>
+
+- Debug page: the Stack health field lines now start August 25 instead of late October. August 25 is the oldest day we still have every forecast for, with weather.gov's forecast saved alongside. Gust truth (URMA) was backfilled to August 25 so gusts start there too.
+- The grey dashed "old score" line is now shown for comparison. It measures something weaker (the median across 10 fields, on our own blended truth, against the raw model rather than weather.gov), so read it as rough context only. The chart starts at the first day with data. Older forecast rows were not kept.
+- Finished days are now stored for good, so the chart keeps its full history instead of a rolling ~25 days.
+- Architecture: truth_compare_daily_history.json in the bucket (seeded once from the backstamped log with `python -m analysis.truth_compare --seed-history`; the publisher adds each day once it is 3 days old); truth_compare reads both the live and backstamped row formats.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.127 • November 21, 2026 (Stack health chart rebuilt; weather.gov rain chance fix)</strong></summary>
 
 - Debug page: the Stack health chart now draws one line per field, each showing the last 7 days of lift over the forecast a person would read: weather.gov for temperature, dew point, wind, wind direction and rain chance; raw NBM for gusts, cloud cover and humidity. Temperature, dew point, wind, gusts and clouds are graded on URMA (NOAA's hourly analysis). The old line was a median across 10 fields on our own blended truth against raw NBM, which hid gusts losing. It is kept, hidden, as "old".

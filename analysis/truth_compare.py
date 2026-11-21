@@ -40,6 +40,7 @@ Runtime:
 """
 import json
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -107,7 +108,12 @@ DAILY_SPEC = {
     "wd": ("weather.gov", "logged observed"), "pp": ("weather.gov", "logged observed"),
     "wg": ("raw NBM", "URMA"), "cc": ("raw NBM", "URMA"), "h": ("raw NBM", "stations"),
 }
-DAILY_FIRST_DAY = "2026-10-01"
+DAILY_FIRST_DAY = "2026-08-25"   # backstamped log + URMA DPT/WIND/TCDC/GUST start here
+DAILY_HISTORY = "truth_compare_daily_history.json"   # finished days, kept forever (the live log and
+                                                    # the cloud URMA stores only reach back ~25 days)
+DAILY_FINAL_LAG = 3      # a valid day is final once its 47 h leads and URMA (~8 h late) are in
+DAILY_FINAL_SPAN = 4     # cloud run adds days from today-6 .. today-3 that history lacks
+_FIELD_RX = re.compile(r'"field": ?"(\w+)"')   # live log writes '"field": "t"', backstamped '"field":"t"'
 
 
 def _daily_new():
@@ -193,8 +199,8 @@ def _summ(b):
     }
 
 
-def build():
-    path = cached_path(PAIR_LOG_URL, max_age_hours=0.5)
+def build(path=None):
+    path = path or cached_path(PAIR_LOG_URL, max_age_hours=0.5)
     split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new(), "lead_2_5h": _new()} for f in FIELDS}
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
@@ -208,10 +214,11 @@ def build():
     cc_day = defaultdict(cc_new)
     nws_sh = {f: {"n": 0, "nws": 0.0, "srv": 0.0} for f in ("wd", "pp")}
     daily = {f: defaultdict(_daily_new) for f in DAILY_SPEC}
-    urma_fields = [f'"field": "{f}"' for f in ("t", "dp", "ws", "wg")]
     with open(path) as fin:
         for line in fin:
-            if '"forecast_nws"' in line and ('"field": "wd"' in line or '"field": "pp"' in line):
+            m = _FIELD_RX.search(line)
+            fld = m.group(1) if m else None
+            if fld in ("wd", "pp") and '"forecast_nws"' in line:
                 try:
                     r = json.loads(line)
                 except json.JSONDecodeError:
@@ -224,7 +231,7 @@ def build():
                     b = nws_sh[f]; b["n"] += 1; b["nws"] += abs(en); b["srv"] += abs(srv)
                     _daily_add(daily, f, r, abs(srv), abs(en))
                 continue
-            if urma_cc and ('"field": "cc"' in line or '"field":"cc"' in line):
+            if urma_cc and fld == "cc":
                 try:
                     r = json.loads(line)
                 except json.JSONDecodeError:
@@ -245,7 +252,7 @@ def build():
                     b["bias"] += srv + obs - tc; b["obs"] += abs(obs - tc)
                 continue
             if '"observed_stations"' not in line:
-                if any(k in line for k in urma_fields):
+                if fld in ("t", "dp", "ws", "wg"):
                     try:
                         _daily_urma(daily, urma_by_field, json.loads(line))
                     except json.JSONDecodeError:
@@ -344,8 +351,59 @@ def build():
     }
 
 
+def _today_et():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo("America/New_York")).date()
+
+
+def _history_io():
+    """(load, save) for the daily history: GCS in the cloud, analysis/output locally."""
+    if os.environ.get("MYWEATHER_CACHE_MODE") == "gcs":
+        from weather_collector.gcs_io import load_json, upload_json
+        return (lambda: load_json(DAILY_HISTORY) or {},
+                lambda h: upload_json(h, DAILY_HISTORY, DAILY_HISTORY))
+    local = _out(DAILY_HISTORY)
+    return (lambda: json.load(open(local)) if os.path.exists(local) else {},
+            lambda h: json.dump(h, open(local, "w"), indent=1))
+
+
+def merge_daily_history(payload, seed=False):
+    """Add newly final days from this run to the stored history, then serve history + live days.
+    seed=True (a run over the backstamped log) takes every final day; a normal run takes only
+    today-6..today-3, so a short live log can never write a partial early day."""
+    from datetime import timedelta
+    load, save = _history_io()
+    hist = load() if not seed else {}
+    hf = hist.setdefault("fields", {})
+    last = (_today_et() - timedelta(days=DAILY_FINAL_LAG)).isoformat()
+    first = DAILY_FIRST_DAY if seed else (_today_et() - timedelta(days=DAILY_FINAL_LAG + DAILY_FINAL_SPAN - 1)).isoformat()
+    added = 0
+    for f, v in payload["daily"]["fields"].items():
+        hd = hf.setdefault(f, {})
+        for d, b in v["days"].items():
+            if first <= d <= last and d not in hd:
+                hd[d] = b
+                added += 1
+        v["days"] = {**v["days"], **hd}   # history wins: fixed once final
+        v["days"] = dict(sorted(v["days"].items()))
+    if added:
+        hist["updated_at"] = payload["generated_at"]
+        save(hist)
+    payload["daily"]["history_days_added"] = added
+    return added
+
+
 def main():
+    seed = "--seed-history" in sys.argv
+    if seed:
+        from analysis._cache import PAIR_LOG_BACKSTAMP_URL
+        payload = build(cached_path(PAIR_LOG_BACKSTAMP_URL, max_age_hours=24))
+        print(f"seeded daily history: {merge_daily_history(payload, seed=True)} field-days (not published; "
+              f"upload {DAILY_HISTORY} to the bucket by hand)")
+        return
     payload = build()
+    merge_daily_history(payload)
     with open(OUT_JSON, "w") as fout:
         json.dump(payload, fout, indent=2)
     print(f"wrote {OUT_JSON} (days {payload['first_day']}..{payload['last_day']})")
