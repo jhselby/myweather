@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.127 • November 21, 2026 (Stack health chart rebuilt; weather.gov rain chance fix)</strong></summary>
+
+- Debug page: the Stack health chart now draws one line per field, each showing the last 7 days of lift over the forecast a person would read: weather.gov for temperature, dew point, wind, wind direction and rain chance; raw NBM for gusts, cloud cover and humidity. Temperature, dew point, wind, gusts and clouds are graded on URMA (NOAA's hourly analysis). The old line was a median across 10 fields on our own blended truth against raw NBM, which hid gusts losing. It is kept, hidden, as "old".
+- Fix: weather.gov's rain chance was missing from our records for most dry hours. Its long intervals (for example "1 day 13 hours of 0%") were read as 1 hour, so the rain-chance comparison with weather.gov was scored mostly on wet hours. The same fix applies to weather.gov's weather wording.
+- Debug page: the publisher is described as running every 3 h (it has since November 20).
+- Architecture: truth_compare.json gains a `daily` block (per field, per valid day, error sums vs each field's bar, from October 22); `_extract_nws_value` parses full ISO 8601 durations (days, hours, minutes); tests/test_nws_duration.py.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.126 • November 20, 2026 (wind shadow extended to 0-5h)</strong></summary>
 
 - The shadow wind forecast `ws_urmab` now covers 0-5h as well as 6-47h. On URMA wind over the 18 holdout days, the 0-5h blend beat served wind by 10.6% and raw NBM by 9.7%, both clearing the bar; served wind at 0-5h (corrected with our sheltered stations) only ties raw NBM. Still shadow: nothing served changes.

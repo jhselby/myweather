@@ -99,6 +99,44 @@ def _urma(var="TMP", store="urma_truth_t.json"):
         return {}
 
 
+# 11-21: per-field daily sums for the debug page's Stack health chart. Each field is graded on its
+# best truth against the bar a person reads (Joe 11-15): weather.gov for t/dp/ws/wd/pp, raw NBM for
+# wg/cc/h. URMA rows do not need observed_stations, so this series starts before 11-02.
+DAILY_SPEC = {
+    "t": ("weather.gov", "URMA"), "dp": ("weather.gov", "URMA"), "ws": ("weather.gov", "URMA"),
+    "wd": ("weather.gov", "logged observed"), "pp": ("weather.gov", "logged observed"),
+    "wg": ("raw NBM", "URMA"), "cc": ("raw NBM", "URMA"), "h": ("raw NBM", "stations"),
+}
+DAILY_FIRST_DAY = "2026-10-01"
+
+
+def _daily_new():
+    return {"n": 0, "srv": 0.0, "bar": 0.0}
+
+
+def _daily_add(daily, f, row, srv_abs, bar_abs):
+    lead, day = row.get("lead_h"), (row.get("valid_time") or "")[:10]
+    if lead is None or not 2 <= lead < 48 or day < DAILY_FIRST_DAY:
+        return
+    b = daily[f][day]
+    b["n"] += 1; b["srv"] += srv_abs; b["bar"] += bar_abs
+
+
+def _daily_urma(daily, urma_by_field, r):
+    """t/dp/ws vs weather.gov, wg vs raw NBM, all on URMA."""
+    f = r.get("field")
+    tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
+    srv, obs = _prod_error(r), r.get("observed")
+    if tu is None or srv is None or obs is None:
+        return
+    if f == "wg":
+        pub = r.get("error_raw_nbm")
+        if pub is not None:
+            _daily_add(daily, f, r, abs(srv + obs - tu), abs(pub + obs - tu))
+    elif r.get("forecast_nws") is not None:
+        _daily_add(daily, f, r, abs(srv + obs - tu), abs(r["forecast_nws"] - tu))
+
+
 def _urma_t():
     return _urma("TMP", "urma_truth_t.json")
 
@@ -169,6 +207,8 @@ def build():
     cc_band = {b[0]: cc_new() for b in CC_BANDS}
     cc_day = defaultdict(cc_new)
     nws_sh = {f: {"n": 0, "nws": 0.0, "srv": 0.0} for f in ("wd", "pp")}
+    daily = {f: defaultdict(_daily_new) for f in DAILY_SPEC}
+    urma_fields = [f'"field": "{f}"' for f in ("t", "dp", "ws", "wg")]
     with open(path) as fin:
         for line in fin:
             if '"forecast_nws"' in line and ('"field": "wd"' in line or '"field": "pp"' in line):
@@ -182,6 +222,7 @@ def build():
                     if f == "wd":
                         en, srv = ((en + 180) % 360) - 180, ((srv + 180) % 360) - 180
                     b = nws_sh[f]; b["n"] += 1; b["nws"] += abs(en); b["srv"] += abs(srv)
+                    _daily_add(daily, f, r, abs(srv), abs(en))
                 continue
             if urma_cc and ('"field": "cc"' in line or '"field":"cc"' in line):
                 try:
@@ -192,6 +233,7 @@ def build():
                 srv, pub, obs, lead = _prod_error(r), r.get("error_raw_nbm"), r.get("observed"), r.get("lead_h")
                 if tc is None or srv is None or pub is None or obs is None or lead is None:
                     continue
+                _daily_add(daily, "cc", r, abs(srv + obs - tc), abs(pub + obs - tc))
                 band = next((n for n, lo, hi in CC_BANDS if lo <= lead < hi), None)
                 if band is None:
                     continue
@@ -203,6 +245,11 @@ def build():
                     b["bias"] += srv + obs - tc; b["obs"] += abs(obs - tc)
                 continue
             if '"observed_stations"' not in line:
+                if any(k in line for k in urma_fields):
+                    try:
+                        _daily_urma(daily, urma_by_field, json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
                 continue
             try:
                 r = json.loads(line)
@@ -211,6 +258,8 @@ def build():
             f = r.get("field")
             if f not in FIELDS:
                 continue
+            if f != "h":
+                _daily_urma(daily, urma_by_field, r)
             obs, obs_s = r.get("observed"), r.get("observed_stations")
             if obs is None or obs_s is None:
                 continue
@@ -221,6 +270,8 @@ def build():
             if lead is None:
                 continue
             shift = obs - obs_s
+            if f == "h":
+                _daily_add(daily, "h", r, abs(srv + shift), abs(pub + shift))
             nw = r.get("forecast_nws")
             tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
             day = (r.get("valid_time") or "")[:10]
@@ -277,6 +328,15 @@ def build():
                            "per_day is leads 6-47h."),
             "bands": {n: _cc_summ(b) for n, b in cc_band.items()},
             "per_day_6_47h": {d: _cc_summ(b) for d, b in sorted(cc_day.items())},
+        },
+        "daily": {
+            "definition": ("Per valid day (ET), leads 2-47h: sums of |served error| (srv) and |bar error| (bar) "
+                           "on each field's truth; served = error_{applied_layer}. Lift = (bar - srv) / bar. "
+                           "Pool sums across days for a multi-day lift."),
+            "fields": {f: {"bar": DAILY_SPEC[f][0], "truth": DAILY_SPEC[f][1],
+                           "days": {d: {"n": b["n"], "srv": round(b["srv"], 2), "bar": round(b["bar"], 2)}
+                                    for d, b in sorted(daily[f].items()) if b["n"]}}
+                       for f in DAILY_SPEC},
         },
         "nws_shrunk": {f: ({"n": b["n"], "nws_mae": round(b["nws"] / b["n"], 3), "served_mae": round(b["srv"] / b["n"], 3),
                             "lift_vs_nws_pct": _lift(b["nws"], b["srv"])} if b["n"] else None)

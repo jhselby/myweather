@@ -81,8 +81,9 @@ def report(field, ticks, scored, per):
         wins = sum(d[k][1] < d[k][0] for k in last7)
         t3 = sorted(d)[-3:]
         trip = sum(d[k][1] for k in t3) > sum(d[k][0] for k in t3)
+        tw = "too few days (<3)" if len(t3) < 3 else ("TRIPPED" if trip else "ok")
         print(f"  {band}h: gain {g['gain']:+.1f}% [{g['lo']:+.1f},{g['hi']:+.1f}] over {g['days']} d, "
-              f"shadow wins {wins}/{len(last7)} (last7), n={g['n']}, tripwire {'TRIPPED' if trip else 'ok'}")
+              f"shadow wins {wins}/{len(last7)} (last7), n={g['n']}, tripwire {tw}")
 
 
 if __name__ == "__main__":

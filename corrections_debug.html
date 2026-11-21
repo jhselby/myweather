@@ -1052,7 +1052,7 @@
 <!-- ───────────────────── Front page (v0.7.107) ─────────────────────
      The one question this project answers: are we beating the forecast a normal
      user already gets? Scorecard is live (truth_compare.json + per_field_scoring.json,
-     both refreshed hourly by the publisher). "Coming up" is hand-kept: update it in the
+     both refreshed every 3 h by the publisher). "Coming up" is hand-kept: update it in the
      same commit as the detailed "Being evaluated next" list under Where things stand. -->
 <style>
   .fp { margin: 4px 0 22px 0; }
@@ -2229,21 +2229,9 @@
      Full "Accuracy over time" section (with per-field drill-down + sparklines)
      stays in Forecast accuracy below. -->
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— daily Total Lift vs the public forecast (10 fields, same as the Total Lift tile)</span></summary>
-  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(public_MAE − prod_MAE) / public_MAE × 100</code> on the same day and the same hours (only hours where both exist) — the Total Lift tile's number over time. Public = raw NBM (what a default weather app shows), raw HRRR for cl/cm/pr. Same-day baseline cancels the weather: a hard day raises both errors. Positive = we beat the public forecast; a ship that helps pushes the 7d median up. Today is not plotted until it is complete. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health <span style="font-weight:normal;opacity:0.75;">— are we beating what a person reads, field by field?</span></summary>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; stations for h; logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Click a field in the legend to hide it. The old 10-field median (logged truth, raw NBM bar) is hidden in the legend as "old".</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
-    <label>Y-range: <select id="stack-health-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
-      <option value="auto" selected>Auto (smart)</option>
-      <option value="free">Free (fit all)</option>
-    </select></label>
-    <fieldset id="stack-health-trend-controls" style="border:1px solid #3a3f48;padding:2px 8px 3px 8px;border-radius:3px;margin:0;">
-      <legend style="opacity:0.7;padding:0 4px;font-size:0.8em;">Trend windows</legend>
-      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="7"> 7d</label>
-      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="30" checked> 30d</label>
-      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="90"> 90d</label>
-      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="180"> 180d</label>
-      <label><input type="checkbox" class="stack-health-trend-cb" value="365"> 365d</label>
-    </fieldset>
     <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
   </div>
   <div style="height:280px;margin-top:10px;position:relative;">
@@ -2614,7 +2602,7 @@
                 Object.entries(d.cc_urma.bands).filter(([, v]) => v).map(([b, v]) =>
                   `<code>${b}h</code> served ${v.served_mae_urma.toFixed(1)} vs NBM ${v.public_mae_urma.toFixed(1)} → ${f(v.total_lift_urma_pct)} <span style="opacity:0.6;">(n ${v.n}; scored cc truth is ${v.observed_mae_urma.toFixed(1)} off URMA)</span>`).join("<br>") + `</div>` : "");
           })
-          .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it hourly.</span>`; });
+          .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it every 3 h.</span>`; });
       })();
       </script>
     </div>
@@ -2642,7 +2630,7 @@
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Infrastructure</div>
       <ul style="margin:0 0 8px 16px;padding:0;">
-        <li>Cloud Functions (us-east1): <code>myweather-collector</code> every 10 min at :07 (4 GB since v0.7.77 memory-leak fix), <code>myweather-nbm-ingest</code> hourly, <code>myweather-refitter</code> 04:30 ET (12 tables: selector, L3/L4_NBM, Lc + recent-bias gate, Lsr bias, sr sea-breeze, chp cell gate, selector regime walker, sr learned GBM, the field blend, the URMA t shadow; 16 GB, one process per table since v0.7.100), <code>myweather-publisher</code> hourly (backstamped pair log + <code>mae_over_time.json</code>), <code>myweather-nbm-backfill</code> (one-shot). The Fitter (L3/L4 tables) runs in the collector at 03:07 and 15:07.</li>
+        <li>Cloud Functions (us-east1): <code>myweather-collector</code> every 10 min at :07 (4 GB since v0.7.77 memory-leak fix), <code>myweather-nbm-ingest</code> hourly, <code>myweather-refitter</code> 04:30 ET (12 tables: selector, L3/L4_NBM, Lc + recent-bias gate, Lsr bias, sr sea-breeze, chp cell gate, selector regime walker, sr learned GBM, the field blend, the URMA t shadow; 16 GB, one process per table since v0.7.100), <code>myweather-publisher</code> every 3 h (backstamped pair log + <code>mae_over_time.json</code>), <code>myweather-nbm-backfill</code> (one-shot). The Fitter (L3/L4 tables) runs in the collector at 03:07 and 15:07.</li>
         <li>Engineering runs from the server (<code>~/Developer/myweather</code>, 3.13 venv) since 11-01; the digest runs there. Bucket protection: weekly copy to <code>myweather-data-backup</code> (first run 11-08, verified), monthly permanent snapshot of the backstamped log to <code>archive/</code> (next 12-06).</li>
         <li><strong>Station feed health (v0.7.88):</strong> Tempest keeps its last good payload on a failed fetch, marks a run "degraded" under 75% valid stations, and the digest carries a Tempest line. L2 itself gets no last-good station input on a failed tick. Tempest is a single point of failure: it depends on the WeatherFlow sign-in (anonymous access closed 10-15, v0.7.67).</li>
         <li>Briefing: Groq <code>gpt-oss-120b</code>, fallback <code>gpt-oss-20b</code> (v0.7.48), then template. Gemini is disabled.</li>
@@ -5749,7 +5737,7 @@ async function renderScoreboardV2() {
     pfs = await pfsRes.json();
     sb  = await sbRes.json();
   } catch (err) {
-    setLoading(`scoreboard not yet available (${err.message}). Publisher runs hourly; check back in ~1h.`);
+    setLoading(`scoreboard not yet available (${err.message}). Publisher runs every 3 h; check back later.`);
     return;
   }
   const pf7  = (pfs.windows && pfs.windows["7d"]  && pfs.windows["7d"].per_field)  || {};
@@ -10589,12 +10577,12 @@ load();
       if (window.Chart && Chart.instances) Object.values(Chart.instances).forEach(ch => ch.update("none"));
     })
     .catch(() => {});
-  function aggregateEventsPlugin() {
+  function aggregateEventsPlugin(daysFor) {
     return {
       id: "aggregateShipEvents",
       afterDatasetsDraw(chart) {
-        if (!payload) return;
-        const days = payload.days;
+        const days = daysFor ? daysFor() : (payload && payload.days);
+        if (!days) return;
         const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
         ctx.save();
         ctx.strokeStyle = "rgba(224,164,115,0.55)";
@@ -10641,105 +10629,85 @@ load();
     el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 12px;margin-top:8px;">${rows}</div>`;
   }
 
-  // v0.6.580: compact aggregate chart at top of Current State.
-  // Same aggregate series + rendering approach as renderAggregate but
-  // targets its own canvas + Y-range selector. No P25/P75 label filter
-  // difference; keep in sync with renderAggregate if that changes.
+  // v0.7.127 (11-21): Stack health = per-field 7-day pooled lift vs the bar a person reads, on the
+  // best truth per field (truth_compare.json `daily`, written by the publisher). Replaces the
+  // cross-field median of mae_over_time (logged truth, raw-NBM bar for every field, and a median
+  // that hid per-field losses like wg); that line stays as a hidden "old" dataset.
+  const STACK_HEALTH_FIELDS = [["t", "#ff8a65"], ["dp", "#4fc3f7"], ["ws", "#81c784"], ["wd", "#c5e1a5"],
+                               ["pp", "#9575cd"], ["wg", "#e57373"], ["cc", "#b0bec5"], ["h", "#ffd54f"]];
+  const STACK_HEALTH_WINDOW = 7, STACK_HEALTH_MIN_DAYS = 4;
+  let stackHealthDaily = null, stackHealthLabels = [];
+  fetch("https://data.wymancove.com/truth_compare.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(tc => { stackHealthDaily = tc && tc.daily ? tc.daily : null; renderStackHealth(); })
+    .catch(() => { if (stackHealthStatusEl) stackHealthStatusEl.textContent = "truth_compare.json unavailable"; });
+
+  function stackHealthPooled(days, labels) {
+    return labels.map((d, i) => {
+      let srv = 0, bar = 0, k = 0;
+      for (let j = Math.max(0, i - STACK_HEALTH_WINDOW + 1); j <= i; j++) {
+        const v = days[labels[j]];
+        if (v && v.n) { srv += v.srv; bar += v.bar; k++; }
+      }
+      return k >= STACK_HEALTH_MIN_DAYS && bar > 0 ? Math.round((bar - srv) / bar * 1000) / 10 : null;
+    });
+  }
+
   function renderStackHealth() {
-    if (!payload || !stackHealthCanvas) return;
-    const agg = aggregateSeries("mae");
-    if (!agg) return;
-    const label = "Total Lift vs public forecast (%, ↑ = beating it)";
+    if (!stackHealthCanvas || !stackHealthDaily) return;
+    const F = stackHealthDaily.fields || {};
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    const set = new Set();
+    Object.values(F).forEach(v => Object.keys(v.days || {}).forEach(d => { if (d < today) set.add(d); }));
+    const labels = [...set].sort();
+    stackHealthLabels = labels;
     const datasets = [];
-    datasets.push({
-      label: "P75", data: agg.p75,
-      borderColor: "rgba(74,210,154,0.15)", backgroundColor: "rgba(0,0,0,0)",
-      borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true, order: 20,
-    });
-    const p75Idx = datasets.length - 1;
-    datasets.push({
-      label: "P25-P75 spread", data: agg.p25,
-      borderColor: "rgba(74,210,154,0.15)",
-      backgroundColor: "rgba(74,210,154,0.08)",
-      borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true,
-      fill: { target: p75Idx }, order: 21,
-    });
-    datasets.push({
-      label: "Median (%)", data: agg.median,
-      borderColor: "#4ad29a", backgroundColor: "rgba(0,0,0,0)",
-      borderWidth: 1.5, pointRadius: 0, tension: 0.2, spanGaps: true,
-    });
-    datasets.push({
-      label: "Mean (%)", data: agg.mean,
-      borderColor: "#e0d472", backgroundColor: "rgba(0,0,0,0)",
-      borderWidth: 1.25, borderDash: [4, 4],
-      pointRadius: 0, tension: 0.2, spanGaps: true,
-    });
-    const medSmooth = rollingMean(agg.median);
-    if (medSmooth.some(v => v !== null)) {
+    STACK_HEALTH_FIELDS.forEach(([f, color]) => {
+      const v = F[f];
+      if (!v) return;
+      const data = stackHealthPooled(v.days || {}, labels);
+      const last = [...data].reverse().find(x => x !== null);
       datasets.push({
-        label: "Median (7d mean)", data: medSmooth,
-        borderColor: "rgba(74,210,154,0.5)", backgroundColor: "rgba(0,0,0,0)",
-        borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
-        borderCapStyle: "round", borderJoinStyle: "round", order: 10,
+        label: `${f} vs ${v.bar === "weather.gov" ? "weather.gov" : "NBM"}${last == null ? "" : ` (${last > 0 ? "+" : ""}${last.toFixed(1)}%)`}`,
+        data, borderColor: color, backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: f === "wg" ? 2.5 : 1.75, pointRadius: 0, tension: 0.25, spanGaps: false,
+      });
+    });
+    const agg = payload ? aggregateSeries("mae") : null;
+    if (agg) {
+      const idx = new Map(payload.days.map((d, i) => [d, i]));
+      const med = rollingMean(agg.median);
+      datasets.push({
+        label: "old: 10-field median (logged truth, vs raw NBM)", hidden: true,
+        data: labels.map(d => idx.has(d) ? med[idx.get(d)] : null),
+        borderColor: "rgba(207,216,227,0.45)", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 1.25, borderDash: [5, 4], pointRadius: 0, tension: 0.25, spanGaps: true,
       });
     }
-    const meanSmooth = rollingMean(agg.mean);
-    if (meanSmooth.some(v => v !== null)) {
-      datasets.push({
-        label: "Mean (7d mean)", data: meanSmooth,
-        borderColor: "rgba(224,212,114,0.5)", backgroundColor: "rgba(0,0,0,0)",
-        borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
-        borderCapStyle: "round", borderJoinStyle: "round", order: 10,
-      });
-    }
-    // v0.6.638: per-window trend lines. Each selected checkbox regresses
-    // the last N days of the 7d-smoothed median and adds its own line.
-    const trendWindows = selectedTrendWindows();
-    trendWindows.forEach(win => {
-      const style = STACK_HEALTH_TREND_STYLES[win];
-      if (!style) return;
-      const trend = computeTrendline(agg, win);
-      if (!trend) return;
-      const sign = trend.slopePerWeek >= 0 ? "+" : "";
-      datasets.push({
-        label: `Trend ${win}d (${sign}${trend.slopePerWeek.toFixed(2)} pp/week)`,
-        data: trend.data,
-        borderColor: style.color, backgroundColor: "rgba(0,0,0,0)",
-        borderWidth: style.width, borderDash: style.dash,
-        pointRadius: 0, spanGaps: true, tension: 0, order: 5,
-      });
-    });
     if (stackHealthChart) stackHealthChart.destroy();
     stackHealthChart = new Chart(stackHealthCanvas, {
       type: "line",
-      data: { labels: payload.days, datasets },
+      data: { labels, datasets },
       options: {
         responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { labels: { color: "#cfd8e3", filter: (item) => item.text !== "P75" } },
-          tooltip: { mode: "index", intersect: false,
-            filter: (item) => item.dataset.label !== "P75" && item.dataset.label !== "P25-P75 spread",
-            callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y == null ? "—" : ctx.parsed.y.toFixed(1) + "%"}` } },
+          legend: { labels: { color: "#cfd8e3", boxWidth: 14, font: { size: 11 } } },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label.split(" (")[0]}: ${ctx.parsed.y == null ? "—" : (ctx.parsed.y > 0 ? "+" : "") + ctx.parsed.y.toFixed(1) + "%"}` } },
         },
         scales: {
-          x: { title: { display: true, text: "obs date", color: "#8a93a3" },
-               min: agg ? agg.firstDay : undefined,
-               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
-               grid: { color: "#242833" } },
-          y: { title: { display: true, text: label, color: "#8a93a3" },
+          x: { ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 10 }, grid: { color: "#242833" } },
+          y: { title: { display: true, text: "7-day lift vs bar (%, ↑ = beating it)", color: "#8a93a3" },
                ticks: { color: "#8a93a3", callback: (v) => v + "%" },
                grid: {
                  color: (ctx) => ctx.tick && ctx.tick.value === 0 ? "rgba(207,216,227,0.55)" : "#242833",
                  lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 1.5 : 1,
-               },
-               beginAtZero: false,
-               ...computeYRange(agg, stackHealthYrangeSel) },
+               } },
         },
       },
-      plugins: [aggregateEventsPlugin()],
+      plugins: [aggregateEventsPlugin(() => stackHealthLabels)],
     });
-    if (stackHealthStatusEl) stackHealthStatusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
+    if (stackHealthStatusEl) stackHealthStatusEl.textContent = `${labels[0] || ""} → ${labels[labels.length - 1] || ""} · 7-day window, ≥${STACK_HEALTH_MIN_DAYS} days · today excluded`;
     renderAggregateEventsLegend("stack-health-events-legend");
   }
 

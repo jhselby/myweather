@@ -5,6 +5,7 @@ Days 8-10: Simple daily summaries from ECMWF daily data
 Uses local time (America/New_York) to determine period boundaries.
 """
 from datetime import datetime, timezone, timedelta
+import re
 import pytz
 from .wind_risk import get_exposure_factor, worry_score, worry_level
 
@@ -22,6 +23,9 @@ WEATHER_CODES = {
     95: "Thunderstorm", 96: "Thunderstorm with slight hail", 99: "Thunderstorm with heavy hail",
 }
 
+
+
+_ISO_DURATION = re.compile(r"P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?")
 
 
 def _extract_nws_value(nws_property, target_time):
@@ -45,13 +49,13 @@ def _extract_nws_value(nws_property, target_time):
         start_str = parts[0]
         start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
         
-        # Parse duration (PT1H = 1 hour, PT3H = 3 hours, etc.)
-        duration_str = parts[1]
-        hours = 1  # Default
-        if "PT" in duration_str and "H" in duration_str:
-            hours = int(duration_str.replace("PT", "").replace("H", ""))
-        
-        end_dt = start_dt + timedelta(hours=hours)
+        # ISO 8601 duration: PT3H, P1D, P1DT13H (11-21: day parts were read as 1 h, so long dry
+        # POP / weather intervals returned None after their first hour).
+        m = _ISO_DURATION.fullmatch(parts[1])
+        if not m or not any(m.groups()):
+            continue
+        d, h, mi = (int(x or 0) for x in m.groups())
+        end_dt = start_dt + timedelta(days=d, hours=h, minutes=mi)
         
         # Check if target_time falls within this interval
         if start_dt <= target_time < end_dt:
