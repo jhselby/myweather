@@ -36,6 +36,9 @@ def cached_path(url, max_age_hours=12, refresh=None):
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / url.rsplit("/", 1)[-1]
     stale = not path.exists() or (time.time() - path.stat().st_mtime) / 3600 > max_age_hours
+    if (stale and not refresh and path.exists() and url in APPEND_ONLY_URLS
+            and _append_fetch(url, path)):
+        return path
     if refresh or stale:
         print(f"  ⇣ caching {url}")
         # Atomic write: curl → .tmp, then os.replace into place. Without this,
@@ -67,6 +70,58 @@ def cached_path(url, max_age_hours=12, refresh=None):
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 PAIR_LOG_BACKSTAMP_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
+# 11-20: append-only files (publisher appends hourly, never prunes): refresh by downloading only the
+# new bytes, not the whole 1.4 GB (~$3/mo of egress). The live pair log is NOT here: decay_fit
+# rewrites it twice a day.
+APPEND_ONLY_URLS = {PAIR_LOG_BACKSTAMP_URL}
+_OVERLAP = 4096
+
+
+def _append_fetch(url, path):
+    """Range-fetch bytes from (local size - 4 KB) onward; append if the 4 KB overlap matches the
+    local tail. Returns False (caller does a full download) on a mismatch (file rebuilt), a server
+    that ignores ranges, or any error."""
+    size = path.stat().st_size
+    if size <= _OVERLAP:
+        return False
+    start = size - _OVERLAP
+    # data.wymancove.com (Cloudflare) ignores Range and sends the whole file (11-20); the bucket's
+    # own public URL honours it.
+    rurl = "https://storage.googleapis.com/myweather-data/" + url.rsplit("/", 1)[-1]
+    tmp = path.with_suffix(path.suffix + ".part")
+    try:
+        r = subprocess.run(
+            ["curl", "--fail", "--silent", "--show-error", "--retry", "3", "--retry-delay", "2",
+             "--max-time", "1800", "-A", "myweather-analysis/1.0", "-r", f"{start}-",
+             "--max-filesize", str(500_000_000),
+             "-w", "%{http_code}", "-o", str(tmp), rurl],
+            check=True, capture_output=True, text=True)
+        if r.stdout.strip() != "206":
+            return False
+        with open(tmp, "rb") as f:
+            head = f.read(_OVERLAP)
+            with open(path, "rb") as g:
+                g.seek(start)
+                if g.read(_OVERLAP) != head:
+                    print(f"  ⇣ {url.rsplit('/', 1)[-1]}: remote rewritten, full download")
+                    return False
+            with open(path, "ab") as g:
+                n = 0
+                while True:
+                    chunk = f.read(1 << 20)
+                    if not chunk:
+                        break
+                    g.write(chunk)
+                    n += len(chunk)
+        os.utime(path, None)
+        print(f"  ⇣ {url.rsplit('/', 1)[-1]}: appended {n:,} new bytes")
+        return True
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⇣ {url.rsplit('/', 1)[-1]}: append fetch failed ({e}); full download")
+        return False
+    finally:
+        if tmp.exists():
+            tmp.unlink()
 
 
 def pair_log_paths():
