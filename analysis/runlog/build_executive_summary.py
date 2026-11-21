@@ -1378,15 +1378,23 @@ def selector_status():
         # cold at night at the Cove's cell, so "vs NBM" overstates the user-facing t gain.
         tcd = json.loads((HERE.parent / "output" / "truth_compare.json").read_text())
         nws = []
-        for f, key in (("t", "lift_vs_nws_urma_pct"), ("dp", "lift_vs_nws_stations_pct"), ("ws", "lift_vs_nws_stations_pct")):
+        # 11-20: t/dp/ws graded on URMA (wind truth = URMA, Joe 11-20); station truth was sheltered.
+        for f in ("t", "dp", "ws"):
             v = ((tcd.get("fields") or {}).get(f) or {}).get("lead_2h_plus") or {}
-            if v.get(key) is not None:
-                nws.append(f"{f} {v[key]:+.1f}%")
+            if v.get("lift_vs_nws_urma_pct") is not None:
+                nws.append(f"{f} {v['lift_vs_nws_urma_pct']:+.1f}%")
         for f, v in (tcd.get("nws_shrunk") or {}).items():
             if v:
                 nws.append(f"{f} {v['lift_vs_nws_pct']:+.1f}%")
         if nws:
-            out.append(f"  vs weather.gov (served vs NWS forecast, 2-47h): {' · '.join(nws)}")
+            out.append(f"  vs weather.gov (served vs NWS forecast, 2-47h; t/dp/ws on URMA): {' · '.join(nws)}")
+        wind = []
+        for f in ("ws", "wg"):
+            v = ((tcd.get("fields") or {}).get(f) or {}).get("lead_2h_plus") or {}
+            if v.get("total_lift_urma_pct") is not None:
+                wind.append(f"{f} {v['total_lift_urma_pct']:+.1f}%")
+        if wind:
+            out.append(f"  wind on URMA (served vs raw NBM, 2-47h; - = served worse): {' · '.join(wind)}")
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
         out.append(f"  ⚠ cc on URMA unreadable ({e})")
     try:

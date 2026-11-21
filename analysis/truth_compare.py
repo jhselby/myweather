@@ -76,7 +76,8 @@ CC_BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)
 def _urma(var="TMP", store="urma_truth_t.json"):
     """{UTC 'YYYY-MM-DDTHH': value}: inverse-distance mean of the 4 URMA cells around the Cove.
     TMP in F; TCDC in % as published."""
-    conv = (lambda k: (k - 273.15) * 9 / 5 + 32) if var == "TMP" else (lambda v: v)
+    conv = ((lambda k: (k - 273.15) * 9 / 5 + 32) if var in ("TMP", "DPT")
+            else (lambda ms: ms * 2.23694) if var in ("WIND", "GUST") else (lambda v: v))
 
     def idw(nb):
         w = [1 / max(x[2], 0.1) ** 2 for x in nb]
@@ -160,6 +161,9 @@ def build():
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
     urma = _urma_t()
+    # 11-20: dp/ws/wg graded on URMA too (Joe ok'd URMA as the wind truth; our anemometers are sheltered).
+    urma_by_field = {"t": urma, "dp": _urma("DPT", "urma_truth_dpt.json"),
+                     "ws": _urma("WIND", "urma_truth_wind.json"), "wg": _urma("GUST", "urma_truth_gust.json")}
     urma_cc = _urma("TCDC", "urma_truth_tcdc.json")
     cc_new = lambda: {"n": 0, "pub": 0.0, "srv": 0.0, "bias": 0.0, "obs": 0.0}  # noqa: E731
     cc_band = {b[0]: cc_new() for b in CC_BANDS}
@@ -218,7 +222,7 @@ def build():
                 continue
             shift = obs - obs_s
             nw = r.get("forecast_nws")
-            tu = urma.get(_utc_hour(r.get("valid_time") or "")) if f == "t" else None
+            tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
             day = (r.get("valid_time") or "")[:10]
             first = day if first is None or day < first else first
             last = day if last is None or day > last else last
@@ -262,8 +266,9 @@ def build():
         "definition": ("Total Lift = (public_MAE - served_MAE)/public_MAE; served = error_{applied_layer}, "
                        "public = error_raw_nbm; same rows on both truths; station truth = "
                        "observed_stations (model-free). gap = shrunk lift - station lift (the flattery). "
-                       "t also on URMA (total_lift_urma_pct), independent of stations and L2."),
+                       "t/dp/ws/wg also on URMA (*_urma keys; TMP/DPT/WIND/GUST), independent of stations and L2."),
         "urma_hours": len(urma),
+        "urma_hours_by_field": {f: len(u) for f, u in urma_by_field.items()},
         "fields": fields,
         "cc_urma": {
             "urma_hours": len(urma_cc),
