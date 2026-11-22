@@ -2697,6 +2697,7 @@
      This section is the single place to see per-(field, gate) triggering
      across all layers. Sibling per-layer filtered slices in each L# section
      are step 6, deferred. -->
+<div class="fp-truthbanner" style="margin:18px 0 8px;"><b>Old truth from here down.</b> The Applicability map and the layer sections (L1 to Lc) grade on the logged "observed": station readings pulled toward the model, which flatters corrections that stay close to the model. The scorecard and trend at the top use the fixed truth per field (URMA, or the Mesonet for humidity). These sections move to it when the corrections are refit on the clean truth (plan Step 5).</div>
 <h2 class="section" id="sec-applicability">Applicability map — what corrections trigger, why, and when they actually fire</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
   <p class="layer-summary">Two lenses on the same object. <strong>Applicability</strong> (top) describes what's <em>configured</em> to fire and under what gates — built each tick from <code>describe_applicability()</code> in each correction module, so <strong>the page can never drift from the code</strong>. <strong>Runtime firing frequency</strong> (bottom, 7-day rolling) shows what's <em>actually</em> firing per operator × field × regime, so silent dormancy (config says "enabled" but the code path never mutates a value — the class of bug that hid ws L3 for 4 days after v0.6.279) surfaces as an ★ on cells with 0 fires despite ≥5 ticks in that regime.</p>
