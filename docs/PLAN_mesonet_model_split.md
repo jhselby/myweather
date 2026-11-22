@@ -10,7 +10,8 @@ Rewritten 2026-11-22 after a conversation with Joe that replaced the first draft
 4. **`/model` holds the forecast only:** the question, scorecard, how it works, trend, then the engine detail (selector, L3, L4, specialists, gates, applicability map, archive). No Mesonet content.
 5. **Scoring split:** `/mesonet` scores the Mesonet (agreement, bias vs URMA/KBVY/buoy, qualify verdict, coverage, station health, wind and own-station tests, Cove adjustment, K, windows). `/model` scores the forecasts (scorecard, trend, detailed scoreboard, selector, shadows and ship ledger, sentries, dated reads, event scoring, truth table).
 6. **Rule:** a thing lives on the page of the module that owns it; the other page links, never copies. Crossover = links plus the cross-check columns on `/mesonet`.
-7. Authority: Joe's words in conversation beat this document. If they differ, change the document.
+7. **The Mesonet represents the Cove (Joe, 11-22 PM), not the Marblehead average.** Consequences: (a) inland or distant stations are not added to the Mesonet (the same-hours test showed adding WU moves the level toward URMA's smoothed value, not toward the Cove); (b) URMA is a smooth reference, not the Cove's truth: the Mesonet's +0.6 F night warmth against URMA is not by itself an error; (c) the test of "does the Mesonet qualify" for temperature and dew point needs a Cove-side reference (Driftwood Rd, Neptune Rd, then the yard station) and has to be re-set before any result is looked at; (d) the Cove adjustment (Step 1.7) moves from "shadow experiment" to core; (e) the shadow Tempest stations (3-4 mi out) are kept only as a cross-check until the Dec 6 read, then dropped unless they help.
+8. Authority: Joe's words in conversation beat this document. If they differ, change the document.
 
 (Sections 4-5 below that say "Notebook underneath on the same URL" or "L2 labelled as the link" are superseded by 1-3.)
 
