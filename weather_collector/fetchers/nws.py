@@ -77,6 +77,9 @@ def fetch_nws_gridpoints():
             "weather": properties.get("weather", {}),
             "windSpeed": properties.get("windSpeed", {}),
             "windDirection": properties.get("windDirection", {}),
+            "relativeHumidity": properties.get("relativeHumidity", {}),
+            "windGust": properties.get("windGust", {}),
+            "skyCover": properties.get("skyCover", {}),
         }
 
         meta["status"] = "ok"

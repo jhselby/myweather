@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.130 • November 22, 2026 (weather.gov humidity, gust, cloud and rain amount recorded)</strong></summary>
+
+- The collector now saves weather.gov's forecast for humidity, gusts, cloud cover and rain amount next to ours, as it already did for temperature, dew point, wind, wind direction and rain chance. Nothing in the app changes. After about two weeks of rows the scorecard can compare these four fields against weather.gov instead of raw NBM; until then it stays on NBM.
+- Rain amount: weather.gov gives a total for each block of hours, so the total is spread evenly over the block's hours and converted to inches.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.129 • November 22, 2026 (Debug page staleness sweep)</strong></summary>
 
 - Debug page: the scorecard drops the "vs raw NBM" column. "Coming up" now lists what is actually next (gust lead 45–47 re-read Nov 23, cloud and dew point re-reads Nov 24, wind and gust serve decision Nov 27, rain chance Dec 4) and marks the humidity-truth question done.

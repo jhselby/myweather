@@ -58,7 +58,7 @@ This project is mostly for Joe. The question he wants answered is: *is my foreca
   - 60a489d2 contains: the debug-page staleness sweep, the draft `#sec-mesonet` section, a scorecard with the vs-raw-NBM column removed, and the first draft of this plan.
 - Its scorecard still uses the old truth mix (t on URMA, the rest on stations). Step 3 replaces that.
 - **Action:** show Joe the LAN preview. If he approves, push both commits as they are; the staleness fixes are worth having now. On the page, label the scorecard truth as "interim, being replaced". Do not polish the draft Mesonet section; Step 2 supersedes it.
-- [ ] done
+- [x] done 11-22: pushed 39da0c82..91b06010 on Joe's yes.
 
 ### Step 1. Validate the Mesonet (read-only; nothing served changes)
 Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.json`. Reuse the scripts in §3.
@@ -84,7 +84,21 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 1.6 Write the window on every number ("11-08 to <date>, autumn only").
 
 **Decision at the end of Step 1:** for each field, does the Mesonet qualify as truth? It qualifies if the held-out MAE is small relative to forecast errors and the network bias against URMA/KBVY is small. If t or h does not qualify, stop and recalibrate before Step 3. Write the verdict per field here.
-- [ ] done
+
+**Rule, fixed 11-22 before any Step 1 score was computed** (thresholds from `analysis/output/truth_compare.json`, 2-47h, 11-02..11-22):
+- A. Precision: held-out (leave-one-station-out) MAE ≤ 0.5 × served forecast MAE on station truth. t ≤ 1.18 F, h ≤ 3.0 %, dp ≤ 0.81 F.
+- B. Accuracy: |mean(Mesonet − URMA)| over the window ≤ the served forecast's lead over the bar, in the field's units, so a truth bias alone cannot flip a verdict. t ≤ 0.36 F (weather.gov 2.28 − served 1.91, URMA), dp ≤ 0.12 F (1.87 − 1.75, URMA), h ≤ 3.6 % (vs raw NBM, no weather.gov h yet; URMA h from TMP+DPT).
+- Both A and B must pass. KBVY and the hour-of-day bias are reported, not gated (KBVY sits 6 mi inland).
+- ws / wg: reported only; they stay on URMA (11-20 decision, §3.1). pr, rain, sr: reported only (not on the scorecard as station-truth fields).
+- [x] measured 11-22 (`analysis/mesonet_validation.py` → `analysis/mesonet_validation.json`; 11-08..11-22, 2,013 ticks, 336 hours, 15-17 Tempest stations every tick):
+  - **t: does not qualify.** Held-out 0.96 F (passes A). Mesonet − URMA +0.61 F (fails B, bar 0.36): +1.0..+1.3 F every night hour, ~0 midday. vs KBVY +4 F at night, ~0 midday (KBVY is an inland airport, so it is colder at night).
+  - **h: qualifies.** Held-out 2.7 % (A ≤ 3.0); Mesonet − URMA −3.4 % (B ≤ 3.6, narrow).
+  - **dp: does not qualify.** Held-out 0.84 F (A ≤ 0.81, narrow fail); Mesonet − URMA −0.72 F, drier by ~1.2 F in daytime (B ≤ 0.12).
+  - pr: held-out 0.01 inHg, KBVY bias 0.00. ws / wg: 4 / 8 mph below URMA (sheltered, as known; stay on URMA). sr: held-out 50 W/m² daytime.
+  - Coverage: never below 15 stations in the window, so the low-coverage threshold cannot be set from data (held-out 1.10 F at 15 vs 0.95 F at 16). Worst octant S (1.53 F); still no west stations.
+  - 1.5 (record only): corrected_temp tracks URMA better than station_temp (0.74 vs 0.82 F MAE), but corrected_temp contains the model and URMA is model-based, so this is not independent.
+  - Found and fixed: `l2_loo_score.nets()` (also used by `mesonet_bench.py`) added `off_t` instead of subtracting it; the earlier LOO / bench numbers were on wrong-sign offsets (~0.17 F level, wider spread).
+  - Open question before Step 3: is the night +1 F real Cove warmth (water, houses) that URMA's 2.5 km grid smooths, or a shared sensor/siting warm bias the held-out test cannot see? Next check: waterfront / open-sited stations alone vs URMA at night.
 
 ### Step 2. The `/mesonet` page
 - New file `mesonet.html` (verify the `/mesonet` URL on Pages after the first push). Standalone: its own styles and no app shell, matching the theme tokens.
@@ -125,6 +139,7 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 - **Collector deploy: ask Joe first.**
 - After about 14 days of rows, the scorecard compares those four against weather.gov instead of NBM. Until then, label them "vs NBM (weather.gov not yet recorded)".
 - Do this as early as Joe approves, because the clock only starts at deploy.
+- 3.6 DONE 11-22 (v0.7.130): deployed 18:14Z; the 13:18 tick stamped h/wg/cc/pa_nws on 48/48 hours. QPF is spread evenly over its validTime block (mm → in/h). ~14 days of rows ≈ 12-06.
 - [ ] done
 
 ### Step 4. `/model` front section and the Notebook

@@ -1,7 +1,7 @@
 """NWS gridpoint validTime durations: day parts must count (11-21: P1DT13H POP read as 1 h)."""
 from datetime import datetime, timezone
 
-from weather_collector.processors.forecast_text import _extract_nws_value
+from weather_collector.processors.forecast_text import _extract_nws_value, _extract_nws_interval
 
 PROP = {"values": [
     {"validTime": "2026-11-21T06:00:00+00:00/PT2H", "value": 5},
@@ -31,3 +31,10 @@ def test_days_only():
 def test_minutes_and_outside():
     assert at("2026-11-23T21:15") == 70
     assert at("2026-11-23T21:30") is None
+
+
+def test_interval_length_for_block_totals():
+    t = datetime(2026, 11, 21, 10, tzinfo=timezone.utc)
+    assert _extract_nws_interval(PROP, t) == (0, 37.0)
+    assert _extract_nws_interval(PROP, datetime(2026, 11, 23, 21, 15, tzinfo=timezone.utc)) == (70, 0.5)
+    assert _extract_nws_interval(PROP, datetime(2026, 11, 20, tzinfo=timezone.utc)) == (None, None)

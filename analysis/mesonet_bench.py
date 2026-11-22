@@ -1,7 +1,7 @@
 """Plain mesonet + model benchmark for t at 6-47h, truth = Tempest network median (Cove-normalised).
 
 At 6h+ the station network is not an input to the forecast, so nothing here is circular. Truth for a
-valid hour = mean over archive ticks within +-30 min of the median of (t + off_t) over fresh stations.
+valid hour = mean over archive ticks within +-30 min of the median of (t - off_t) over fresh stations.
 Rows = forecast_log snapshot hours (GCS) with every source present. Columns, MAE F by lead band:
   served (t), hrrr (t_l1), nbm (t_raw_nbm), ecmwf (t_ecmwf), and each raw model minus its mean error
   over the PRIOR valid days in the same band (walk-forward; the first scored day needs >= 1 prior day).

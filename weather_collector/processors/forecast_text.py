@@ -30,12 +30,20 @@ _ISO_DURATION = re.compile(r"P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?")
 
 def _extract_nws_value(nws_property, target_time):
     """Extract NWS value for a specific datetime from gridpoint property."""
+    value, _hours = _extract_nws_interval(nws_property, target_time)
+    return value
+
+
+def _extract_nws_interval(nws_property, target_time):
+    """(value, interval length in hours) of the validTime interval holding
+    target_time, or (None, None). Accumulated properties (QPF) need the
+    length to turn a block total into a per-hour amount."""
     # Ensure target_time is timezone-aware
     if target_time.tzinfo is None:
         target_time = target_time.replace(tzinfo=timezone.utc)
     if not nws_property or "values" not in nws_property:
-    
-        return None
+
+        return None, None
     for entry in nws_property["values"]:
         valid_time = entry.get("validTime", "")
         if not valid_time:
@@ -59,9 +67,9 @@ def _extract_nws_value(nws_property, target_time):
         
         # Check if target_time falls within this interval
         if start_dt <= target_time < end_dt:
-            return entry.get("value")
-    
-    return None
+            return entry.get("value"), (end_dt - start_dt).total_seconds() / 3600.0
+
+    return None, None
 
 def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bias=0, derived=None):
     """Generate 10-day forecast: 14 periods (days 1-7) + 3 simple dailies (days 8-10)."""

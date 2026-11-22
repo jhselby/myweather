@@ -24,7 +24,7 @@ from .ch_persistence_gate import (
     _persistence_source as _chp_persistence_source,
     _valid_hour_local as _chp_valid_hour_local,
 )
-from .forecast_text import _extract_nws_value
+from .forecast_text import _extract_nws_value, _extract_nws_interval
 
 
 GCS_PATH = "forecast_log.json"
@@ -53,9 +53,15 @@ CHP_NBM_CH_KILL = True
 #   pp ← probabilityOfPrecipitation (percent, no conversion)
 #   ws ← windSpeed (km/h → mph)
 #   wd ← windDirection (deg, no conversion)
-# Not covered (NWS gridpoint returns no equivalent): h, cc, cl, cm, ch, sr,
-# wg, pa (QPF is in mm and can be added later once we settle on the pa unit).
-_NWS_FIELDS = ("t", "dp", "pp", "ws", "wd")
+# v0.7.130 (11-22, plan Step 3.6) — recorded only, so the scorecard can grade
+# these against weather.gov after ~14 days; the selector never routes them to
+# NWS (l1_selector._NWS_FIELDS_WIRE_ELIGIBLE):
+#   h  ← relativeHumidity (percent)
+#   wg ← windGust (km/h → mph)
+#   cc ← skyCover (percent)
+#   pa ← quantitativePrecipitation (mm per validTime block → in per hour)
+# Not covered (NWS gridpoint returns no equivalent): cl, cm, ch, sr, pr.
+_NWS_FIELDS = ("t", "dp", "pp", "ws", "wd", "h", "wg", "cc", "pa")
 
 # Phase 1 (option-1 parallel HRRR/NBM cascade, 2026-08-18) — NBM CO grib
 # point extract fetched hourly by nbm-ingester CF, stamped per-hour as
@@ -857,6 +863,27 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                                   lambda d: d)
                 if v is not None:
                     entry["wd_nws"] = _round_for("wd", v)
+                # v0.7.130 — h / wg / cc / pa, recorded for the scorecard only.
+                v = _nws_value_at(nws_gridpoints, "relativeHumidity", target_utc,
+                                  lambda x: x)
+                if v is not None:
+                    entry["h_nws"] = _round_for("h", v)
+                v = _nws_value_at(nws_gridpoints, "windGust", target_utc,
+                                  lambda k: k * 0.621371)
+                if v is not None:
+                    entry["wg_nws"] = _round_for("wg", v)
+                v = _nws_value_at(nws_gridpoints, "skyCover", target_utc,
+                                  lambda x: x)
+                if v is not None:
+                    entry["cc_nws"] = _round_for("cc", v)
+                # QPF is a block total: spread it evenly over the block's hours.
+                qpf, qpf_h = _extract_nws_interval(
+                    nws_gridpoints.get("quantitativePrecipitation"), target_utc)
+                if qpf is not None and qpf_h:
+                    try:
+                        entry["pa_nws"] = _round_for("pa", float(qpf) / 25.4 / qpf_h)
+                    except (TypeError, ValueError):
+                        pass
         # Phase 1 (2026-08-18) — NBM raw stamp per field for parallel
         # HRRR/NBM cascade. Look up this hour's valid UTC in the extract's
         # lead_valid_utc map; if the ingester covered it, stamp _raw_nbm

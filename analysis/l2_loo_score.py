@@ -2,11 +2,11 @@
 
 L2 is graded on the same stations that feed it, so its score mixes real skill with the network
 agreeing with itself. Here, for every tick T and every valid station j, the correction is built from
-the OTHER stations only and scored against j's own reading (truth_j = t_j + off_j, the Cove-normalised
+the OTHER stations only and scored against j's own reading (truth_j = t_j - off_j, the Cove-normalised
 reading L2 uses). Temperature only.
 
   raw      model_temp(T+k)                                   (the model the correction sits on)
-  loo      model_temp(T+k) + exp(-k/TAU) * (median_{i!=j}(t_i+off_i) - model_temp(T))
+  loo      model_temp(T+k) + exp(-k/TAU) * (median_{i!=j}(t_i-off_i) - model_temp(T))
   incl     same with j included in the median               (the circular, in-sample version)
   deb      model_temp(T+k) + trailing 24 h mean (others' mean - model_temp), stations only, j excluded
   loo+deb  deb + exp(-k/TAU) * (current others' median - model_temp(T) - trailing bias)
@@ -57,7 +57,8 @@ def load(d):
 
 def nets(t):
     """{station: Cove-normalised t} for valid stations."""
-    return {k: r["t"] + (r.get("off_t") or 0.0) for k, r in t["readings"].items()
+    # off_t is the offset hyperlocal SUBTRACTS (station_readings_log); + was a sign error (fixed 11-22).
+    return {k: r["t"] - (r.get("off_t") or 0.0) for k, r in t["readings"].items()
             if r.get("valid") and r.get("t") is not None and (r.get("age_min") or 0) < 15}
 
 
