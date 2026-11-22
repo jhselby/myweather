@@ -120,12 +120,12 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 1.8 **Cove-side qualification for t and dp (drafted 11-22 PM, BEFORE any score is computed; thresholds below are proposals for Joe to confirm; supersedes rule B in 1.x for t and dp, which stays as a labelled URMA cross-check).**
 - **Why:** the Mesonet represents the Cove. URMA smooths the water, so a Mesonet warmer than URMA at night is not an error by itself.
 - **Reference stations (kept apart, never pooled):** (1) the yard station KMAMARBL124, 0.04 mi, not in the Mesonet, different hardware (the clean reference); (2) Neptune Rd (0.43 mi, waterfront) and (3) Driftwood Rd (0.21 mi, harbour shore), both Cove side of the Cliffs and both IN the Mesonet, so for each the Mesonet is recomputed WITHOUT that station before comparing.
-- **Open fact needed from Joe:** how the yard sensor is mounted (radiation shield, sun and wall exposure). An unshielded sensor warms in sun and would bias the reference; until known it is a cross-check, not the arbiter.
+- **Yard sensor mounting (Joe, 11-22): in the vented eave of the chicken coop.** Shaded from direct sun, but the roof heats the eave space by day (warm bias, slow response) and the wall and birds may hold a little heat at night. So it is a PROVISIONAL reference: its day and night offset against Driftwood Rd and Neptune Rd is estimated first (on days before the Mesonet is scored against it, and fixed), night rows carry the weight, and it never decides a verdict alone.
 - **Rows:** hourly means, same hours for every comparison, day (08-18 ET) and night separately; at least 10 nights per reference. Earliest read: Dec 2 (yard data from Nov 18), Dec 6 for Driftwood Rd.
 - **The Cove adjustment (step 1.7) is part of the estimator under test**, learned walk-forward on prior days only, never on the day scored.
 - **A. Precision (unchanged):** held-out agreement <= 0.5 x served forecast MAE (t <= 1.18 F, dp <= 0.81 F).
 - **B. Level (proposed):** for each reference and for day and night separately, |mean(Mesonet - reference)| <= 0.5 F for t and <= 0.7 F for dp, and hourly RMSE of the difference <= 1.0 F for t. These are about half the typical 1 F spread between neighbouring stations; chosen now, not from results.
-- **Verdict:** t (and dp) qualify as the Cove truth only if B holds against the yard station AND neither waterfront reference differs by more than 1 F at night. Otherwise t stays graded on URMA, labelled, as now.
+- **Verdict:** t (and dp) qualify as the Cove truth only if B holds against the yard station (after its own offset is applied, night rows) AND against Driftwood Rd and Neptune Rd (night difference <= 1 F each). Otherwise t stays graded on URMA, labelled, as now.
 - **Humidity** keeps its current qualification (it passed A and B against URMA) and gets the same yard-station check when the data is there.
 
 ### Step 2. The `/mesonet` page
