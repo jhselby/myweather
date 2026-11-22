@@ -939,35 +939,46 @@ def sustained_vs_fresh(series_for_field, tail_days, window_days):
     return pct, n_tot
 
 
-def urma_t_sentry_series():
-    """t Prod-vs-Raw per valid day on URMA truth, from the local pair log.
+FIXED_TRUTH_SENTRY = {"t": "URMA", "dp": "URMA", "ws": "URMA", "wg": "URMA", "h": "Mesonet 6-47h"}
 
-    Returns ({"raw": {day: {mae, n}}, "prod_real": {...}}, sorted days) or None
-    when the pair log or URMA truth is missing. Raw = forecast_l1 (raw HRRR),
-    prod = forecast_{applied_layer}, same rows, truth = URMA 2 m TMP at the
-    valid hour (analysis/truth_compare._urma_t)."""
+
+def fixed_truth_sentry_series():
+    """Prod-vs-Raw per valid day on each field's fixed truth (plan Step 3.1, 11-22), from the local
+    pair log: t/dp/ws/wg on URMA, h on observed_stations (the Mesonet) at leads >= 6 h (L2 reads the
+    same stations below that). Raw = forecast_l1 (raw HRRR), prod = forecast_{applied_layer}, same rows.
+    The pair log's `observed` is partly model, so sentries on it fired false alarms (t 11-20, h/dp 11-22).
+
+    Returns {field: (acc, sorted days)} with acc = {"raw": {day: {mae, n}}, "prod_real": {...}}, or {}."""
     log = Path.home() / ".cache" / "myweather" / "forecast_error_log.jsonl"
     if not log.exists():
-        return None
+        return {}
     try:
         sys.path.insert(0, str(HERE.parent.parent))
-        from analysis.truth_compare import _urma_t, _utc_hour
-        truth = _urma_t()
+        from analysis.truth_compare import _urma, _urma_t, _utc_hour
+        urma = {"t": _urma_t(), "dp": _urma("DPT", "urma_truth_dpt.json"),
+                "ws": _urma("WIND", "urma_truth_wind.json"), "wg": _urma("GUST", "urma_truth_gust.json")}
     except Exception:
-        return None
-    if not truth:
-        return None
-    acc = {"raw": {}, "prod_real": {}}
-    rx = re.compile(r'"field": ?"t"')
+        return {}
+    acc = {f: {"raw": {}, "prod_real": {}} for f in FIXED_TRUTH_SENTRY}
+    rx = re.compile(r'"field": ?"(t|dp|ws|wg|h)"')
     with open(log) as fh:
         for line in fh:
-            if not rx.search(line):
+            m = rx.search(line)
+            if not m:
                 continue
             try:
                 r = json.loads(line)
             except ValueError:
                 continue
-            tr = truth.get(_utc_hour(r.get("valid_time") or ""))
+            f = r.get("field")
+            if f not in acc:
+                continue
+            if f == "h":
+                if (r.get("lead_h") or 0) < 6:
+                    continue
+                tr = r.get("observed_stations")
+            else:
+                tr = (urma.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
             ap = r.get("applied_layer")
             prod = r.get(f"forecast_{ap}") if ap else None
             if prod is None:
@@ -977,14 +988,18 @@ def urma_t_sentry_series():
                 continue
             day = r["valid_time"][:10]
             for key, v in (("raw", raw), ("prod_real", prod)):
-                a = acc[key].setdefault(day, {"sum": 0.0, "n": 0})
+                a = acc[f][key].setdefault(day, {"sum": 0.0, "n": 0})
                 a["sum"] += abs(v - tr)
                 a["n"] += 1
-    for s in acc.values():
-        for a in s.values():
-            a["mae"] = a.pop("sum") / a["n"]
-    days = sorted(acc["raw"])
-    return (acc, days) if days else None
+    out = {}
+    for f, sf in acc.items():
+        for s_ in sf.values():
+            for a in s_.values():
+                a["mae"] = a.pop("sum") / a["n"]
+        days = sorted(sf["raw"])
+        if days:
+            out[f] = (sf, days)
+    return out
 
 
 def regression_sentry():
@@ -1015,13 +1030,12 @@ def regression_sentry():
     lines = []
     healing = []
     watch = []
-    urma_t = urma_t_sentry_series()
+    fixed = fixed_truth_sentry_series()
     for field in sorted(series.keys()):
         sf = series.get(field) or {}
-        if field == "t" and urma_t:
-            # v0.7.123: t is served from t_urmab (fit to URMA) since v0.7.114; the pair log's
-            # observed blend is partly model, so scoring t on it fired a false FRESH FIRE (11-20).
-            sf, days_f, field = urma_t[0], urma_t[1], "t (URMA truth)"
+        if field in fixed:
+            # 11-22: every field the scorecard grades on a fixed truth is sentried on it too.
+            sf, days_f, field = fixed[field][0], fixed[field][1], f"{field} ({FIXED_TRUTH_SENTRY[field]} truth)"
         else:
             days_f = days
         s_pct, s_n = sustained_vs_fresh(sf, days_f, SENTRY_SUSTAINED_DAYS)
