@@ -2,7 +2,7 @@
 // Changelog loader — fetches docs/CHANGELOG.md into the Settings drawer.
 //
 // HOW_IT_WORKS.md and DATA_PIPELINE.md retired 2026-06-21: nobody read them
-// and they drifted from reality. corrections_debug.html is the live canonical
+// and they drifted from reality. model.html is the live canonical
 // reference for the math; the README covers the project at the overview level.
 // ======================================================
 

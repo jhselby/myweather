@@ -23,7 +23,7 @@ Five Google Cloud Functions, one GCS bucket, one static site. They share nothing
                               │ public fetch
   ┌──────────────────────────────────────────────────────────┐
   │  GitHub Pages: PWA (index.html + js/ + styles/)            │
-  │  + corrections_debug.html                                  │
+  │  + model.html, mesonet.html                                │
   └──────────────────────────────────────────────────────────┘
 ```
 
@@ -121,7 +121,7 @@ It also re-fetches when the app resumes from background.
 
 ### Debug page
 
-A separate page at [wymancove.com/corrections_debug.html](https://wymancove.com/corrections_debug.html) renders the correction pipelines: the applicability map (what each module covers and whether it fires), one section per layer (L1 with the selector, L2 station network, L3, L4, Lsr, Lc), accuracy series from `mae_over_time.json`, and research and archive sections. Not linked from the PWA — debug-only.
+A separate page at [wymancove.com/model.html](https://wymancove.com/model.html) renders the correction pipelines: the applicability map (what each module covers and whether it fires), one section per layer (L1 with the selector, L2 station network, L3, L4, Lsr, Lc), accuracy series from `mae_over_time.json`, and research and archive sections. Not linked from the PWA — debug-only.
 
 ### Build step
 

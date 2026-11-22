@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.136 • November 22, 2026 (Two pages: Mesonet and Model)</strong></summary>
+
+- The Mesonet page now holds everything about the Mesonet, including the old L2 observation layer: how each field is combined, the compass coverage chart, the network bias estimate, and station feed health. It also lists what is being tested next (the Cove adjustment on Nov 29, your yard station on Dec 2).
+- The Model page is the forecast only. L2 is no longer described as a forecast layer: a short section, "How the forecast takes the Mesonet", holds the confidence K and the fade with lead time, and links to the Mesonet. Removed from it: the L2 section and its "what it is worth" box, the current-conditions snapshot (the app shows it), the "this hour" table, the applicability map, the old-truth "Where things stand" notes, and the page's own station tables. Sections were renamed for what they answer, and the Coming up list was rewritten.
+- Both pages now share one shell: the same title style (each title is the question the page answers), the same top navigation with an App / Mesonet / Model switcher (the current page highlighted), the same headings and panels. A test fails if the shared styling ever differs between the two files. Answer sections never collapse; only the reference sections on the Model page do.
+- The Mesonet page was reordered and merged: Now and Map, Coverage by direction (table and compass chart together), Stations (Tempest, archived Weather Underground, feed health), How it's built, How good, Being tested next. The separate "stations minus model" table is gone, since the Now table already shows the model beside each reading.
+- `corrections_debug.html` is gone; there is no separate notebook page.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.135 • November 22, 2026 (Dew point blend on URMA, shadow)</strong></summary>
 
 - Served dew point copies the old truth's dry bias: 0.7–0.95 °F below URMA, while raw NBM runs +0.7 °F and raw HRRR −2.7 °F. A blend of HRRR, NBM and ECMWF dew point fit on URMA beat served dew point in walk-forward on the days since Nov 3 by 19.8% at 6–11 h and 18.3% at 12–23 h (both pass the ship rule), and beat weather.gov by 24.9% and 23.5%. At 24–47 h it gains 10.4% but the interval touches zero, so it does not pass.

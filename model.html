@@ -25,17 +25,23 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
+  /* SHARED SHELL START: identical in model.html and mesonet.html (tests/test_shared_shell.py) */
   :root {
     --bg: #0f1115;
     --panel: #171b22;
     --ink: #e7ecf3;
+    --text: #e7ecf3;
     --muted: #8a93a3;
     --accent: #4aa3ff;
     --warn: #ff9f4a;
+    --good: #5cc88a;
+    --bad: #e07070;
+    --line: #262c36;
     --warm: rgba(239,100,80,0.9);
     --cool: rgba(80,160,239,0.9);
   }
   * { box-sizing: border-box; }
+  html { scroll-padding-top: 72px; }
   body {
     margin: 0;
     padding: 18px;
@@ -52,7 +58,9 @@
     padding-bottom: 0;
   }
   h1 { font-size: 18px; margin: 0; font-weight: 600; }
-  html { scroll-padding-top: 72px; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .meta strong { color: var(--ink); font-weight: 500; }
+  .meta a { color: var(--accent); }
   h2.section {
     scroll-margin-top: 72px;
     font-size: 21px;
@@ -66,6 +74,54 @@
     border-left: 3px solid var(--accent);
     border-radius: 4px;
   }
+  h3.subsection {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 18px 2px 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #242833;
+  }
+  h3.subsection:first-child { border-top: none; padding-top: 0; }
+  .fp-panel { border: 1px solid #253247; background: #0d141e; border-radius: 10px; padding: 12px 16px; }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,21,0.96);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid #242833;
+    padding: 8px 12px;
+    margin: 0 -12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  nav.toc a {
+    color: var(--ink);
+    background: #1a1f2a;
+    border: 1px solid #242833;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
+  nav.toc a.here { color: #fff; background: #1d3250; border-color: #3b6ea8; }
+  nav.toc .sep { width: 1px; background: #242833; margin: 2px 4px; }
+  @media (max-width: 640px) {
+    nav.toc {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    nav.toc::-webkit-scrollbar { display: none; }
+  }
+  /* SHARED SHELL END */
   h2.section.research-heading {
     background: linear-gradient(90deg, rgba(212,163,115,0.10), rgba(212,163,115,0.00) 70%);
     border-left-color: #d4a373;
@@ -94,6 +150,8 @@
     display: inline-block;
   }
   h2.section.collapsed::after { content: " ▸"; }
+  h2.section.fixed { cursor: default; }
+  h2.section.fixed::after { content: none; }
 
   /* ── Print / PDF: flip to light theme so text is readable on paper ────
      Canvas charts are rasterized with the dark theme baked in — those stay
@@ -317,9 +375,6 @@
     .band-table td, .band-table th { background: white !important; color: #111 !important; border-color: #ddd !important; }
     .band-table .all-row td { background: #f8f8f8 !important; }
   }
-  .meta { color: var(--muted); font-size: 12px; }
-  .meta strong { color: var(--ink); font-weight: 500; }
-  .meta a { color: var(--accent); }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -442,15 +497,6 @@
   }
   .hist-legend-hint { margin-left: auto; opacity: 0.7; }
   /* Sub-section header inside a layer */
-  h3.subsection {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 600;
-    margin: 18px 2px 8px;
-    padding-top: 6px;
-    border-top: 1px dashed #242833;
-  }
-  h3.subsection:first-of-type { border-top: none; padding-top: 0; }
   /* Layer 2 bias-values panel */
   .layer-info-text {
     background: var(--panel);
@@ -855,45 +901,8 @@
     font-weight: 400;
   }
   /* Sticky TOC bar */
-  nav.toc {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(15,17,21,0.96);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-bottom: 1px solid #242833;
-    padding: 8px 12px;
-    margin: 0 -12px 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  nav.toc a {
-    color: var(--ink);
-    background: #1a1f2a;
-    border: 1px solid #242833;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
   nav.toc a.research { color: #d4a373; border-color: #3a2d1f; background: #1c1813; }
   nav.toc a.accuracy { color: #74c38b; border-color: #1f3a25; background: #131c16; }
-  /* v0.6.580: on mobile, TOC becomes a single horizontally-scrollable row
-     instead of wrapping to 5 rows. Hides the scrollbar but stays swipable. */
-  @media (max-width: 640px) {
-    nav.toc {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding-bottom: 4px;
-    }
-    nav.toc::-webkit-scrollbar { display: none; }
-  }
   /* Forecast accuracy section */
   .accuracy-grid {
     display: grid;
@@ -1034,21 +1043,22 @@
 
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← App</a>
+  <a href="mesonet.html">Mesonet</a>
+  <a href="model.html" class="here">Model</a>
+  <span class="sep"></span>
   <a href="#sec-front">Scorecard</a>
   <a href="#sec-how">How it works</a>
-  <a href="#sec-stack-health" class="accuracy">Trend</a>
-  <a href="#sec-notebook" style="color:#e0b050;">Notebook ▸</a>
-  <a href="#sec-now">Conditions</a>
-  <a href="mesonet.html">Mesonet ↗</a>
-  <a href="#sec-engine-scoreboard">Detailed scoreboard</a>
-  <a href="#sec-state-now">Where things stand</a>
-  <a href="#sec-layer1" title="L1: raw models + selector">Layers ▸ L1</a>
-  <a href="#sec-layer2" title="L2: local station bias">L2</a>
+  <a href="#sec-mesonet-use">Mesonet use</a>
+  <a href="#sec-trend" class="accuracy">Trend</a>
+  <a href="#sec-whats-new">Changes &amp; next</a>
+  <a href="#sec-scoreboard">Scoreboard</a>
+  <a href="#sec-current-state">Per field</a>
+  <a href="#sec-state-now">Tested &amp; killed</a>
+  <a href="#sec-layer1" title="Which raw source feeds each field">Selector</a>
   <a href="#sec-layer3" title="L3: lead-time decay">L3</a>
   <a href="#sec-layer4" title="L4: time-of-day">L4</a>
   <a href="#sec-layer5" title="Lsr: sunshine by weather regime">Lsr</a>
   <a href="#sec-lc" title="Lc: cloud saturation">Lc</a>
-  <a href="#sec-applicability">When corrections fire</a>
   <a href="#sec-research" class="research">Research</a>
   <a href="#sec-archive">Archive</a>
 </nav>
@@ -1087,7 +1097,6 @@
   .fp-t-weak { color: #9aa6b6; border-color: #3a4352; }
   .fp-note { color: #c9a86a; font-size: 0.8em; display: block; margin-top: 3px; }
   .fp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-  .fp-panel { border: 1px solid #253247; background: #0d141e; border-radius: 10px; padding: 12px 16px; }
   .fp-h { color: #e8eef6; font-weight: 650; font-size: 1em; margin-bottom: 8px; }
   .fp-h span { color: #7f8ba0; font-weight: 400; font-size: 0.85em; }
   .fp-list { list-style: none; margin: 0; padding: 0; font-size: 0.88em; line-height: 1.45; }
@@ -1104,26 +1113,18 @@
   .fp-sample { color:#c9d1dc; font-size:0.84em; margin:2px 4px 12px 4px; line-height:1.5; }
   .fp-sample b { color:#e8eef6; }
   .fp-truthbanner { border:1px solid #5a4a1f; background:#1a160b; color:#e6c46a; border-radius:8px; padding:8px 12px; font-size:0.84em; line-height:1.5; margin:10px 0; }
-  .now-sec { border:1px solid #253247; background:#0d141e; border-radius:10px; padding:14px 18px; margin:6px 0 18px 0; }
-  .now-sec .now-top { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
-  .now-sec .now-temp { font-size:2.3em; font-weight:700; font-variant-numeric:tabular-nums; color:#e8eef6; line-height:1.1; }
-  .now-sec .now-cond { font-size:1.1em; color:#cfd8e3; }
-  .now-sec .now-head { margin-top:8px; font-size:1.05em; color:#e8eef6; font-weight:600; }
-  .now-sec .now-sub { margin-top:3px; color:#8b97a8; font-size:0.9em; line-height:1.45; }
-  .now-sec .now-foot { margin-top:8px; font-size:0.8em; color:#7f8ba0; }
-  .now-sec .now-foot a { color:#7fb3ff; }
   .fp-engine { margin-top: 18px; color: #9aa6b6; font-size: 0.88em; }
 </style>
 
 <section class="fp" id="sec-front">
-  <h2 class="section" id="sec-front-q">Scorecard</h2>
+  <h2 class="section fixed" id="sec-front-q">Scorecard</h2>
 
   <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
   <div class="fp-sample" id="fp-sample"></div>
   <details class="fp-legend" style="margin:0 4px 12px 4px;"><summary style="cursor:pointer;">how to read this, and terms</summary><div style="margin-top:6px;line-height:1.6;">Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.<br>The 8 / 1 / 1 count is a tally of separate per-field tests, each against its own bar and truth, not one score.<br><br>
     <b>weather.gov</b> the NWS forecast a person sees on the weather.gov page. <b>NBM</b> NOAA's National Blend of Models, a public blended forecast. <b>HRRR</b> NOAA's hourly high-resolution model. <b>ECMWF</b> the European model.<br>
     <b>URMA</b> NOAA's hourly analysis of what the weather actually was, built from satellite and surface reports; independent of our stations and corrections. <b>Stations</b> our local weather stations only. <b>Model-blended truth</b> the logged "observed": station readings pulled toward the model forecast, so it flatters us.<br>
-    <b>L1</b> the raw model. <b>L2</b> local station bias correction (first 5 h). <b>L3</b> lead-time decay. <b>L4</b> time-of-day correction. <b>Selector</b> picks which source or blend is served per field, weather pattern and lead time.<br>
+    <b>L1</b> the raw model. <b>Mesonet</b> our station network combined into one current reading; the forecast starts from it. <b>L3</b> lead-time decay. <b>L4</b> time-of-day correction. <b>Selector</b> picks which source or blend is served per field, weather pattern and lead time.<br>
     <b>Error</b> average absolute miss (MAE) over the same hours. <b>% better</b> is how much smaller our error is than the bar's. <b>Holdout</b> days the fit never saw; a change ships only if it wins there.</div></details>
 
   <div class="fp-card">
@@ -1143,12 +1144,12 @@
 </section>
 
 <section class="fp" id="sec-how">
-<h2 class="section" id="sec-how-h">How it works</h2>
+<h2 class="section fixed" id="sec-how-h">How it works</h2>
   <div class="fp-panel" style="margin-top:14px;">
     <div class="fp-flow">
       <div class="fp-step"><b>1 · Gather</b>Forecasts from HRRR (hourly, fine-grained), NBM (the official blend) and ECMWF (European), plus readings from ~19 local weather stations and the airports.<small>Collector, every 10 min · NBM pulled hourly</small></div>
       <div class="fp-arrow">→</div>
-      <div class="fp-step"><b>2 · Correct</b>Nudge each model toward what our stations are seeing right now (strongest in the first ~5 hours), then fix known habits: how errors grow with lead time, time-of-day biases, sea-breeze sunshine, cloud saturation.<small>Layers L2 → L4 and the specialists</small></div>
+      <div class="fp-step"><b>2 · Correct</b>Start each model from the <a href="mesonet.html" style="color:#7fb3ff;">Mesonet</a>'s current reading (it matters most in the first ~5 hours), then fix known habits: how errors grow with lead time, time-of-day biases, sea-breeze sunshine, cloud saturation.<small>Layers L3 → L4 and the specialists</small></div>
       <div class="fp-arrow">→</div>
       <div class="fp-step"><b>3 · Blend &amp; choose</b>For each field and lead time, mix the corrected models with weights refit every morning from the last 14 days, or pick the one source that has been winning.<small>Terminal blend + selector · refit 04:30 ET</small></div>
       <div class="fp-arrow">→</div>
@@ -1158,8 +1159,22 @@
 
 </section>
 
-<details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health <span style="font-weight:normal;opacity:0.75;">— are we beating what a person reads, field by field?</span></summary>
+<section class="fp" id="sec-mesonet-use">
+<h2 class="section fixed" id="sec-mesonet-use-h">How the forecast takes the Mesonet</h2>
+<div class="fp-panel" style="margin-top:14px;">
+  <p style="margin:0 0 4px;">The forecast starts from the <a href="mesonet.html" style="color:#7fb3ff;">Mesonet</a>'s current reading. Two settings decide how much it keeps: a <b>confidence K</b> (how far to trust the stations right now) and a <b>fade with lead time</b> (how quickly that starting point wears off).</p>
+  <h3 class="subsection">Confidence (K)</h3>
+  <div id="k-panel" class="layer-info-text">loading…</div>
+  <h3 class="subsection">Fade with lead time</h3>
+  <div id="leaddecay-meta" class="layer-info-text">loading…</div>
+  <div id="leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="leaddecay-canvas"></canvas></div>
+</div>
+</section>
+
+<section class="fp" id="sec-trend">
+<h2 class="section fixed" id="sec-trend-h">Trend</h2>
+<div class="fp-panel" style="margin-top:14px;" id="sec-stack-health">
+  <div style="color:#7fb3ff;font-weight:600;">Are we beating what a person reads, field by field?</div>
   <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; the <strong>Mesonet</strong> for h (leads 6–47 h, where the stations are not a forecast input); logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Field lines start 08-25 (the oldest forecast rows we kept, with weather.gov's forecast saved alongside). The grey dashed "old score" measures something weaker: the median across 10 fields, on our own blended truth, against the raw model rather than weather.gov. Click any legend entry to hide it.</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
@@ -1168,78 +1183,12 @@
     <canvas id="stack-health-canvas"></canvas>
   </div>
   <div id="stack-health-events-legend"></div>
-</details>
-
-<h2 class="section" id="sec-notebook" style="margin-top:34px;border-left-color:#e0b050;">Notebook</h2>
-
-<section class="fp" id="sec-conditions">
-<h2 class="section" id="sec-now" style="margin-top:14px;">Current Conditions</h2>
-<div class="now-sec">
-  <div class="now-top"><span class="now-temp" id="now-temp">…</span><span class="now-cond" id="now-cond">loading current conditions</span></div>
-  <div class="now-head" id="now-head"></div>
-  <div class="now-sub" id="now-sub"></div>
-  <div class="now-foot"><span id="now-stamp"></span><a href="/">Open the app →</a></div>
-</div>
-<script>
-(function () {
-  // Now section: current conditions + the app's own briefing, from the feed the app reads
-  // (weather_data.json). No new source; on failure it says so and the rest of the page is unaffected.
-  const $ = id => document.getElementById(id);
-  const dir = d => ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(d / 22.5) % 16];
-  const load = () => fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
-    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(d => {
-      const c = d.current || {}, b = d.briefing || {};
-      if (c.temperature == null) throw new Error("no current conditions in feed");
-      $("now-temp").textContent = Math.round(c.temperature) + "°";
-      const wind = c.wind_speed != null ? " · wind " + Math.round(c.wind_speed) + " mph" + (c.wind_direction != null ? " " + dir(c.wind_direction) : "") : "";
-      const feels = c.apparent_temperature != null ? " · feels " + Math.round(c.apparent_temperature) + "°" : "";
-      $("now-cond").textContent = ((c.weather_emoji || "") + " " + (c.weather_description || "")).trim() + feels + wind;
-      $("now-head").textContent = b.headline || "";
-      $("now-sub").textContent = b.subheadline || "";
-      const t = d.generated_at ? new Date(d.generated_at) : null;
-      $("now-stamp").textContent = t && !isNaN(t) ? "As of " + t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET · " : "";
-    })
-    .catch(e => { $("now-temp").textContent = "—"; $("now-cond").textContent = "current conditions unavailable (" + e.message + ")"; });
-  load(); setInterval(load, 600000);
-})();
-</script>
-
-<div style="margin:0 0 18px 0;">
-<div id="headlineBox">
-  <table class="hb-corr-table">
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-      </tr>
-    </thead>
-    <tbody id="hbCorrRows">
-      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
-    </tbody>
-  </table>
-  <div class="hb-ops-row">
-    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
-    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
-  </div>
-  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
-</div>
 </div>
 </section>
 
-<section class="fp" id="sec-mesonet">
-<h2 class="section" id="sec-mesonet-h">Wyman Cove Mesonet</h2>
-<div class="fp-card" style="padding:12px 18px;">Moved to its own page: <a href="mesonet.html">Wyman Cove Mesonet</a> (live station values, cross-checks, how it is built and how good it is).</div>
-</section>
 
 <section class="fp" id="sec-whats-new">
-<h2 class="section" id="sec-whats-new-h">What's new &amp; next</h2>
+<h2 class="section fixed" id="sec-whats-new-h">What changed and what is next</h2>
   <div class="fp-grid">
     <div class="fp-panel">
       <div class="fp-h">What changed recently <span>· every release, from the changelog</span></div>
@@ -1248,24 +1197,18 @@
     <div class="fp-panel">
       <div class="fp-h">Coming up <span>· earliest decision dates, not release dates</span></div>
       <ul class="fp-list">
-        <li class="fp-done"><span class="fp-date">Nov 19</span><span><b>Temperature blend is live</b> for 6–47 h (bias removed against URMA, three models blended; v0.7.114). It cleared 5 of 6 or better days in every range. Re-evaluate on unseen days after about Nov 27; a switch turns it off if it scores worse.</span></li>
-        <li class="fp-done"><span class="fp-date">Nov 21</span><span><b>Humidity truth settled:</b> the digest and Stack health grade dew point on NOAA URMA (+6% over weather.gov); the scorecard grades it on our stations (+22%), which read drier than URMA.</span></li>
         <li><span class="fp-date">Nov 23</span><span><b>Gust lead 45–47 h:</b> re-read on runs since Nov 18, after the NBM horizon fix.</span></li>
-        <li><span class="fp-date">Nov 24+</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours. <b>Dew point:</b> re-read on rows since the temperature blend went live.</span></li>
-        <li><span class="fp-date">Nov 27</span><span><b>Wind and gusts, scored on URMA now:</b> bias-removed blends for wind and gusts are scoring in the background. Served gusts run about 21% worse than raw NBM on URMA (about 3 mph low); serving the gust blend would raise them 2–3 mph. Decision after 5 of 7 forward days.</span></li>
-        <li><span class="fp-date">Dec 4+</span><span><b>Rain chance:</b> re-read after two weeks of clean rows (rain truth is now hourly totals; weather.gov rain chance was missing on dry hours until Nov 21).</span></li>
+        <li><span class="fp-date">Nov 24</span><span><b>Cloud cover and dew point:</b> re-read the long-lead cloud blend against a satellite check; first daily fit of the dew point blend (<code>dp_urmab</code>, recording only) runs 04:30 on Nov 23.</span></li>
+        <li><span class="fp-date">Nov 26</span><span><b>Humidity watch:</b> served humidity lost to raw HRRR on the Mesonet on 3 of 4 days, Nov 18–21. If it keeps losing, test a recency override.</span></li>
+        <li><span class="fp-date">Nov 27</span><span><b>Wind and gusts:</b> decide whether to serve the URMA-trained wind and gust blends (gusts would rise 2–3 mph; served gusts are 23% worse than NBM today). Same day: the temperature blend's ship-rule check.</span></li>
+        <li><span class="fp-date">Dec 4</span><span><b>Rain chance:</b> re-read after two weeks of clean rows (weather.gov rain chance was missing on dry hours until Nov 21).</span></li>
+        <li><span class="fp-date">Dec 6</span><span><b>weather.gov becomes the bar</b> for humidity, gusts, cloud cover and pressure, after 14 days of weather.gov values recorded since Nov 22. Same day: the monthly pair-log snapshot.</span></li>
       </ul>
-      <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">Full detail, killed ideas and what's not built →</a></div>
+      <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">What is being tested, what was killed, what is not built →</a></div>
     </div>
   </div>
 
 </section>
-
-<div class="fp-engine">
-    Below this line is the <b>engine room</b>: the detailed scoreboard and architecture (collapsed), the trend chart, where things stand, then one section per correction layer, research, and the archive.
-  </div>
-  <div class="fp-truthbanner"><b>Different truth, different score.</b> The scorecard above uses independent or public comparisons (URMA, stations, weather.gov). Most tables below grade on the model-blended truth, which flatters us, so their percentages run higher. Do not compare a number below with one above.</div>
-
 
 <script>
 (function () {
@@ -1410,8 +1353,10 @@
 </script>
 
 
+<section class="fp" id="sec-scoreboard">
+<h2 class="section" id="sec-scoreboard-h">Selector and scoreboard <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· graded on the old model-blended truth until the retrain</span></h2>
 <details id="sec-engine-scoreboard" style="margin:0 0 16px 0;padding:10px 14px;border:1px solid #253247;background:#0b1119;border-radius:10px;">
-  <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Detailed scoreboard &amp; architecture <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
+  <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Selector, old-truth scoreboard and what is switched on <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
   <div style="margin-top:12px;">
   <div class="fp-truthbanner"><b>Different truth, different score.</b> The tiles in this block grade on the model-blended truth (optimistic). The scorecard at the top uses independent truth.</div>
 <!-- ───────────────────── Architecture now (v0.7.99) ─────────────────────
@@ -2238,6 +2183,7 @@
 
   </div>
 </details>
+</section>
 
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
      Forward-looking summary of the three lenses that matter for a daily
@@ -2249,7 +2195,7 @@
        - What's running: current live state, no history (kill trail below)
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
-<h2 class="section" id="sec-current-state">Trend &amp; where things stand <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· how our lead over the public forecast has moved, and the full status notes</span></h2>
+<h2 class="section" id="sec-current-state">Per-field detail</h2>
 
 <!-- v0.6.580: compact aggregate stack-health chart at top of Current State.
      Full "Accuracy over time" section (with per-field drill-down + sparklines)
@@ -2477,55 +2423,55 @@
     <tbody>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.2% agg; l6_nbm v0.6.453 scaffold ENABLED=False)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.2% agg; l6_nbm v0.6.453 scaffold ENABLED=False)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served 6–47h: t_urmab</strong> (v0.7.114, 11-19): per-source bias against URMA removed, then the 3-way blend of corrected HRRR, corrected NBM and raw ECMWF IFS, one weight per lead band, refit daily. 0–5h is still the 3-way blend (v0.7.74/75/85). L2 additive station correction feeds the HRRR side and is worth ~5h. Kill switch <code>runtime_tables/urma_blend_serve.json</code>; ship rule at 14 holdout days ~11-27. The Selector column is the fallback, not what is served.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 09-05 v0.6.551 — sentry HOT + 14/15 cells help_fresh negative)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet <span style="opacity:0.6;">(l3_nbm dropped 09-05 v0.6.551 — sentry HOT + 14/15 cells help_fresh negative)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> (HRRR / NBM / ECMWF), weight per lead band (v0.7.82; ECMWF v0.7.75). The app's h equals the blend (v0.7.72). L3_NBM dropped 09-05 v0.6.551, so the NBM cascade is <code>raw_nbm → l2_nbm</code>. L2 gain is mixed day to day.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> (HRRR / NBM / ECMWF), weight per lead band (v0.7.82; ECMWF v0.7.75). The app's h equals the blend (v0.7.72). L3_NBM dropped 09-05 v0.6.551, so the NBM cascade is <code>raw_nbm + Mesonet</code>. L2 gain is mixed day to day.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.5% agg)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.5% agg)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> (HRRR / NBM / ECMWF) per lead band (v0.7.81), replacing the 6–11h terminal blend (dropped v0.7.69) and the frontal-only 24–47h blend. Since the 11-06 refit served ws ≈ NBM at 6–23h (ECMWF weight 0 there). Graded on URMA since 11-20; <code>ws_urmab</code> shadow scoring, serve decision ~11-27. L2 wind blend is useful to ~3h only. wsbp calm-only gate <code>ENABLED=False</code>.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct → L3 lead-decay → L4 diurnal <span style="opacity:0.6;">(09-24 v0.7.1)</span> → wg residual persistence <span style="opacity:0.6;">(dormant)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm</div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → L3 lead-decay → L4 diurnal <span style="opacity:0.6;">(09-24 v0.7.1)</span> → wg residual persistence <span style="opacity:0.6;">(dormant)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet → l3_nbm</div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: HRRR / NBM blend</strong>, one weight (v0.7.71, refit daily); on URMA gusts it loses to raw NBM ~21% (served ~3 mph low). <code>wg_urmab</code> shadow scoring, serve decision ~11-27. Stack: L3 + L4 with SKIP tables; NBM L3_NBM runs nw_flow/6-11 (v0.7.66). L2 useful to ~3h. wg residual persistence <code>ENABLED=False</code>.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive → L3 skip-table → dpbp → dp residual persistence <span style="opacity:0.6;">(dormant)</span> <span style="opacity:0.55;">(derived from corrected t, h via Magnus)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → L3 skip-table → dpbp → dp residual persistence <span style="opacity:0.6;">(dormant)</span> <span style="opacity:0.55;">(derived from corrected t, h via Magnus)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Derived, not blended:</strong> Magnus(blended t, blended h) on every blended hour (v0.7.72), so it follows t_urmab since 11-19; graded on URMA, beats weather.gov. No independent skill chain. dpbp LIVE since 08-04. L2 gain holds out past 9h.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover <span style="font-size:0.72em;opacity:0.55;">(derived)</span></td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → <strong>Ccd = max(cl_l6, cm_l6, ch_l6)</strong> <span style="opacity:0.6;">(SKIP_REGIMES: se_flow, unknown → Pirate fallback)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 09-10 v0.6.577 — sentry HOT + walkforward DROP two-tool; l4_nbm dropped 09-08 v0.6.563)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → <strong>Ccd = max(cl_l6, cm_l6, ch_l6)</strong> <span style="opacity:0.6;">(SKIP_REGIMES: se_flow, unknown → Pirate fallback)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet <span style="opacity:0.6;">(l3_nbm dropped 09-10 v0.6.577 — sentry HOT + walkforward DROP two-tool; l4_nbm dropped 09-08 v0.6.563)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Derived via Ccd</strong> = max(cl_l6, cm_l6, ch_l6) except SKIP_REGIMES. Fully removed from NBM cascade layers 09-08 + 09-10. Combine walker tracking random-overlap replacement for the hardcoded max formula.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → L3 lead-decay → L4 diurnal → Lc <span style="opacity:0.6;">(07-17)</span> → chp <span style="opacity:0.6;">(07-19)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm → l4_nbm → chp_nbm <span style="opacity:0.6;">(l4_nbm v0.6.451, chp_nbm v0.6.454)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → L3 lead-decay → L4 diurnal → Lc <span style="opacity:0.6;">(07-17)</span> → chp <span style="opacity:0.6;">(07-19)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet → l3_nbm → l4_nbm → chp_nbm <span style="opacity:0.6;">(l4_nbm v0.6.451, chp_nbm v0.6.454)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Full stack L1→L2→L3→L4→Lc→chp. chp runs 0–5h only since v0.7.76; its dynamic cell gate refits daily in the cloud. Router drops ne_flow/12-23 (v0.7.45), nw_flow/24-47 (v0.7.68), se_flow/6-11 (v0.7.70). Static <code>_CELL_SKIP</code> still forces some mid/long-lead cells back to L4.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Full stack L1 + Mesonet → L3 → L4 → Lc → chp. chp runs 0–5h only since v0.7.76; its dynamic cell gate refits daily in the cloud. Router drops ne_flow/12-23 (v0.7.45), nw_flow/24-47 (v0.7.68), se_flow/6-11 (v0.7.70). Static <code>_CELL_SKIP</code> still forces some mid/long-lead cells back to L4.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cl</code> low cloud</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → clp <span style="opacity:0.6;">(dormant; cl in _FIELD_SKIP; cl_l6 = raw)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cl)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → clp <span style="opacity:0.6;">(dormant; cl in _FIELD_SKIP; cl_l6 = raw)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cl)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Off Lc</strong> (in <code>_FIELD_SKIP</code>) since 07-30. clp gate wired Stage 3, <code>ENABLED=False</code>. Open: EMA/Kalman shift tracker to un-skip Lc.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">L3 lead-decay</span> → Lc <span style="opacity:0.6;">(L3 dropped 09-15 v0.6.625 — walkforward pooled net-negative; Lc 07-17)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cm)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → <span style="text-decoration:line-through;opacity:0.5;">L3 lead-decay</span> → Lc <span style="opacity:0.6;">(L3 dropped 09-15 v0.6.625 — walkforward pooled net-negative; Lc 07-17)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cm)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win</strong> + Lc live. L3 dropped 09-15 v0.6.625 (walk-forward pooled net-negative). Selector picks HRRR (no NBM cascade).</td>
       </tr>
@@ -2537,25 +2483,25 @@
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pr</code> pressure</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive <span style="opacity:0.6;">(gated on nw_flow/0-5h + 6-11h since 08-10)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish pressure)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet <span style="opacity:0.6;">(gated on nw_flow/0-5h + 6-11h since 08-10)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish pressure)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L2 SHIP</strong> gated on nw_flow/{0-5h, 6-11h} since 08-10 v0.6.401.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span> → Lsb <span style="opacity:0.6;">(sea_breeze cc&lt;25 override)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472; l5_nbm KILLED 08-25 v0.6.471 — sentry +238% MAE + walkforward −126%/−145% agreed; sr has no HRRR L2 so l2_nbm ≈ raw_nbm)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span> → Lsb <span style="opacity:0.6;">(sea_breeze cc&lt;25 override)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472; l5_nbm KILLED 08-25 v0.6.471 — sentry +238% MAE + walkforward −126%/−145% agreed; sr has no HRRR L2 so l2_nbm ≈ raw_nbm)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: HRRR / NBM blend</strong>, weight per 4-hour local block (v0.7.73), refit daily. ECMWF solar logged only (v0.7.84); the 3-way was killed on aligned data. Lsr (skip ne_flow + calm) and Lsb (sea_breeze cc&lt;25) stay on the HRRR side; l3_nbm / l5_nbm killed for sr.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 only <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(APCP deferred pending unit audit)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 only <span style="opacity:0.6;">(no Mesonet start, L3 or L4 apply)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(APCP deferred pending unit audit)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> <strong style="color:#e0a070;">No truth from 2026-10-21 to 11-04 (scoreboard n=0): observed pa read WU only.</strong> v0.7.90 adds Tempest (max fresh station rate, x60 to in/hr). pa rows score again as rain days accrue.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(07-27)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm (sin/cos) → wdp_nbm <span style="opacity:0.6;">(08-19 v0.6.437)</span></div></td>
+        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 + Mesonet → wdp <span style="opacity:0.6;">(07-27)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm + Mesonet → l3_nbm (sin/cos) → wdp_nbm <span style="opacity:0.6;">(08-19 v0.6.437)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 wind_blend + wdp both LIVE.</strong> NBM cascade full (l2/l3/wdp_nbm).</td>
       </tr>
@@ -2574,95 +2520,15 @@
 
 
 <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-state-now">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Where things stand — 2026-11-22 (v0.7.128) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· rebuilt 11-04, evaluation list swept 11-22; the 10-09 version is in the Archive</span></summary>
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Being tested, killed and not built — 2026-11-22 (v0.7.135) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· the 10-09 version is in the Archive</span></summary>
 <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
-
-  <!-- Measurement -->
-  <div style="border:1px solid #3a2f1f;background:#15120d;padding:12px 14px;border-radius:8px;">
-    <div style="color:#e0d472;font-weight:600;margin-bottom:8px;font-size:0.95em;">What the numbers measure — read this first (CLAUDE.md §0)</div>
-    <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
-      <ul style="margin:0 0 0 16px;padding:0;">
-        <li><strong>Scored truth is not model-free.</strong> The pair-log <code>observed</code> for t/h/dp/ws/wg is the station network shrunk toward the model: <code>model_t + K × weighted station bias</code> (K 0.4 / 0.65 / 0.9). The 11-02 audit put it at 40–90% station, the rest model. That flatters any layer that stays close to the model.</li>
-        <li><strong>Model-free truth now exists.</strong> Since 11-02 18:07 the pair log also carries <code>observed_stations</code> (K=1, stations only) for t, h, dp (v0.7.86) and ws, wg (v0.7.87). The scoreboard tiles above still grade on the shrunk truth; the table below grades the same rows on both so the gap is visible (v0.7.91).</li>
-        <li><strong>L2 is graded on the same stations that feed it.</strong> At lead 0–1h the correction and the answer key are the same reading, so L2's gain there is a tautology (95–100% on the old truth). The table below splits 0–1h (nowcast) from 2h+. Rule adopted 11-04: grade L2 and the short-lead layers on <code>observed_stations</code> from lead 2h on; the scoreboard tiles switch once <code>observed_stations</code> has enough history (~11-17 / 11-20 rescore). See L2 below for what L2 is actually worth.</li>
-        <li><strong>A third, independent truth: URMA</strong> (NOAA's hourly 2.5 km analysis; v0.7.97). It does not use our stations or L2. The table below grades t on it; h/dp/ws scores are in <code>analysis/urma_field_score.py</code>. Caveat: NBM is calibrated to URMA, so URMA flatters NBM, most on moisture. Cloud cover: the scored <code>observed</code> is HRRR shrunk toward the KBOS/KBVY METARs (ceilometers blind above 12,000 ft) and sits 13–15 points from URMA, so cc is graded on URMA cloud cover (TCDC, satellite + surface) since v0.7.102: the cc line under the table.</li>
-        <li><strong>Ship rule</strong> (<code>analysis/ship_rule.py</code>, 11-02): day-block bootstrap, 95% interval, holdout days = valid day ≥ 2026-11-03 (never tuned on), ≥ 8 holdout days before a verdict; ledger <code>analysis/runlog/ship_tests.jsonl</code>. <code>analysis/holdout_tracker.py</code> runs served vs raw NBM / HRRR by band through it. Every future ship call uses it.</li>
-        <li><strong>Baseline = the normal source:</strong> NBM where NBM publishes the field, HRRR only where it does not. Never always-HRRR on an NBM field (the 10-24 tile was reverted for that).</li>
-      </ul>
-      <div id="truth-compare-live" style="margin-top:10px;font-size:0.95em;"><span style="opacity:0.6;">loading truth_compare.json…</span></div>
-      <script>
-      (function () {
-        const el = document.getElementById("truth-compare-live");
-        const f = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(d) + "%");
-        fetch("https://data.wymancove.com/truth_compare.json?_=" + Date.now(), { cache: "no-store" })
-          .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-          .then(d => {
-            const rows = Object.entries(d.fields).map(([k, v]) => {
-              const two = v.lead_2h_plus, now = v.nowcast_0_1h, l2w = v.lead_2_5h || two;
-              if (!two) return "";
-              const gap = v.gap_pts_2h_plus;
-              const gc = gap == null ? "" : (Math.abs(gap) >= 3 ? "color:#e0a86b;font-weight:600;" : "opacity:0.8;");
-              return `<tr><td style="padding:3px 10px 3px 0;"><code>${k}</code></td>` +
-                `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_shrunk_pct)}</td>` +
-                `<td style="padding:3px 10px;text-align:right;">${f(two.total_lift_stations_pct)}</td>` +
-                `<td style="padding:3px 10px;text-align:right;">${two.total_lift_urma_pct == null ? '<span style="opacity:0.5;">—</span>' : f(two.total_lift_urma_pct)}</td>` +
-                `<td style="padding:3px 10px;text-align:right;${gc}">${gap == null ? "—" : (gap > 0 ? "+" : "") + gap.toFixed(1) + " pts"}</td>` +
-                `<td style="padding:3px 10px;text-align:right;">${f(l2w.l2_gain_shrunk_pct)} / ${f(l2w.l2_gain_stations_pct)}</td>` +
-                `<td style="padding:3px 10px;text-align:right;opacity:0.75;">${now ? f(now.l2_gain_shrunk_pct) + " / " + f(now.l2_gain_stations_pct) : "—"}</td>` +
-                `<td style="padding:3px 0 3px 10px;text-align:right;opacity:0.6;">${two.n}</td></tr>`;
-            }).join("");
-            el.innerHTML = `<div style="color:#e0d472;font-weight:600;margin-bottom:4px;">Same rows, three truths (served vs raw NBM, leads 2h+) <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· ${d.first_day} → ${d.last_day} · station truth only exists from 2026-11-02, so this is a thin window</span></div>` +
-              `<table style="border-collapse:collapse;font-size:0.92em;"><thead><tr style="opacity:0.7;text-align:right;"><th style="text-align:left;padding:3px 10px 3px 0;">field</th><th style="padding:3px 10px;">lift, shrunk truth</th><th style="padding:3px 10px;">lift, station truth</th><th style="padding:3px 10px;">lift, URMA</th><th style="padding:3px 10px;">flattery</th><th style="padding:3px 10px;">L2 gain 2–5h (shrunk / stations)</th><th style="padding:3px 10px;">L2 gain 0–1h</th><th style="padding:3px 0 3px 10px;">n</th></tr></thead><tbody>${rows}</tbody></table>` +
-              `<div style="margin-top:4px;font-size:0.82em;opacity:0.65;">Flattery = how many points of Total Lift the model-shrunk truth adds over the model-free station truth. URMA = NOAA's hourly analysis, independent of our stations and of L2 (t here; cc on URMA cloud cover below; ${d.urma_hours ?? 0} URMA hours, ~8 h publish lag). L2 is graded at 2–5h: it fades to nothing by 6–8h, so a 2–47h pool hides it. 0–1h L2 gain is circular (the correction and the truth are the same reading) and is shown only to make that visible. Source: <code>analysis/truth_compare.py</code>, refreshed hourly by the publisher.</div>` +
-              (d.cc_urma && d.cc_urma.bands ? `<div style="margin-top:8px;"><span style="color:#e0d472;font-weight:600;">cc on URMA cloud cover</span> <span style="opacity:0.7;font-size:0.85em;">(served vs raw NBM; MAE in cloud-cover points)</span><br>` +
-                Object.entries(d.cc_urma.bands).filter(([, v]) => v).map(([b, v]) =>
-                  `<code>${b}h</code> served ${v.served_mae_urma.toFixed(1)} vs NBM ${v.public_mae_urma.toFixed(1)} → ${f(v.total_lift_urma_pct)} <span style="opacity:0.6;">(n ${v.n}; scored cc truth is ${v.observed_mae_urma.toFixed(1)} off URMA)</span>`).join("<br>") + `</div>` : "");
-          })
-          .catch(e => { el.innerHTML = `<span style="color:#e08a70;">truth_compare.json not available yet (${e}). The publisher writes it every 3 h.</span>`; });
-      })();
-      </script>
-    </div>
-  </div>
-
-  <!-- What's running -->
-  <div style="border:1px solid #1f3a2a;background:#0d1512;padding:12px 14px;border-radius:8px;">
-    <div style="color:#4ad29a;font-weight:600;margin-bottom:8px;font-size:0.95em;">What's running</div>
-    <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
-      <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">What the user is served</div>
-      <ul style="margin:0 0 8px 16px;padding:0;">
-        <li><strong style="color:#4ad29a;">Field blend (v0.7.71+), t · h · ws · wg · sr:</strong> a weighted average of the corrected HRRR terminal and the corrected NBM terminal, served on every hour. <strong>t, h, ws also include raw ECMWF IFS as a third input</strong> (t/h v0.7.75, ws v0.7.81). Weights are refit daily at 04:30 ET by the cloud refitter into <code>runtime_tables/</code>; a table older than 3 days switches the blend off and the older per-cell blend / selector path serves.</li>
-        <li><span style="opacity:0.85;">Weight keys:</span> <strong>t</strong> per lead band (0–5 / 6–11 / 12–23 / 24–47h; v0.7.74, 3-way v0.7.75, ECMWF-timing fit fix v0.7.85) · <strong>h</strong> per lead band (v0.7.82; was time of day v0.7.73) · <strong>ws</strong> per lead band (v0.7.81, replaced the frontal-only 24–47h blend and the 6–11h terminal blend dropped in v0.7.69) · <strong>sr</strong> per 4-hour local block, 2-way (v0.7.73; ECMWF solar is logged only, v0.7.84, 3-way killed on aligned data) · <strong>wg</strong> one weight.</li>
-        <li><strong>dp</strong> is not blended: Magnus(blended t, blended h) on every blended hour (v0.7.72, which also fixed the PWA rebuilding h from t+dp).</li>
-        <li><strong>L1 selector</strong> (HRRR vs NBM per field × lead band, 30d fit + 7d recency override, refit daily in the cloud) serves what the field blend does not: <strong>cc · cl · cm · ch · pr · pp · pa · wd</strong>, and is the fallback if a blend table goes stale. <span style="opacity:0.7;">Selector Score = achieved ÷ achievable (v0.7.59) with a walk-forward ceiling (v0.7.73). The room-to-gain numbers live in the Selector Skill tile, not here.</span></li>
-        <li>L1 static blender (L1b), per-cell terminal blend, learned per-obs GBM (sr) and the v0.7.3 shadow blender are the older routing layers underneath. <code>BLENDER_APPLIED_FIELDS</code> is still empty; the L1b / terminal per-cell paths still apply on cells the field blend does not cover.</li>
-      </ul>
-      <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Correction stack (HRRR side; the NBM cascade mirrors it)</div>
-      <ul style="margin:0 0 8px 16px;padding:0;">
-        <li><strong>L2 station-network bias</strong> — t · h · dp · pr · ws · wg · cloud (METAR blend) · wd. Station input is <strong>Tempest only</strong> (19 stations configured, 18 valid on the 11-04 tick; 7 more culled because owners restrict field sharing). Weather Underground stopped reporting 2026-10-21 (API key throttled; 401s since 10-07) and is dormant.</li>
-        <li><strong>L3 lead-decay:</strong> wg · ch. <strong>L4 diurnal:</strong> ch · wg (wg added 09-24 v0.7.1). Skip tables apply per cell.</li>
-        <li><strong>Lsr</strong> synoptic-regime (sr; skip ne_flow + calm) · <strong>Lsb</strong> sea-breeze override (sr) · <strong>Lc</strong> cloud saturation-unbiasing (cm · ch; cl and cc off) · <strong>Ccd</strong> cc = max(cl, cm, ch) except se_flow/unknown.</li>
-        <li><strong>chp</strong> high-cloud persistence: <strong>0–5h only</strong> since v0.7.76 (it lost at 6–23h), plus the dynamic cell gate refit daily. <strong>ch router</strong> drops ne_flow/12-23 (v0.7.45), nw_flow/24-47 (v0.7.68), se_flow/6-11 (v0.7.70). <strong>wdp</strong> wd calm/12-23 only. <strong>dpbp</strong> dp antecedent persistence. <strong>NBM wg</strong> L3_NBM runs on nw_flow/6-11 again (v0.7.66).</li>
-        <li>Confidence layer (C1h / C1d / cross-run spread) stamps bands; it does not change the forecast.</li>
-      </ul>
-      <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Infrastructure</div>
-      <ul style="margin:0 0 8px 16px;padding:0;">
-        <li>Cloud Functions (us-east1): <code>myweather-collector</code> every 10 min at :07 (4 GB since v0.7.77 memory-leak fix), <code>myweather-nbm-ingest</code> hourly, <code>myweather-refitter</code> 04:30 ET (12 tables: selector, L3/L4_NBM, Lc + recent-bias gate, Lsr bias, sr sea-breeze, chp cell gate, selector regime walker, sr learned GBM, the field blend, the URMA t shadow; 16 GB, one process per table since v0.7.100), <code>myweather-publisher</code> every 3 h (backstamped pair log + <code>mae_over_time.json</code>), <code>myweather-nbm-backfill</code> (one-shot). The Fitter (L3/L4 tables) runs in the collector at 03:07 and 15:07.</li>
-        <li>Engineering runs from the server (<code>~/Developer/myweather</code>, 3.13 venv) since 11-01; the digest runs there. Bucket protection: weekly copy to <code>myweather-data-backup</code> (first run 11-08, verified), monthly permanent snapshot of the backstamped log to <code>archive/</code> (next 12-06).</li>
-        <li><strong>Station feed health (v0.7.88):</strong> Tempest keeps its last good payload on a failed fetch, marks a run "degraded" under 75% valid stations, and the digest carries a Tempest line. L2 itself gets no last-good station input on a failed tick. Tempest is a single point of failure: it depends on the WeatherFlow sign-in (anonymous access closed 10-15, v0.7.67).</li>
-        <li>Briefing: Groq <code>gpt-oss-120b</code>, fallback <code>gpt-oss-20b</code> (v0.7.48), then template. Gemini is disabled.</li>
-      </ul>
-      <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Guards</div>
-      <ul style="margin:0 0 0 16px;padding:0;">
-        <li>Ship rule + holdout (above) · live-layer change gate (7-day / 2-tool / per-cell) · digest sentries (NBM regression, layer shape, staleness audit, Tempest feed).</li>
-      </ul>
-    </div>
-  </div>
 
   <!-- Being evaluated next -->
   <div style="border:1px solid #1f2f4a;background:#0e1520;padding:12px 14px;border-radius:8px;">
     <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">Being evaluated next</div>
     <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
       <ul style="margin:0 0 8px 16px;padding:0;">
+        <li><strong>dp_urmab — SHADOW since v0.7.135 (Nov 22, 6–47h):</strong> HRRR / NBM / ECMWF dew point blended with weights fit on URMA dew point. Served dew point runs 0.7–0.95°F drier than URMA, which copies the old truth. Walk-forward on 77 days, holdout days since 11-03 vs served: +19.8% (6–11h) and +18.3% (12–23h) pass, +10.4% (24–47h) does not [−0.5, +20.3]; vs weather.gov +24.9% / +23.5% / +19.5%. Records <code>dp_urmab</code> only; the daily fit starts 11-23 04:30. Not served: served dew point is Magnus(t, h) and the collector rebuilds h from (t, dp), so serving a separate dp needs its own test of what it does to h.</li>
         <li><strong>t_urmab — SERVED since v0.7.114 (Nov 19, 6–47h; shadow from v0.7.97):</strong> per-source bias against URMA removed, then HRRR / NBM / ECMWF blended, 6–47h. Walk-forward over 69 days +12 / +18 / +17% over served at 6–11 / 12–23 / 24–47h; holdout intervals still span zero. Served after 5 of 6 or better forward days positive in every band; on 11-22 the forward score vs the old value was +33 / +35 / +42% (7 of 7 days, tripwire ok); the old served value is logged as t_pre_urmab and a switch (runtime_tables/urma_blend_serve.json) reverts it with no deploy. Still to come: the ship rule at 14 holdout days, about 11-27. Daily read: <code>analysis/urma_shadow_score.py</code>.</li>
         <li><strong>Daily refit was failing — FIXED 11-14 (v0.7.100):</strong> the refitter ran out of memory at 8 GB on 11-13 and 11-14, so the served blend weights were last refit 11-12 and the URMA shadow had never refit in the cloud. Now 16 GB, each table fitted in its own process, status written after every table, and <code>analysis/refitter_status.py</code> fails the digest when any table is more than a day old.</li>
         <li><strong>t station-truth fit — CLOSED 11-16:</strong> fails on both stations and URMA; no flip. The station fit does not beat the served blend.</li>
@@ -2682,7 +2548,7 @@
       <ul style="margin:0 0 0 16px;padding:0;">
         <li><strong>11-15:</strong> cc HRRR/NBM/ECMWF blend on URMA (no band beats raw NBM over 72 days) · pp to NBM (NBM ties HRRR 0–23h and loses 24–47h by 6.7%; HRRR stays).</li>
         <li><strong>11-14:</strong> h URMA bias-then-blend (+12..17% on 69 days, but the November holdout and station truth are negative in every band) · sr field or band weight instead of the 4h block weight (block wins 27 days; the 7-day room is a window swing) · extra blend inputs for t (NWS, GFS, ICON ~0; GEM +1–2 pts, holdout spans zero) · learned per-obs selector for sr (refit finds no cell; empty since 11-14).</li>
-        <li>sr ECMWF 3-way (the +25.7% was a one-hour timing artifact; +0 on aligned data) · cc + ECMWF · bust-aware blend (all fields ±0.5%) · HRRR−NBM disagreement and forecast-cloud t weight keys (recency; lose h1) · Weather Underground as an L2 input (L2 gain at 2–5h is the same or better on Tempest alone; see L2).</li>
+        <li>sr ECMWF 3-way (the +25.7% was a one-hour timing artifact; +0 on aligned data) · cc + ECMWF · bust-aware blend (all fields ±0.5%) · HRRR−NBM disagreement and forecast-cloud t weight keys (recency; lose h1) · Weather Underground as a Mesonet input (the first-5-hours gain is the same or better on Tempest alone; see the Mesonet page).</li>
       </ul>
     </div>
   </div>
@@ -2704,273 +2570,15 @@
      across all layers. Sibling per-layer filtered slices in each L# section
      are step 6, deferred. -->
 <div class="fp-truthbanner" style="margin:18px 0 8px;"><b>Old truth from here down.</b> The Applicability map and the layer sections (L1 to Lc) grade on the logged "observed": station readings pulled toward the model, which flatters corrections that stay close to the model. The scorecard and trend at the top use the fixed truth per field (URMA, or the Mesonet for humidity). These sections move to it when the corrections are refit on the clean truth (plan Step 5).</div>
-<h2 class="section" id="sec-applicability">Applicability map — what corrections trigger, why, and when they actually fire</h2>
-<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <p class="layer-summary">Two lenses on the same object. <strong>Applicability</strong> (top) describes what's <em>configured</em> to fire and under what gates — built each tick from <code>describe_applicability()</code> in each correction module, so <strong>the page can never drift from the code</strong>. <strong>Runtime firing frequency</strong> (bottom, 7-day rolling) shows what's <em>actually</em> firing per operator × field × regime, so silent dormancy (config says "enabled" but the code path never mutates a value — the class of bug that hid ws L3 for 4 days after v0.6.279) surfaces as an ★ on cells with 0 fires despite ≥5 ticks in that regime.</p>
-  <details class="layer-methodology"><summary>How to read this</summary>
-    <div class="meta-line">Three categories: <strong>General-purpose</strong> layers (L1–L4) can apply to any field; the per-field applicability set controls which actually trigger. <strong>Specialists</strong> (Lsr, Lt, Lc) are domain-scoped by construction — the physics of the correction binds them to a field type. <strong>Confidence</strong> (C1) doesn't modify forecast values; it widens or narrows uncertainty bands along orthogonal axes (transition, pressure tendency, mesonet spread, pre-frontal proximity) that cross multiple (field, band) cells.</div>
-    <div class="meta-line"><strong>HRRR + NBM cascades render together below.</strong> HRRR-side layers (L2 mesonet blend, L3 decay, L4 diurnal, Lsr, Lc, chp/clp/wdp/dpbp/wsbp/lsb, C1) plus NBM-side layers (l3_nbm, l4_nbm, l5_nbm, l6_nbm, skip_table_nbm) are all unioned into the same block. Selector (l1_selector) picks between HRRR-Prod and NBM-Prod per (field, lead-band) after both cascades finish. L2_NBM as of v0.6.499 is a NATIVE fit (not a delta reconstruction) — described in the hand-curated block below.</div>
-    <div class="meta-line"><strong>applies when</strong> is the predicate in plain text. <strong>gated by</strong> names the module-level constant the gate reads (omitted if always-on). <strong>current state</strong> resolves the constant for the reader — what the gate is doing this very tick.</div>
-    <div class="meta-line"><strong>Terminology key:</strong> <em>applies</em> = correction applied to a (field, row) this tick · <em>enabled</em> = feature switch (the module-level constant is on) · <em>active</em> = runtime branch (which code path actually fired).</div>
-    <div class="meta-line">Source: <code>weather_data.applicability_map.layers</code>. Schema: <code>weather_collector/data/applicability_map_schema.json</code>. If this section says "not available," the collector hasn't shipped the block yet — it landed v0.6.260.</div>
-  </details>
-</div>
-<div id="status-applicability" class="status" hidden></div>
-
-<!-- Static L2 / L2_NBM blocks: renderApplicabilityMap() moves these into
-     cascade order (L2 after L1b, L2_NBM before L3_NBM) once the map loads. -->
-<div id="appl-static-L2">
-<!-- L2 row group — hand-curated; L2 module doesn't expose describe_applicability() yet.
-     Promote to the dynamic block once that lands. -->
-<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a4f6a;">
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L2 — Aggregate bias (mesonet blend)</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#1f2a3a;border:1px solid #3a4f6a;color:#9fb8d8;">general-purpose</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#2a2a3a;border:1px solid #4a4a5a;color:#a8a8b8;font-style:italic;">hand-curated · promote to <code>describe_applicability()</code></span>
-  </div>
-  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
-    <thead>
-      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-        <th style="padding:4px 10px 4px 0;">field</th>
-        <th style="padding:4px 10px;">applies when</th>
-        <th style="padding:4px 10px;">gated by</th>
-        <th style="padding:4px 0 4px 10px;">current state</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network, scaled by Kalman gain K</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>dp</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>h</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias scaled by Kalman gain K</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(K-taper 1.0 → 0.4 by lead 24h)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>pr</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>RE-ENABLED 2026-08-10 v0.6.401</strong> with regime gate — K=1 additive, τ=8h fitted, applied on <code>(regime, lead_band) ∈ {(nw_flow, 0-5h), (nw_flow, 6-11h)}</code>; every other cell stays raw. Cell selection from <code>analysis/pr_l2_regime_lead_retro.py</code> 08-10 (Jaccard 0.50 STAGE 1 SHIP, both-halves winners A +21.8%/B +41.6% and A +10.3%/B +13.1% on 8,596 shadow rows). <span style="opacity:0.7;">History: DISABLED 2026-07-01 v0.6.276 after pooled Production +2.4% BAD — but that pooled read was regime-blind. The nw_flow short-lead win was real all along; needed regime-conditional cross-cut + halves verification to surface. Shadow-wire since 2026-07-29 v0.6.389 supplied the fresh data.</span></td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">regime-gated (current-tick regime × lead band)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies on nw_flow 0-11h; other cells raw</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — Kalman-blended KBOS + KBVY METAR override on <code>hourly[0]</code> (current-hour value used by cards). <em>Not propagated across forecast leads</em> — promotion to a true per-lead L2 bias correction is queued (see Open architectural questions).</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(needs KBOS or KBVY at current hour)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cl</code> / <code>cm</code> / <code>ch</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Derived</strong> — same Kalman K applied to L/M/H splits on <code>hourly[0]</code> to keep them self-consistent with cc. <em>Not propagated across leads</em>, same as cc.</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(derives from cc)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws</code> / <code>wg</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — direct selection from per-octant median (no per-station bias track); KBOS+KBVY authoritative-source floor when both agree at &gt;1.4× the octant median</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(direct-selection, not additive)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (direct)</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code> / <code>pp</code> / <code>pa</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>N/A</strong> — no station network for this field; L2 row is structurally empty</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a — no obs network</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a</span></td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — <strong>SHIPPED 2026-07-20 v0.6.368a.</strong> Circular unit-vector blend in <code>wind_blend.py</code>: obs wd + fc wd → (sin, cos), weighted mean by linear decay over 24 leads, atan2 back to degrees. Solves the wrap-around that made "N/A — L2's linear math doesn't apply" true prior to this ship. Calm-floor guard <code>WIND_DIR_MIN_SPEED = 3.0 mph</code> skips cells where both obs and fc speed are below floor. <code>raw_wind_direction</code> preserved for baseline. Complementary wd persistence gate (Stage 2 07-20 v0.6.365) targets long-lead regime-transition cells where L2 decay has expired.</td>
-        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(needs both obs+fc speed ≥3 mph)</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (circular)</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-</div>
-
-<div id="appl-static-L2_NBM">
-<!-- L2_NBM row group — hand-curated; l2_nbm is not a standalone module (reconstruction
-     happens inline in forecast_snapshot.py). Promote to describe_applicability() if
-     l2_nbm becomes a real processor. -->
-<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a4f6a;">
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L2_NBM — NATIVE fit (v0.6.499)</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#1f2a3a;border:1px solid #3a4f6a;color:#9fb8d8;">general-purpose · NBM cascade</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#2a2a3a;border:1px solid #4a4a5a;color:#a8a8b8;font-style:italic;">hand-curated · not a standalone module</span>
-  </div>
-  <div class="meta-line" style="opacity:0.85;font-size:0.9em;margin-bottom:8px;">
-    <strong>v0.6.499 (2026-08-26) — L2_NBM is now NATIVE for all 8 NBM-scope fields.</strong> Full delta-transfer retirement. Every family mirrors its HRRR counterpart, re-anchored against NBM raw:
-    <ul style="margin:6px 0 0 20px;">
-      <li><strong>t/h/dp</strong> — station-consensus additive bias + Kalman gain + decay curve from corrected_hourly.py, anchored to raw_nbm at h=0. dp = Magnus(l2_nbm_t, l2_nbm_h).</li>
-      <li><strong>ws/wg/wd</strong> — wind_blend.py's linear time-decay blend of the current observed value into [0, BLEND_HOURS), applied to raw_nbm arrays. wd uses circular unit-vector blend with WIND_DIR_MIN_SPEED calm-floor guard.</li>
-      <li><strong>cc/ch</strong> — cloud_obs_blend.py's K·(obs_mean − raw) at hourly[0] only, reusing HRRR's K + obs means from cloud_l2_meta.</li>
-      <li><strong>sr</strong> — identity. No station network for solar → no L2 either side.</li>
-    </ul>
-    <p style="margin-top:8px;">All native math shares the same station observations / Kalman gain / decay curves the HRRR side uses. The only substitution is which raw forecast the correction anchors against. This is exactly the fix the 08-26 <code>nbm_l2_delta_audit</code> prescribed: the station-network bias IS model-independent, but the anchor (raw at h=0) is not, and the delta transfer conflated the two.</p>
-  </div>
-  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
-    <thead>
-      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-        <th style="padding:4px 10px 4px 0;">field</th>
-        <th style="padding:4px 10px;">applies when</th>
-        <th style="padding:4px 10px;">gated by</th>
-        <th style="padding:4px 0 4px 10px;">current state</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t / dp / h</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — receives HRRR L2's Kalman-scaled additive bias delta</td>
-        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws / wg</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — direct-selection delta from HRRR L2 wind blend rides across</td>
-        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (direct)</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — circular unit-vector delta from HRRR L2 wind_blend rides across (calm-floor 3 mph inherited)</td>
-        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (circular)</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc / ch</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>hourly[0] only</strong> — inherits HRRR L2 KBOS+KBVY METAR delta on current hour; not propagated across leads (same limitation as HRRR L2 cloud fields)</td>
-        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies on hourly[0]; other leads pass through</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Passes through raw</strong> — HRRR L2 has no sr correction (no station network), so delta is 0.</td>
-        <td style="padding:6px 10px;vertical-align:top;">n/a — HRRR L2 sr is n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">l2_nbm = raw_nbm</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cl / cm / pp / pa / pr</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;"><strong>Not emitted by NBM CO grib</strong> — permanent HRRR-only. Selector never picks NBM for these; no L2_NBM row exists.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- L2_NBM soundness tile (v0.6.492, 2026-08-26) — reads nbm_l2_delta_audit.json.
-     Answers the load-bearing question: does the HRRR-delta transfer actually
-     lift l2_nbm vs raw_nbm, or is it hurting the foundation every deeper NBM
-     layer sits on? Placed next to the L2_NBM applicability block so the
-     measurement lives next to the description of what's being measured. -->
-<div class="layer-info-text" style="margin-bottom:12px;border-color:#4a3f6a;background:#131019;">
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">🔍 L2_NBM soundness — 30d field × lead</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#241f3a;border:1px solid #4a3f6a;color:#b8a8d8;">measurement</span>
-  </div>
-  <div class="meta-line" style="opacity:0.85;font-size:0.9em;margin-bottom:8px;">
-    Grades the HRRR-delta transfer per (field, lead-band). Positive lift = delta helps NBM (assumption vindicated); near-zero = neutral (delta washes at long lead by construction — K-taper); negative = delta HURTS raw NBM for this cell (Wyman Cove bias is model-dependent). ★ = both halves of window agree on sign. Source: <code>analysis/nbm_l2_delta_audit.py</code> → <code>gs://myweather-data/nbm_l2_delta_audit.json</code>.
-  </div>
-  <div id="nbm-l2-delta-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading nbm_l2_delta_audit.json…</div>
-  </div>
-</div>
-<script>
-(function(){
-  const url = "https://data.wymancove.com/nbm_l2_delta_audit.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-l2-delta-live");
-      if (!el) return;
-      const escape = (s) => String(s == null ? "" : s)
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      const fmtPct = (v) => (v == null) ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
-      const cls = (v) => v == null ? "" : (v >= 2 ? "color:#4ad29a;" : v <= -2 ? "color:#e07272;" : "color:#e0a86b;");
-      const pf = d.per_field_totals || {};
-      const FIELDS = ["t","dp","ws","wd","wg","sr","cc","ch","h"];
-      let rows = FIELDS.map(f => {
-        const c = pf[f] || {};
-        return `<tr>
-          <td style="padding:3px 10px 3px 0;vertical-align:top;"><code>${f}</code></td>
-          <td style="padding:3px 10px;vertical-align:top;text-align:right;">${c.n ? c.n.toLocaleString() : "—"}</td>
-          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.mae_raw != null ? c.mae_raw.toFixed(3) : "—"}</td>
-          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.mae_l2 != null ? c.mae_l2.toFixed(3) : "—"}</td>
-          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-weight:600;${cls(c.lift_pct)}">${fmtPct(c.lift_pct)}</td>
-        </tr>`;
-      }).join("");
-      const hurts = (d.hurts || []);
-      const helps = (d.helps || []);
-      const hurtsRow = hurts.length
-        ? `<div style="margin-top:8px;padding:6px 8px;border-left:2px solid #e07272;background:#1a0e0e;border-radius:2px;">
-             <strong style="color:#e07272;">HURTS (${hurts.length}):</strong>
-             ${hurts.map(h => `<code>${h.field} ${h.band}</code> ${fmtPct(h.lift_pct)} <span style="opacity:0.6;">n=${h.n.toLocaleString()}</span>`).join(" · ")}
-           </div>` : "";
-      const helpsRow = helps.length
-        ? `<div style="margin-top:6px;padding:6px 8px;border-left:2px solid #4ad29a;background:#0e1a13;border-radius:2px;">
-             <strong style="color:#4ad29a;">HELPS (${helps.length}):</strong>
-             ${helps.map(h => `<code>${h.field} ${h.band}</code> ${fmtPct(h.lift_pct)} <span style="opacity:0.6;">n=${h.n.toLocaleString()}</span>`).join(" · ")}
-           </div>` : "";
-      el.innerHTML = `
-        <div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;">Per-field pooled (30d window)</div>
-        <table style="border-collapse:collapse;font-size:0.9em;">
-          <thead>
-            <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-              <th style="padding:3px 10px 3px 0;">field</th>
-              <th style="padding:3px 10px;text-align:right;">n</th>
-              <th style="padding:3px 10px;text-align:right;">MAE raw_nbm</th>
-              <th style="padding:3px 10px;text-align:right;">MAE l2_nbm</th>
-              <th style="padding:3px 10px;text-align:right;">lift %</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-        ${hurtsRow}
-        ${helpsRow}
-        <div style="margin-top:8px;font-size:0.85em;opacity:0.7;"><strong>${escape(d.verdict || "")}</strong></div>
-        <div style="margin-top:4px;font-size:0.8em;opacity:0.55;">Assembled ${escape(d.generated_at || "")}</div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-l2-delta-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">nbm_l2_delta_audit.json not yet available (publisher CF hasn't uploaded the first run). Error: ${e}</div>`;
-    });
-})();
-</script>
-</div>
-
-<div id="applicability-content"></div>
-
-<!-- ─── Runtime firing (7-day rolling) — subsection within Applicability map ─── -->
-<div style="margin:22px 0 10px 0;padding:10px 14px;border-left:3px solid #2a3a52;background:#0e1520;">
-  <div style="color:#7fb3ff;font-weight:600;font-size:1.02em;margin-bottom:6px;">
-    Runtime firing frequency <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">— 7-day rolling</span>
-  </div>
-  <div class="meta-line" style="opacity:0.9;font-size:0.9em;">
-    <strong>Fires</strong> = the correction actually mutated a value at that lead (not "would have applied"). <strong>Skips</strong> = would-fire cells suppressed by the skip table (L3 ws in ne_flow / short-lead sea_breeze; Lsr sr in ne_flow / calm) or by a gate being OFF (MLC currently ENABLED=False → all matching cells count as skips). <strong>Rate/tick</strong> = fires ÷ ticks_in_regime; for L3/L4 with 48 leads, healthy is close to 48. <strong>★</strong> marks (operator × field × regime) cells with 0 fires despite ≥5 ticks in that regime — silent-dormancy candidates.
-  </div>
-  <div class="meta-line" style="opacity:0.7;font-size:0.85em;">Source: <code>gate_firing_rollup.json</code> (nightly digest via <code>analysis/gate_firing_rollup.py</code>) over per-tick <code>gate_firing_log.jsonl</code> (written by <code>weather_collector/processors/gate_firing_log.py</code>, v0.6.318). <strong>NBM operators added v0.6.458</strong> (F4, 2026-08-21): <code>L3_NBM</code>, <code>L4_NBM</code>, <code>L5_NBM</code>, <code>L6_NBM</code>, <code>CHP_NBM</code>, <code>WDP_NBM</code> now emit per-tick fires/skips from <code>forecast_snapshot.py</code>; expect them to appear in the 7-day rollup once the rollup script's next digest cycle picks up the newly-accumulating log rows.</div>
-</div>
-<div id="status-gate-firing" class="status" hidden></div>
-<div id="gate-firing-content"></div>
-
 <!-- ───────────────────── L1 ───────────────────── -->
-<h2 class="section" id="sec-layer1">L1 — Raw model input (parallel HRRR + NBM cascades; selector picks per cell)</h2>
+<h2 class="section" id="sec-layer1">Selector — which raw source feeds each field</h2>
 <div class="layer-info-text">
   <p class="layer-summary">Two forecast sources run in parallel for every hour: Open-Meteo HRRR/GFS on one side, direct NBM (National Blend of Models) on the other. Each side runs its own full correction cascade. The 🎯 selector below picks per (field, lead-band) which cascade's output becomes user-visible. Multi-kilometer grid resolution on both — still knows nothing specifically about Wyman Cove; that's what the layers below add.</p>
   <div class="meta-line" style="margin:6px 0;padding:6px 10px;border-left:2px solid #4ad29a;background:#0d1512;"><strong style="color:#4ad29a;">Since v0.7.71 the selector is not what serves t, h, ws, wg or sr.</strong> Those five are served as a weighted blend of the corrected HRRR and NBM terminals (t, h, ws also take raw ECMWF as a third input; dp is derived from the blended t and h). The selector table below serves cc · cl · cm · ch · pr · pp · pa · wd, and is the fallback for the blended fields if their daily blend table goes stale (older than 3 days). Details: <a href="#sec-state-now" style="color:#7090a0;">Current state → What's running</a>.</div>
   <p class="layer-summary" style="display:none;">
   <details class="layer-methodology"><summary>About the L1 sources (post-selector-arm v0.6.445)</summary>
     <div class="meta-line"><strong>HRRR-side (Open-Meteo).</strong> Open-Meteo HRRR (next 48h) + GFS (days 3-7), fetched every 10-min tick. Feeds the full HRRR cascade: L1 → L2 mesonet blend → L3 lead-decay → L4 diurnal → L5 Lsr (sr) / L6 Lc (cm/ch) / specialists (chp, wdp, clp, dpbp) / Ccd (cc derivation). Every field starts from a HRRR value at L1.</div>
-    <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. <strong>Full parallel cascade shipped 2026-08-21:</strong> raw_nbm → l2_nbm (HRRR-delta reconstruction for all 9) → l3_nbm (per-lead bias, LIVE v0.6.445, scope trimmed 08-25 v0.6.472 to {wg, h, ch, cc}; sr re-added 09-04 v0.6.549) → l4_nbm for ch only (cc dropped 09-08 v0.6.563; diurnal hour-of-day) → <span style="text-decoration:line-through;opacity:0.6;">l5_nbm for sr</span> <strong style="color:#e07272;">KILLED 08-25 v0.6.471</strong> (sentry +238% MAE + walkforward −126% to −147% agreed) → l6_nbm for t (v0.6.453 scaffold, ENABLED=False mirroring HRRR L6) → chp_nbm for ch (v0.6.454) / wdp_nbm for wd (v0.6.437). clp_nbm N/A (NBM doesn't emit cl). <strong>Path B discipline (owner call 08-25):</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around — a broken cascade should be diagnosed loudly, not silently masked. Adding raw as a selector fallback was considered and rejected on those grounds.</div>
+    <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. <strong>Full parallel cascade shipped 2026-08-21:</strong> raw_nbm + Mesonet (HRRR-delta reconstruction for all 9) → l3_nbm (per-lead bias, LIVE v0.6.445, scope trimmed 08-25 v0.6.472 to {wg, h, ch, cc}; sr re-added 09-04 v0.6.549) → l4_nbm for ch only (cc dropped 09-08 v0.6.563; diurnal hour-of-day) → <span style="text-decoration:line-through;opacity:0.6;">l5_nbm for sr</span> <strong style="color:#e07272;">KILLED 08-25 v0.6.471</strong> (sentry +238% MAE + walkforward −126% to −147% agreed) → l6_nbm for t (v0.6.453 scaffold, ENABLED=False mirroring HRRR L6) → chp_nbm for ch (v0.6.454) / wdp_nbm for wd (v0.6.437). clp_nbm N/A (NBM doesn't emit cl). <strong>Path B discipline (owner call 08-25):</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around — a broken cascade should be diagnosed loudly, not silently masked. Adding raw as a selector fallback was considered and rejected on those grounds.</div>
     <div class="meta-line"><strong>🎯 L1 selector (Prod-vs-Prod, v0.6.440 fit / v0.6.445 armed).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-Prod, deepest applied HRRR layer) vs MAE(NBM-Prod, deepest applied NBM layer — l3_nbm → l4_nbm → l5_nbm → l6_nbm → chp_nbm/wdp_nbm as each fires). Fires per <code>l1_selector_table_curated.json</code>. In-scope fields: t / ws / wg / wd / h / ch / sr / dp / cc (all 9 NBM emits). Out-of-scope (HRRR-only): cl / cm / pr / pa / pp — NBM doesn't publish them. Live per-cell picks are in the 🎯 L1 selector table below (read from the cloud refitter's live table). Since v0.7.56–58, blends (L1 static blend for h; terminal blend for t/sr/ws/h) pre-empt the pick on their cells.</div>
     <div class="meta-line"><strong>v0.6.432 L1 router retired 2026-08-19 v0.6.437.</strong> Superseded by the selector on all counts: wider scope (9 fields vs 3), stronger evidence base (30-day scoreboard vs 14-day, plus 108-day backfill for L3 fit), post-cascade application (all corrections apply first, selector picks last).</div>
     <div class="meta-line">Curves below show the current L1 forecast per field for the HRRR-side only. NBM raw is available on the per-field accuracy charts as a dashed line (<code>raw_nbm</code>) once the Fitter has a day of pair-log coverage.</div>
@@ -3208,69 +2816,6 @@
 
 <h3 class="subsection" style="margin-top:14px;">Raw L1 forecast per field (post-router where the router fired)</h3>
 <div id="grid-raw" class="grid"></div>
-
-<!-- ───────────────────── L2 ───────────────────── -->
-<h2 class="section" id="sec-layer2">L2 — the link from the Mesonet (station bias correction)</h2>
-<div class="layer-info-text">
-  <p class="layer-summary">What our <span id="layer2NetworkCount">—</span> nearby weather stations say the model is getting wrong <em>right now</em> — and how much of that signal we trust.</p>
-  <details class="layer-methodology"><summary>How the network correction is built</summary>
-    Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
-    <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> per-station Kalman offset (rolling 48h) → per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted (station − model) bias → unweighted mean across non-empty octants. t and h scale by per-field network Kalman K (sec 2c); pr applies full strength.</div>
-    <div class="meta-line"><strong>Lead-decay:</strong> <code>bias_applied(lead) = current_bias × exp(-lead/τ)</code> per field. Fitter (03/15 local) refits τ on train/test split; loader adopts fitted τ only if it beat hardcoded default on held-out RMSE AND stays within 0.25×–4× default. Defaults: τ_t=4h, τ_h=240h, τ_pr=12h. Fields without τ (wind/clouds/solar) get flat L2. See sec 2d for live curves.</div>
-    <div class="meta-line"><strong>Wind / gust (direct selection):</strong> no per-station calibration, no additive bias. Per-octant MAX gust → MEDIAN across octants; linear-decay blend into next 24h (100% h0 → 0% h24). <strong>KBOS+KBVY floor:</strong> if both airports agree on speed &gt;1.4× octant-median, defer to their median. Direction rejected if &gt;60° off airport+buoy+Tempest consensus. Gust override allows single-source (METAR omits when steady). Physical floor: gust ≥ wind.</div>
-    <div class="meta-line"><strong>Cloud cover (Kalman METAR blend):</strong> KBOS+KBVY sky obs (BKN/SCT/FEW/OVC → percent + L/M/H) blended against HRRR hourly[0] via <code>_kalman_gain_cloud</code>. K=0.90 if airports agree within 20pp, 0.70 at 20-40pp, 0.50 at &gt;40pp, 0.35 for single-source. Same K on total + L/M/H for self-consistency. Live values in <code>cloud_l2_meta</code>.</div>
-  </details>
-</div>
-
-<div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;margin-bottom:10px;" id="sec-l2-worth">
-  <p class="layer-summary" style="margin:0 0 6px 0;"><strong style="color:#4ad29a;">What L2 is worth, and what it is graded on</strong> <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">· last manual run 2026-11-04 · pair log (backstamped 08-24→11-03 and primary) · scored on the older shrunk <code>observed</code> unless noted</span></p>
-  <div class="meta-line"><strong>Station feed:</strong> Tempest only. Weather Underground stopped reporting 2026-10-21 (key throttled; 401s from 10-07) and is not needed: L2's gain at 2–5h over raw HRRR, pooled by era —
-    <table style="margin:6px 0;border-collapse:collapse;font-size:0.9em;">
-      <tr style="opacity:0.7;"><td style="padding:2px 12px 2px 0;">field</td><td style="padding:2px 12px;">WU era 08-24→10-21 (58 days)</td><td style="padding:2px 12px;">Tempest only 10-22→11-03 (13 days)</td></tr>
-      <tr><td>t</td><td style="padding:2px 12px;">+9.9%</td><td style="padding:2px 12px;">+11.8%</td></tr>
-      <tr><td>ws</td><td style="padding:2px 12px;">+6.1%</td><td style="padding:2px 12px;">+7.3%</td></tr>
-      <tr><td>wg</td><td style="padding:2px 12px;">+11.5%</td><td style="padding:2px 12px;">+14.2%</td></tr>
-      <tr><td>dp</td><td style="padding:2px 12px;">+35.7%</td><td style="padding:2px 12px;">+29.4%</td></tr>
-      <tr><td>h</td><td style="padding:2px 12px;">+25.8%</td><td style="padding:2px 12px;">+14.9% <span style="opacity:0.7;">(daily median 19.5% → 17.8%; 8 of 13 days positive)</span></td></tr>
-    </table>
-    Three times the stations (about 59 vs 18) bought nothing measurable. The limit is how L2 uses the readings, not how many there are.</div>
-  <div class="meta-line"><strong>Where the gain lives</strong> (11-02→11-04 on <code>observed_stations</code>, n≈38 per lead — three days, directional only): t is useful to ~5h (60% / 43% / 25% / 17% / 11% / 7% at leads 0–5, ~0 by 9h); ws and wg to ~3h; dp holds 16–45% out past 9h; h is mixed. Past ~5h L2 does nothing for t, ws or wg. <strong>Lead 0 is a tautology</strong> (the correction and the truth are the same reading); the real value starts at lead 2h.</div>
-  <div class="meta-line"><strong>Conclusion:</strong> keep the stations as an L2 input for the 0–5h nowcast; grade L2 from lead 2h on <code>observed_stations</code>; Tempest is the mesonet and the single point of failure (sentry shipped v0.7.88). Not yet done: a held-out truth / correction split (needs a per-station reading archive).</div>
-</div>
-
-<h3 class="subsection">2a. Octant coverage — where this tick's stations came from</h3>
-<div id="layer2-octants" class="layer-info-text">loading…</div>
-
-<details id="bias-details" class="bias-accordion">
-  <summary>Per-station detail — mesonet map &amp; Kalman-tracked offsets table</summary>
-  <div id="status-bias" class="status" hidden></div>
-  <div id="stats-bias" class="stats-panel" hidden></div>
-  <div id="bias-map" class="bias-map-wrap"></div>
-  <div id="bias-table-wrap"></div>
-</details>
-
-<details id="uptime-details" class="bias-accordion">
-  <summary>Per-station uptime — fetch success rates (rolling window)</summary>
-  <div id="status-uptime" class="status" hidden></div>
-  <div id="stats-uptime" class="stats-panel" hidden></div>
-  <div id="uptime-table-wrap"></div>
-</details>
-
-<h3 class="subsection">2b. Network bias estimate (full, un-confidence-scaled)</h3>
-<div id="layer2-panel" class="layer-info-text">loading…</div>
-
-<h3 class="subsection">2c. Network confidence (Kalman gain K)</h3>
-<div id="layer3-panel" class="layer-info-text">loading…</div>
-
-<h3 class="subsection">2d. Lead-decay applied to L2 bias (v0.6.44)</h3>
-<div id="layer2-leaddecay-meta" class="layer-info-text">loading…</div>
-<div id="layer2-leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="layer2-leaddecay-canvas"></canvas></div>
-
-<h3 class="subsection">2e. Post-aggregate-bias forecast — what gets passed to L3 <span style="font-weight:normal;color:#e0d472;opacity:0.85;">· engineering view (pre-clamp)</span></h3>
-<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;">
-  <p class="layer-summary" style="margin:0;"><strong style="color:#d4a373;">⚠ These are internal pipeline values, not user forecasts.</strong> After the aggregate-bias correction is applied but <em>before</em> downstream layers and physical-bounds clamping (<code>FIELD_BOUNDS</code> in <code>decay_apply.py</code>). Values can legitimately fall outside physical ranges here — <code>cloud_cover 121%</code>, <code>precip_probability −6%</code>, <code>precip_amount −0.025 in</code> — because the bias offset is additive and the clamp comes downstream. If any of these look wrong for user display, check the L3 / L4 / cloud-clamp path, not this section.</p>
-</div>
-<div id="grid-layer2" class="grid"></div>
 
 <!-- ───────────────────── L3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">L3 — Lead-decay correction</h2>
@@ -3782,7 +3327,7 @@
 
         <div style="padding:6px 8px;border-left:2px solid #8db4e8;background:#0e1a2a;margin-bottom:6px;border-radius:2px;">
           <div><strong>NBM parallel cascade</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ AT ARCHITECTURAL PARITY 2026-08-26 v0.6.499 · native L2 shipped for all 8 NBM-scope fields · all layer slots + specialists mirrored</span></div>
-          <div style="opacity:0.85;">Full mirror of the HRRR cascade on the NBM side, layer-for-layer: <code>raw_nbm → l2_nbm → l3_nbm → l4_nbm (ch) → l5_nbm (sr) → l6_nbm (t, ENABLED=False) → chp_nbm (ch) / wdp_nbm (wd)</code>. Each layer has its own fitter (<code>analysis/l{3-6}_nbm_*.py</code>) writing a curated JSON that the collector loads at import; per-hour stamps land in the snapshot log and per-row <code>error_l{n}_nbm</code> columns land in the pair log. L1 selector picks argmin(MAE(HRRR-deepest-Prod), MAE(NBM-deepest-Prod)) per (field, lead-band). Bins reached L3 maturity via <code>analysis/nbm_backstamp.py</code> (walks pair log + backfilled NBM point extracts, reconstructs <code>l2_nbm</code> exactly from snapshotted HRRR values); deeper layers warm naturally over the next ~30 days as <code>error_l3_nbm</code>/<code>error_l4_nbm</code>/<code>error_l5_nbm</code> rows accumulate. See per-layer fit-status tiles below.</div>
+          <div style="opacity:0.85;">Full mirror of the HRRR cascade on the NBM side, layer-for-layer: <code>raw_nbm + Mesonet → l3_nbm → l4_nbm (ch) → l5_nbm (sr) → l6_nbm (t, ENABLED=False) → chp_nbm (ch) / wdp_nbm (wd)</code>. Each layer has its own fitter (<code>analysis/l{3-6}_nbm_*.py</code>) writing a curated JSON that the collector loads at import; per-hour stamps land in the snapshot log and per-row <code>error_l{n}_nbm</code> columns land in the pair log. L1 selector picks argmin(MAE(HRRR-deepest-Prod), MAE(NBM-deepest-Prod)) per (field, lead-band). Bins reached L3 maturity via <code>analysis/nbm_backstamp.py</code> (walks pair log + backfilled NBM point extracts, reconstructs <code>l2_nbm</code> exactly from snapshotted HRRR values); deeper layers warm naturally over the next ~30 days as <code>error_l3_nbm</code>/<code>error_l4_nbm</code>/<code>error_l5_nbm</code> rows accumulate. See per-layer fit-status tiles below.</div>
           <div style="color:#9ab0a0;">→ Live per-field / per-band picks in the <strong>National Source</strong> tile above. Router-scope aggregate lift last refit at v0.6.500 (2026-08-26) was +53.5% on n=73,023; refreshed daily by the pool table. v0.7.5 (09-26) added learned_gbm + ims_threshold precedence on top of the pool for ch and sr; v0.7.11 (09-29) added a per-cell L3 skip for sr × nor_easter that runs after the selector picks NBM. Static "which side wins" summaries drift within days of every ship — read the live tile.</div>
         </div>
 
@@ -4264,9 +3809,7 @@ function renderMeta(corrDoc, wxDoc) {
   const versionSpan = `<strong id="meta-version" style="color:#7fb3ff;">…</strong> · `;
   el.innerHTML =
     versionSpan +
-    `${fitted}${applied} · ` +
-    `<a href="${CORRECTIONS_URL}" target="_blank">corrections</a> · ` +
-    `<a href="${WEATHER_URL}" target="_blank">weather</a>`;
+    `${fitted}${applied}`;
   // Fetch deployed version (cache-busted) and swap into the placeholder — lets
   // the reader see at a glance whether the live page matches the latest ship.
   fetch('version.json?_=' + Date.now())
@@ -4436,127 +3979,193 @@ function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
 // specialists / skip tables entered the stack. _drillComputeSeries above
 // stays because the L2 raw-model charts still call it.)
 
-// ── Top-of-page "right now" headline (plain English, mobile-first) ──────
-function renderApplicabilityMap(wxDoc) {
-  const host = document.getElementById("applicability-content");
-  if (!host) return;
-  // Park the static L2 / L2_NBM blocks above the host before any innerHTML
-  // write, so a re-render never wipes them.
-  const staticL2 = document.getElementById("appl-static-L2");
-  const staticL2Nbm = document.getElementById("appl-static-L2_NBM");
-  [staticL2, staticL2Nbm].forEach((n) => { if (n) host.parentNode.insertBefore(n, host); });
+let _l2LeadDecayChart = null;
+function renderLayer3Panel(wxDoc) {
+  const el = document.getElementById("k-panel");
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
+  const K  = (hyp.kalman_gain == null)          ? null : Number(hyp.kalman_gain);
+  const wb = (hyp.weighted_bias == null)        ? null : Number(hyp.weighted_bias);
+  const Kh = (hyp.kalman_gain_humidity == null) ? null : Number(hyp.kalman_gain_humidity);
+  const wh = (hyp.weighted_bias_humidity == null) ? null : Number(hyp.weighted_bias_humidity);
+  const appliedTempBias = (K  != null && wb != null) ? K  * wb : null;
+  const appliedHumidBias = (Kh != null && wh != null) ? Kh * wh : null;
+  const pct  = (K  != null) ? Math.round(K  * 100) : null;
+  const pctH = (Kh != null) ? Math.round(Kh * 100) : null;
+  el.innerHTML =
+    `Kalman gain throttles how aggressively the station gap is trusted. Few stations or high station-to-station scatter → low K → forecast moves less toward the network reading. ` +
+    `Applied to temperature and humidity with separate threshold functions (temp scatter is in °F, humidity scatter is in %, so a single K function would miscalibrate one or the other).` +
+    `<div class="meta-line"><strong>Temp:</strong> ` +
+      `K <strong>${fmt(K, 3)}</strong>${pct != null ? ` (${pct}% trusted)` : ""} · ` +
+      `station gap <strong>${sgn(wb)}${fmt(wb)}°F</strong> · ` +
+      `applied <strong>${sgn(appliedTempBias)}${fmt(appliedTempBias)}°F</strong> · ` +
+      `scatter <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations` +
+    `</div>` +
+    `<div class="meta-line"><strong>Humidity:</strong> ` +
+      `K <strong>${fmt(Kh, 3)}</strong>${pctH != null ? ` (${pctH}% trusted)` : ""} · ` +
+      `station gap <strong>${sgn(wh)}${fmt(wh, 1)}%</strong> · ` +
+      `applied <strong>${sgn(appliedHumidBias)}${fmt(appliedHumidBias, 1)}%</strong> · ` +
+      `scatter <strong>${fmt(hyp.bias_std_humidity, 2)}%</strong> across ${hyp.stations_used_humidity ?? "?"} stations` +
+    `</div>`;
+}
 
-  const block = wxDoc && wxDoc.applicability_map;
-  if (!block || !Array.isArray(block.layers) || block.layers.length === 0) {
-    host.innerHTML = `<div class="layer-info-text" style="opacity:0.75;font-style:italic;">
-      <code>weather_data.applicability_map</code> not available yet — collector tick hasn't shipped the block. Lands automatically once v0.6.260 is deployed.
-    </div>`;
-    return;
+function renderL2LeadDecay(wxDoc) {
+  const meta = (wxDoc && wxDoc.l2_decay_meta) || {};
+  const taus = meta.tau_hours || { t: 4, h: 240, pr: 12 };
+  const fieldsMeta = meta.fields || {};
+  const N = 48;
+  const xs = Array.from({ length: N }, (_, i) => i);
+
+  const datasets = [];
+  const metaParts = [];
+
+  // Additive-bias fields with a τ.
+  const TAU_FIELDS = [
+    { key: "t",  label: "Temperature", color: "rgba(110,180,235,1)" },
+    { key: "h",  label: "Humidity",    color: "rgba(200,160,110,1)" },
+    { key: "pr", label: "Pressure",    color: "rgba(180,140,220,1)" },
+  ];
+  for (const f of TAU_FIELDS) {
+    const tau = taus[f.key];
+    if (tau == null) continue;
+    const tauNum = Number(tau);
+    const isFlat = !Number.isFinite(tauNum) || tauNum >= 1e8;
+    const data = isFlat ? xs.map(() => 1.0) : xs.map(i => Math.exp(-i / tauNum));
+    const fm = fieldsMeta[f.key] || {};
+    const srcTag = fm.source === "fitted" ? " (fitted)" : (fm.source === "default" ? " (default)" : "");
+    datasets.push({
+      label: `${f.label} (τ=${isFlat ? "∞" : tauNum + "h"})${srcTag}`,
+      data,
+      borderColor: f.color,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: 1.75,
+      pointRadius: 0,
+      tension: 0.25,
+    });
+    metaParts.push(`<strong>${f.label}</strong> τ=${isFlat ? "flat" : tauNum + "h"}${srcTag}`);
   }
 
-  const CATEGORY_COLOR = {
-    "general-purpose": { bg: "#1f2a3a", border: "#3a4f6a", fg: "#9fb8d8" },
-    "specialist":      { bg: "#241f3a", border: "#4a3f6a", fg: "#b8a8d8" },
-    "confidence":      { bg: "#1f3a2a", border: "#3a6a4f", fg: "#a8d8b8" },
-  };
+  // Wind speed + gust + direction (v0.6.368a): linear 100% → 0% across
+  // leads 0..24, then 0 thereafter. wd uses the same ramp but with circular
+  // sin/cos unit-vector blending instead of scalar averaging.
+  const windRamp = xs.map(i => i >= 24 ? 0 : 1 - i / 24);
+  datasets.push({
+    label: "Wind speed / gust / dir (linear 0–24h)",
+    data: windRamp,
+    borderColor: "rgba(120,210,160,1)",
+    backgroundColor: "rgba(0,0,0,0)",
+    borderWidth: 1.75,
+    pointRadius: 0,
+    tension: 0,
+  });
+  metaParts.push(`<strong>Wind speed/gust/dir</strong> linear 0–24h`);
 
-  const escape = (s) => String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // All other fields: flat 1.0 across the horizon.
+  datasets.push({
+    label: "All other fields (flat)",
+    data: xs.map(() => 1.0),
+    borderColor: "rgba(140,150,165,0.55)",
+    backgroundColor: "rgba(0,0,0,0)",
+    borderWidth: 1.25,
+    borderDash: [4, 4],
+    pointRadius: 0,
+    tension: 0,
+  });
+  metaParts.push(`<strong>cc, sr, dp, pa, …</strong> flat`);
 
-  // HRRR cascade (collector order) → NBM cascade → confidence last.
-  const layers = block.layers.filter((L) => L.category !== "confidence")
-    .concat(block.layers.filter((L) => L.category === "confidence"));
-
-  const blocks = layers.map((L) => {
-    const cat = CATEGORY_COLOR[L.category] || CATEGORY_COLOR["general-purpose"];
-    const header = `
-      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-        <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">${escape(L.layer_id)} — ${escape(L.name)}</span>
-        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;
-                     background:${cat.bg};border:1px solid ${cat.border};color:${cat.fg};">
-          ${escape(L.category)}
-        </span>
-      </div>`;
-
-    const rows = Array.isArray(L.fields) ? L.fields : (Array.isArray(L.axes) ? L.axes : []);
-    const isAxes = Array.isArray(L.axes);
-    const colLabel = isAxes ? "axis" : "field";
-
-    let body;
-    if (rows.length === 0) {
-      body = `<div class="meta-line" style="opacity:0.6;font-style:italic;">No ${colLabel} entries.</div>`;
-    } else {
-      const rowHtml = rows.map((r) => {
-        const name = isAxes
-          ? `${escape(r.axis_id || "?")} <span style="opacity:0.65;">— ${escape(r.name || "")}</span>`
-          : `<code>${escape(r.field || "?")}</code>`;
-        const triggers = escape(r.fires_when || "—");
-        // Fall back to layer-level gated_by / current_state when the per-row
-        // descriptor omits it. C1 axes inherit the same ENABLED gate as the
-        // layer, so duplicating it on each axis row is redundant — the
-        // renderer just resolves the inheritance here.
-        const gatedRaw = r.gated_by || L.gated_by;
-        const gated = gatedRaw
-          ? `<code style="opacity:0.85;">${escape(gatedRaw)}</code>`
-          : `<span style="opacity:0.5;">—</span>`;
-        const stateRaw = r.current_state || L.current_state;
-        const state = stateRaw
-          ? `<span style="opacity:0.9;">${escape(stateRaw)}</span>`
-          : `<span style="opacity:0.5;">—</span>`;
-        const notes = r.notes
-          ? `<div style="margin-top:3px;opacity:0.7;font-size:0.85em;">${escape(r.notes)}</div>`
-          : "";
-        return `
-          <tr style="border-top:1px solid #232936;">
-            <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;">${name}</td>
-            <td style="padding:6px 10px;vertical-align:top;">${triggers}${notes}</td>
-            <td style="padding:6px 10px;vertical-align:top;">${gated}</td>
-            <td style="padding:6px 0 6px 10px;vertical-align:top;">${state}</td>
-          </tr>`;
-      }).join("");
-
-      body = `
-        <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
-          <thead>
-            <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-              <th style="padding:4px 10px 4px 0;">${colLabel}</th>
-              <th style="padding:4px 10px;">applies when</th>
-              <th style="padding:4px 10px;">gated by</th>
-              <th style="padding:4px 0 4px 10px;">current state</th>
-            </tr>
-          </thead>
-          <tbody>${rowHtml}</tbody>
-        </table>`;
+  const metaEl = document.getElementById("leaddecay-meta");
+  if (metaEl) {
+    // Per-field adoption table: shows what the loader actually applied and why.
+    const TABLE_FIELDS = [
+      { key: "t",  label: "Temperature" },
+      { key: "h",  label: "Humidity" },
+      { key: "pr", label: "Pressure" },
+    ];
+    const fmt = (v, d = 2) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toFixed(d));
+    const tauStr = (v) => {
+      if (v == null) return "—";
+      const n = Number(v);
+      if (!Number.isFinite(n) || n >= 1e8) return "∞";
+      return n + "h";
+    };
+    let tableRows = "";
+    for (const f of TABLE_FIELDS) {
+      const fm = fieldsMeta[f.key] || {};
+      const sourceBadge = fm.source === "fitted"
+        ? `<span style="color:#7fc97f;font-weight:600">fitted</span>`
+        : `<span style="color:#bcc4d0">default</span>`;
+      const imp = fm.improvement_vs_default_pct;
+      const impColor = imp == null ? "#bcc4d0" : (imp > 0 ? "#7fc97f" : "#ff8a8a");
+      const impStr = imp == null ? "—"
+        : `<span style="color:${impColor}">${imp >= 0 ? "+" : ""}${fmt(imp, 2)}%</span>`;
+      const nTest = fm.n_test ? fm.n_test.toLocaleString() : "—";
+      const reason = (fm.reason || "").replace(/</g, "&lt;");
+      tableRows +=
+        `<tr>` +
+        `<td>${f.label}</td>` +
+        `<td>${tauStr(fm.tau_hours)}</td>` +
+        `<td>${sourceBadge}</td>` +
+        `<td>${tauStr(fm.fitted_tau_hours)}</td>` +
+        `<td>${tauStr(fm.default_tau_hours)}</td>` +
+        `<td>${impStr}</td>` +
+        `<td>${nTest}</td>` +
+        `<td style="color:#bcc4d0;font-size:.85em">${reason}</td>` +
+        `</tr>`;
     }
+    const fittedAt = meta.fitted_at || "—";
+    const heldoutDays = meta.heldout_days || "—";
+    const gr = meta.guardrail || {};
+    const guardrailText = (gr.min_improvement_pct != null)
+      ? `≥${gr.min_improvement_pct}% improvement vs default, ≥${gr.min_n_test} test pairs, τ within [${gr.tau_low_mult}×, ${gr.tau_high_mult}×] of default`
+      : "guardrail metadata not present";
 
-    const layerNotes = L.notes
-      ? `<div class="meta-line" style="margin-top:8px;opacity:0.7;font-size:0.85em;">${escape(L.notes)}</div>`
-      : "";
-
-    return `
-      <div class="layer-info-text" data-layer-id="${escape(L.layer_id)}" style="margin-bottom:12px;border-color:${cat.border};">
-        ${header}
-        ${body}
-        ${layerNotes}
-      </div>`;
-  }).join("");
-
-  const stamp = block.generated_at
-    ? `<div class="meta-line" style="opacity:0.6;font-size:0.82em;margin-bottom:8px;">
-        Assembled at ${escape(block.generated_at)} from <code>describe_applicability()</code> across ${block.layers.length} module${block.layers.length === 1 ? "" : "s"}.
-       </div>`
-    : "";
-
-  host.innerHTML = stamp + blocks;
-
-  const l1b = host.querySelector('[data-layer-id="L1b"]');
-  const l3 = host.querySelector('[data-layer-id="L3"]');
-  if (staticL2) {
-    if (l1b) l1b.after(staticL2);
-    else if (l3) l3.before(staticL2);
+    metaEl.innerHTML =
+      `Fraction of the Mesonet's current reading the forecast keeps at each lead hour. Three weighting families: <strong>additive bias with τ</strong> (t, h, pr) uses <code>exp(-lead/τ)</code>, fit twice daily by the Fitter (<code>decay_fit.py</code>) on a train/test split — older pairs fit τ, last ${heldoutDays} days score it; the loader's per-field guardrail adopts the fitted τ only if it beat the default on held-out RMSE within sanity bounds, otherwise falls back to the hardcoded default. <strong>Wind speed / gust / direction</strong> linearly ramps 100% → 0% across hours 0–24 (no additive bias). Direction added v0.6.368a using circular sin/cos unit-vector blending on the same ramp (linear scalar averaging would produce garbage on wraparound: avg of 350°+10° = 180° instead of 0°). <strong>Everything else</strong> is flat at 100%.` +
+      `<div class="meta-line"><strong>Note:</strong> "flat" for the remaining fields isn't pending — each has a structural reason. <strong>dp</strong> inherits the Mesonet start indirectly: it's derived from <code>corrected_temperature</code> + <code>corrected_humidity</code> via Magnus, so it carries those layers' biases through and there's no separate dp bias to decay. <strong>cc / cl / cm / ch</strong> got a Mesonet contribution in v0.6.153 — KBOS+KBVY METAR Kalman blend at hour-0 only — but that's a point correction at the current observed hour, not the kind of persistent additive bias that extends usefully across the 48h horizon (KBOS reporting 75% clouds right now doesn't predict cloud at hour 12). <strong>sr</strong> has Tempest's 20-station coverage but the Lsr regime correction is the better tool for solar's regime-conditional error than a flat additive bias would be. <strong>pa</strong> could in principle take a Mesonet start (WU + Tempest both report rain) but precip is so spatially patchy that station-averaging adds noise faster than it removes bias. <strong>pp</strong> isn't directly observable as a probability.</div>` +
+      `<div class="meta-line"><strong>Per-field adoption</strong> · fitted at <code>${fittedAt}</code> · guardrail: ${guardrailText}` +
+      `<div style="overflow-x:auto;margin-top:6px">` +
+      `<table style="width:100%;border-collapse:collapse;font-size:.9em">` +
+      `<thead><tr style="color:#bcc4d0;text-align:left;border-bottom:1px solid #2a3142">` +
+      `<th style="padding:4px 8px 4px 0">Field</th>` +
+      `<th style="padding:4px 8px">Adopted τ</th>` +
+      `<th style="padding:4px 8px">Source</th>` +
+      `<th style="padding:4px 8px">Fitted τ</th>` +
+      `<th style="padding:4px 8px">Default τ</th>` +
+      `<th style="padding:4px 8px">Held-out Δ vs default</th>` +
+      `<th style="padding:4px 8px">n_test</th>` +
+      `<th style="padding:4px 0 4px 8px">Reason</th>` +
+      `</tr></thead><tbody>${tableRows}</tbody></table></div></div>` +
+      `<div class="meta-line">${metaParts.join(" · ")}</div>`;
   }
-  const l3Nbm = host.querySelector('[data-layer-id="L3_NBM"]');
-  if (staticL2Nbm && l3Nbm) l3Nbm.before(staticL2Nbm);
+
+  const canvas = document.getElementById("leaddecay-canvas");
+  if (!canvas) return;
+  if (_l2LeadDecayChart) { _l2LeadDecayChart.destroy(); _l2LeadDecayChart = null; }
+  _l2LeadDecayChart = new Chart(canvas, {
+    type: "line",
+    data: { labels: xs, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#e7ecf3", font: { size: 12, weight: "600" }, usePointStyle: true, boxWidth: 14, boxHeight: 14, padding: 12 },
+        },
+        tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h`, label: (item) => `${item.dataset.label}: ${(item.parsed.y * 100).toFixed(1)}%` } },
+      },
+      scales: {
+        x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
+             ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
+             grid: { color: "#242833" } },
+        y: { title: { display: true, text: "Fraction of bias applied", color: "#e7ecf3", font: { size: 12, weight: "600" } },
+             ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" }, callback: (v) => (v * 100).toFixed(0) + "%" },
+             grid: { color: "#242833" },
+             min: 0, max: 1.05 },
+      },
+    },
+  });
 }
 
 function renderGateFiring(doc) {
@@ -4721,177 +4330,6 @@ function renderGateFiring(doc) {
 
   host.innerHTML = summary + dormancyDetail + detailTable;
 }
-
-function renderHeadlineBox(wxDoc) {
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  const briefing = (wxDoc && wxDoc.briefing) || {};
-  const hourly = (wxDoc && wxDoc.hourly) || {};
-  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-
-  // Detect degraded mode: when GFS/HRRR is unavailable, the pipeline falls
-  // back to using WU stations directly with no model comparison, so the
-  // bias fields aren't written. In that case t/h rows fall back to
-  // "paused" but other fields (raw_* arrays) can still populate.
-  const degraded = (hyp.aggregation && /fallback/i.test(hyp.aggregation))
-                || (hyp.note && /unavailable/i.test(hyp.note))
-                || (hyp.weighted_bias == null && hyp.weighted_bias_humidity == null);
-
-  // ── Current-tick correction table ──
-  // Convention: correction = corrected[0] − L1[0]. Positive = the pipeline
-  // added to L1 (warmer, wetter, more wind, etc.); negative = subtracted.
-  // v0.6.442: the Raw column ("Base forecast (L1)") reads
-  // hourly.l1_selected_{field}[0] — the selector's chosen raw source at
-  // lead=0 (raw NBM if selector picked NBM, raw HRRR otherwise). Legacy
-  // fallback to hourly.raw_* if the collector hasn't stamped l1_selected_*
-  // yet (pre-v0.6.442 weather_data.json). Correction = cor − L1 shows the
-  // FULL correction stack (L2 + L3 + L4 + gates), not just the L2 bias.
-  const h0 = (arr) => Array.isArray(arr) && arr.length ? arr[0] : null;
-  const l1sel = (field, fallbackArr) => {
-    const v = h0(hourly[`l1_selected_${field}`]);
-    return v != null ? v : h0(fallbackArr);
-  };
-  // t/h have no hourly.raw_temperature / raw_humidity arrays historically —
-  // the collector never preserved them because L2 additive is invertible via
-  // hyp.weighted_bias. Now with l1_selected_t / l1_selected_h we have the
-  // true L1 directly. Legacy fallback (for pre-v0.6.442 payloads only):
-  // derive from corrected minus L2 bias — accurate for t (L1→L2 only) but
-  // silently absorbs L4 diurnal for h (known-lossy; deploy fixes).
-  const t_cor = h0(hourly.temperature);
-  const h_cor = h0(hourly.humidity);
-  const tb = hyp.weighted_bias;
-  const hb = hyp.weighted_bias_humidity;
-  const t_raw_legacy = (t_cor != null && tb != null) ? t_cor - tb : null;
-  const h_raw_legacy = (h_cor != null && hb != null) ? h_cor - hb : null;
-  const t_raw = h0(hourly.l1_selected_t);
-  const h_raw = h0(hourly.l1_selected_h);
-
-  const rows = [
-    { label: "Temperature (t)",  raw: (t_raw != null ? t_raw : t_raw_legacy), cor: t_cor, unit: "°F", dec: 1 },
-    { label: "Humidity (h)",     raw: (h_raw != null ? h_raw : h_raw_legacy), cor: h_cor, unit: "%",  dec: 0 },
-    { label: "Dew point (dp)",   raw: l1sel("dp", hourly.dew_point),            cor: h0(hourly.corrected_dew_point),  unit: "°F", dec: 1 },
-    { label: "Wind speed (ws)",  raw: l1sel("ws", hourly.raw_wind_speed),       cor: h0(hourly.wind_speed),           unit: "mph", dec: 1 },
-    { label: "Wind gusts (wg)",  raw: l1sel("wg", hourly.raw_wind_gusts),       cor: h0(hourly.wind_gusts),           unit: "mph", dec: 1 },
-    { label: "Wind dir (wd)",    raw: l1sel("wd", hourly.raw_wind_direction),   cor: h0(hourly.wind_direction),       unit: "°",   dec: 0 },
-    { label: "Cloud cover (cc)", raw: l1sel("cc", hourly.raw_cloud_cover),      cor: h0(hourly.cloud_cover),          unit: "%",   dec: 0 },
-    { label: "Cloud low (cl)",   raw: l1sel("cl", hourly.raw_cloud_cover_low),  cor: h0(hourly.cloud_cover_low),      unit: "%", dec: 0 },
-    { label: "Cloud mid (cm)",   raw: l1sel("cm", hourly.raw_cloud_cover_mid),  cor: h0(hourly.cloud_cover_mid),      unit: "%", dec: 0 },
-    { label: "Cloud high (ch)",  raw: l1sel("ch", hourly.raw_cloud_cover_high), cor: h0(hourly.cloud_cover_high),     unit: "%", dec: 0 },
-    { label: "Solar rad (sr)",   raw: l1sel("sr", hourly.raw_direct_radiation), cor: h0(hourly.direct_radiation),     unit: "W/m²", dec: 0 },
-    { label: "Precip prob (pp)", raw: l1sel("pp", hourly.raw_precipitation_probability), cor: h0(hourly.precipitation_probability), unit: "%", dec: 0 },
-    { label: "Precip amt (pa)",  raw: l1sel("pa", hourly.raw_precipitation),    cor: h0(hourly.precipitation),        unit: "in", dec: 2 },
-    { label: "Pressure (pr)",    raw: l1sel("pr", hourly.raw_pressure_in),      cor: h0(hourly.corrected_pressure_in), unit: "inHg", dec: 2 },
-  ];
-
-  const _fmt = (v, unit, dec) => v == null ? "—" : `${Number(v).toFixed(dec)} ${unit}`;
-  const _fmtDelta = (raw, cor, unit, dec, presetDelta) => {
-    // If caller passed an explicit delta (t/h), use it; else compute cor−raw.
-    let d = presetDelta;
-    if (d == null && raw != null && cor != null) d = cor - raw;
-    if (d == null) return { txt: "—", cls: "" };
-    const eps = Math.pow(10, -dec) / 2;  // half a display-precision unit
-    // Correction direction is a fact, not a good/bad signal — page uses
-    // green/yellow/red for quality elsewhere, so this table stays neutral
-    // and uses arrows to show direction instead.
-    const arrow = d > eps ? "↑" : d < -eps ? "↓" : "";
-    // For percentage-valued fields (cloud cover, humidity, precip prob),
-    // the correction is an additive percentage-point shift, not a
-    // multiplicative %. Use "pts" to make that unambiguous — "+57 %" reads
-    // like a 1.57× multiplier; "+57 pts" reads correctly as a level shift.
-    const deltaUnit = unit === "%" ? "pts" : unit;
-    return { txt: `${arrow}${arrow ? " " : ""}${Math.abs(d).toFixed(dec)} ${deltaUnit}`, cls: "" };
-  };
-
-  // v0.6.382d: partition rows into (correcting, quiet) preserving canonical
-  // order within each group, then render as two side-by-side columns. The
-  // categorical distinction is what the eye can't do on its own; the visual
-  // scan handles "big vs small correction" within col-1 by itself.
-  const _hasCorrection = (r) => {
-    let d = r.delta;
-    if (d == null && r.raw != null && r.cor != null) d = r.cor - r.raw;
-    if (d == null) return false;
-    const eps = Math.pow(10, -r.dec) / 2;
-    return Math.abs(d) > eps;
-  };
-  const partitioned = [
-    ...rows.filter(_hasCorrection),
-    ...rows.filter(r => !_hasCorrection(r)),
-  ];
-  const _rowCells = (r, isRight) => {
-    if (!r) return '<td></td><td></td><td></td><td></td>';
-    const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
-    const tOrH = (r.label === "Temperature (t)" || r.label === "Humidity (h)");
-    const rawTxt = (degraded && tOrH)
-      ? '<span style="opacity:0.6;" title="HRRR-side L1 seed (Open-Meteo HRRR/GFS) did not respond this tick; the L2 station-bias correction can\'t compute without it. Selector (v0.6.445) only picks NBM at cells where NBM-Prod beats HRRR-Prod, so it doesn\'t rescue this hour-0 tile.">unavailable</span>'
-      : _fmt(r.raw, r.unit, r.dec);
-    // In degraded mode the Production value is still real — it comes straight
-    // from WU stations (hyperlocal.corrected_temp) instead of model+bias — so
-    // show it. Only Raw and Correction are truly missing.
-    const corTxt = (degraded && tOrH)
-      ? `<span title="Sourced directly from the station network — no Open-Meteo bias correction applied this tick.">${_fmt(r.cor, r.unit, r.dec)} <span style="opacity:0.5;font-size:0.85em;">(stations only)</span></span>`
-      : _fmt(r.cor, r.unit, r.dec);
-    // v0.6.382h: right-column label needs to match left-column's muted grey
-    // + left-align styling (which the CSS applies to td:first-child only —
-    // the right column's Field cell is td #5, so we style it inline).
-    const labelStyle = isRight
-      ? ' style="border-left:1px solid #232936;padding-left:16px;text-align:left;color:var(--muted);"'
-      : '';
-    return `<td${labelStyle}>${r.label}</td><td>${rawTxt}</td><td>${corTxt}</td><td class="${del.cls}">${del.txt}</td>`;
-  };
-
-  const tbody = document.getElementById("hbCorrRows");
-  if (tbody) {
-    const half = Math.ceil(partitioned.length / 2);
-    const rowsHtml = [];
-    for (let i = 0; i < half; i++) {
-      rowsHtml.push(`<tr>${_rowCells(partitioned[i], false)}${_rowCells(partitioned[i + half], true)}</tr>`);
-    }
-    tbody.innerHTML = rowsHtml.join("");
-  }
-
-  set("hbConfidence", hyp.confidence || "—");
-  const used = hyp.stations_used, total = hyp.stations_total;
-  let stationsLine;
-  if (used != null && total != null) stationsLine = `${used} of ${total} stations reporting`;
-  else if (used != null) stationsLine = `${used} stations reporting`;
-  else stationsLine = "— stations reporting";
-  set("hbStationsLine", stationsLine);
-
-  const model = briefing.model || "—";
-  const labels = { gemini: "Gemini", groq: "Groq (fallback)", templated: "Templated", "—": "—" };
-  set("hbBriefingSource", labels[model] || model);
-  const cached_at = briefing.cached_at;
-  if (cached_at) {
-    try {
-      const age_min = Math.round((Date.now() - new Date(cached_at).getTime()) / 60000);
-      set("hbBriefingAge", `headline ${age_min}m old`);
-    } catch (e) { set("hbBriefingAge", "—"); }
-  } else {
-    set("hbBriefingAge", "—");
-  }
-}
-
-// ── Layer 2 panel: station-network bias snapshot ────────────────────────
-function renderLayer2Panel(wxDoc) {
-  const el = document.getElementById("layer2-panel");
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  // Keep the static blurb's roster count in sync with live data so it doesn't
-  // drift after future culls/adds.
-  const ct = document.getElementById("layer2NetworkCount");
-  if (ct && hyp.stations_total != null) ct.textContent = hyp.stations_total;
-  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
-  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
-  el.innerHTML =
-    `What the local station network thinks the model is biased by right now. These are the FULL (un-confidence-scaled) values — section 2c below shows the Kalman gain K that decides how much of each to actually apply.` +
-    `<div class="meta-line">` +
-      `Temp <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong> · ` +
-      `Humidity <strong>${sgn(hyp.weighted_bias_humidity)}${fmt(hyp.weighted_bias_humidity, 1)}%</strong> · ` +
-      `Wind <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong> · ` +
-      `Gust <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong> · ` +
-      `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
-      `${hyp.confidence ?? "—"} confidence` +
-    `</div>`;
-}
-
 // ── 2e: L2 lead-decay curves. Three weighting families in L2:
 //   - additive-bias fields with a τ (t, h, pr): exp(-lead/τ) from l2_decay_meta.
 //   - wind speed / gust / direction: linear ramp 100% → 0% across hours 0..24
@@ -4899,165 +4337,6 @@ function renderLayer2Panel(wxDoc) {
 //     the same ramp), then 0% thereafter.
 //   - everything else (cc, sr, dp, pa, etc.): flat 1.0 at every lead.
 // Y-axis is fraction of the L2 contribution applied at each lead.
-let _l2LeadDecayChart = null;
-function renderL2LeadDecay(wxDoc) {
-  const meta = (wxDoc && wxDoc.l2_decay_meta) || {};
-  const taus = meta.tau_hours || { t: 4, h: 240, pr: 12 };
-  const fieldsMeta = meta.fields || {};
-  const N = 48;
-  const xs = Array.from({ length: N }, (_, i) => i);
-
-  const datasets = [];
-  const metaParts = [];
-
-  // Additive-bias fields with a τ.
-  const TAU_FIELDS = [
-    { key: "t",  label: "Temperature", color: "rgba(110,180,235,1)" },
-    { key: "h",  label: "Humidity",    color: "rgba(200,160,110,1)" },
-    { key: "pr", label: "Pressure",    color: "rgba(180,140,220,1)" },
-  ];
-  for (const f of TAU_FIELDS) {
-    const tau = taus[f.key];
-    if (tau == null) continue;
-    const tauNum = Number(tau);
-    const isFlat = !Number.isFinite(tauNum) || tauNum >= 1e8;
-    const data = isFlat ? xs.map(() => 1.0) : xs.map(i => Math.exp(-i / tauNum));
-    const fm = fieldsMeta[f.key] || {};
-    const srcTag = fm.source === "fitted" ? " (fitted)" : (fm.source === "default" ? " (default)" : "");
-    datasets.push({
-      label: `${f.label} (τ=${isFlat ? "∞" : tauNum + "h"})${srcTag}`,
-      data,
-      borderColor: f.color,
-      backgroundColor: "rgba(0,0,0,0)",
-      borderWidth: 1.75,
-      pointRadius: 0,
-      tension: 0.25,
-    });
-    metaParts.push(`<strong>${f.label}</strong> τ=${isFlat ? "flat" : tauNum + "h"}${srcTag}`);
-  }
-
-  // Wind speed + gust + direction (v0.6.368a): linear 100% → 0% across
-  // leads 0..24, then 0 thereafter. wd uses the same ramp but with circular
-  // sin/cos unit-vector blending instead of scalar averaging.
-  const windRamp = xs.map(i => i >= 24 ? 0 : 1 - i / 24);
-  datasets.push({
-    label: "Wind speed / gust / dir (linear 0–24h)",
-    data: windRamp,
-    borderColor: "rgba(120,210,160,1)",
-    backgroundColor: "rgba(0,0,0,0)",
-    borderWidth: 1.75,
-    pointRadius: 0,
-    tension: 0,
-  });
-  metaParts.push(`<strong>Wind speed/gust/dir</strong> linear 0–24h`);
-
-  // All other fields: flat 1.0 across the horizon.
-  datasets.push({
-    label: "All other fields (flat)",
-    data: xs.map(() => 1.0),
-    borderColor: "rgba(140,150,165,0.55)",
-    backgroundColor: "rgba(0,0,0,0)",
-    borderWidth: 1.25,
-    borderDash: [4, 4],
-    pointRadius: 0,
-    tension: 0,
-  });
-  metaParts.push(`<strong>cc, sr, dp, pa, …</strong> flat`);
-
-  const metaEl = document.getElementById("layer2-leaddecay-meta");
-  if (metaEl) {
-    // Per-field adoption table: shows what the loader actually applied and why.
-    const TABLE_FIELDS = [
-      { key: "t",  label: "Temperature" },
-      { key: "h",  label: "Humidity" },
-      { key: "pr", label: "Pressure" },
-    ];
-    const fmt = (v, d = 2) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toFixed(d));
-    const tauStr = (v) => {
-      if (v == null) return "—";
-      const n = Number(v);
-      if (!Number.isFinite(n) || n >= 1e8) return "∞";
-      return n + "h";
-    };
-    let tableRows = "";
-    for (const f of TABLE_FIELDS) {
-      const fm = fieldsMeta[f.key] || {};
-      const sourceBadge = fm.source === "fitted"
-        ? `<span style="color:#7fc97f;font-weight:600">fitted</span>`
-        : `<span style="color:#bcc4d0">default</span>`;
-      const imp = fm.improvement_vs_default_pct;
-      const impColor = imp == null ? "#bcc4d0" : (imp > 0 ? "#7fc97f" : "#ff8a8a");
-      const impStr = imp == null ? "—"
-        : `<span style="color:${impColor}">${imp >= 0 ? "+" : ""}${fmt(imp, 2)}%</span>`;
-      const nTest = fm.n_test ? fm.n_test.toLocaleString() : "—";
-      const reason = (fm.reason || "").replace(/</g, "&lt;");
-      tableRows +=
-        `<tr>` +
-        `<td>${f.label}</td>` +
-        `<td>${tauStr(fm.tau_hours)}</td>` +
-        `<td>${sourceBadge}</td>` +
-        `<td>${tauStr(fm.fitted_tau_hours)}</td>` +
-        `<td>${tauStr(fm.default_tau_hours)}</td>` +
-        `<td>${impStr}</td>` +
-        `<td>${nTest}</td>` +
-        `<td style="color:#bcc4d0;font-size:.85em">${reason}</td>` +
-        `</tr>`;
-    }
-    const fittedAt = meta.fitted_at || "—";
-    const heldoutDays = meta.heldout_days || "—";
-    const gr = meta.guardrail || {};
-    const guardrailText = (gr.min_improvement_pct != null)
-      ? `≥${gr.min_improvement_pct}% improvement vs default, ≥${gr.min_n_test} test pairs, τ within [${gr.tau_low_mult}×, ${gr.tau_high_mult}×] of default`
-      : "guardrail metadata not present";
-
-    metaEl.innerHTML =
-      `Fraction of the current L2 contribution applied at each lead hour. Three weighting families: <strong>additive bias with τ</strong> (t, h, pr) uses <code>exp(-lead/τ)</code>, fit twice daily by the Fitter (<code>decay_fit.py</code>) on a train/test split — older pairs fit τ, last ${heldoutDays} days score it; the loader's per-field guardrail adopts the fitted τ only if it beat the default on held-out RMSE within sanity bounds, otherwise falls back to the hardcoded default. <strong>Wind speed / gust / direction</strong> linearly ramps 100% → 0% across hours 0–24 (no additive bias). Direction added v0.6.368a using circular sin/cos unit-vector blending on the same ramp (linear scalar averaging would produce garbage on wraparound: avg of 350°+10° = 180° instead of 0°). <strong>Everything else</strong> is flat at 100%.` +
-      `<div class="meta-line"><strong>Note:</strong> "flat" for the remaining fields isn't pending — each has a structural reason. <strong>dp</strong> inherits L2 indirectly: it's derived from <code>corrected_temperature</code> + <code>corrected_humidity</code> via Magnus, so it carries those layers' biases through and there's no separate dp bias to decay. <strong>cc / cl / cm / ch</strong> got an L2 contribution in v0.6.153 — KBOS+KBVY METAR Kalman blend at hour-0 only — but that's a point correction at the current observed hour, not the kind of persistent additive bias that extends usefully across the 48h horizon (KBOS reporting 75% clouds right now doesn't predict cloud at hour 12). <strong>sr</strong> has Tempest's 20-station coverage but the Lsr regime correction is the better tool for solar's regime-conditional error than a flat additive bias would be. <strong>pa</strong> could in principle fit an L2 bias (WU + Tempest both report rain) but precip is so spatially patchy that station-averaging adds noise faster than it removes bias. <strong>pp</strong> isn't directly observable as a probability.</div>` +
-      `<div class="meta-line"><strong>Per-field adoption</strong> · fitted at <code>${fittedAt}</code> · guardrail: ${guardrailText}` +
-      `<div style="overflow-x:auto;margin-top:6px">` +
-      `<table style="width:100%;border-collapse:collapse;font-size:.9em">` +
-      `<thead><tr style="color:#bcc4d0;text-align:left;border-bottom:1px solid #2a3142">` +
-      `<th style="padding:4px 8px 4px 0">Field</th>` +
-      `<th style="padding:4px 8px">Adopted τ</th>` +
-      `<th style="padding:4px 8px">Source</th>` +
-      `<th style="padding:4px 8px">Fitted τ</th>` +
-      `<th style="padding:4px 8px">Default τ</th>` +
-      `<th style="padding:4px 8px">Held-out Δ vs default</th>` +
-      `<th style="padding:4px 8px">n_test</th>` +
-      `<th style="padding:4px 0 4px 8px">Reason</th>` +
-      `</tr></thead><tbody>${tableRows}</tbody></table></div></div>` +
-      `<div class="meta-line">${metaParts.join(" · ")}</div>`;
-  }
-
-  const canvas = document.getElementById("layer2-leaddecay-canvas");
-  if (!canvas) return;
-  if (_l2LeadDecayChart) { _l2LeadDecayChart.destroy(); _l2LeadDecayChart = null; }
-  _l2LeadDecayChart = new Chart(canvas, {
-    type: "line",
-    data: { labels: xs, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#e7ecf3", font: { size: 12, weight: "600" }, usePointStyle: true, boxWidth: 14, boxHeight: 14, padding: 12 },
-        },
-        tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h`, label: (item) => `${item.dataset.label}: ${(item.parsed.y * 100).toFixed(1)}%` } },
-      },
-      scales: {
-        x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
-             ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
-             grid: { color: "#242833" } },
-        y: { title: { display: true, text: "Fraction of bias applied", color: "#e7ecf3", font: { size: 12, weight: "600" } },
-             ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" }, callback: (v) => (v * 100).toFixed(0) + "%" },
-             grid: { color: "#242833" },
-             min: 0, max: 1.05 },
-      },
-    },
-  });
-}
-
 // ── Forecast accuracy: per-field MAE-vs-lead chart with 4 layers overlaid.
 // X-axis = lead hour 0..47, Y-axis = MAE in field units. Lines for L1 (raw),
 // L2 (+mesonet), L3 (+decay), L4 (+diurnal=final). Reads per_layer_mae_by_lead
@@ -8541,67 +7820,6 @@ function renderStateStratifiedSection(ssDoc) {
   `;
 }
 
-// ── Layer 2 octant coverage: where did this tick's stations come from? ─
-function renderOctantPanel(wxDoc) {
-  const el = document.getElementById("layer2-octants");
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  const cov = hyp.octant_coverage || {};
-  const aggregation = hyp.aggregation || "—";
-  const wind_aggregation = (wxDoc && wxDoc.current && wxDoc.current.wind_aggregation) || "—";
-  const order = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];  // 3×3 compass grid
-  function cell(label) {
-    if (label === "C") return `<div class="oct home">Wyman<br>Cove</div>`;
-    const n = cov[label] || 0;
-    const cls = n === 0 ? "empty" : (n < 2 ? "sparse" : "ok");
-    return `<div class="oct ${cls}"><span class="lbl">${label}</span><span class="cnt">${n}</span></div>`;
-  }
-  // Fallback-mode banner: when the upstream forecast model is unavailable
-  // (Open-Meteo 429, etc.), hyperlocal takes a distance-weighted-mean branch
-  // that bypasses the octant-balanced L2 path. The octant counts are still
-  // accurate (v0.6.57+), but the rest of the L2 panel reads differently.
-  const fallbackBanner = hyp.note
-    ? `<div class="meta-line" style="color:#fbbf24;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:8px 10px;margin-bottom:10px;"><strong>⚠ Fallback mode:</strong> ${hyp.note}. L2 octant-balanced aggregation didn't run this tick — counts below are real, but bias aggregation, Kalman gain, and weighted-bias readings will be blank until the forecast model recovers.</div>`
-    : "";
-  el.innerHTML =
-    fallbackBanner +
-    `The number in each cell is how many stations reported from that compass sector this tick. ` +
-    `Color flags <strong>per-sector reliability</strong>: red = no data from that direction, amber = single station (noisy, no cross-check), green = ≥2 stations (cross-check possible). ` +
-    `Color does <em>not</em> imply weighting — the aggregator weights every non-empty sector equally regardless of count (so a 12-station Marblehead sector doesn't outvote a 2-station Salem sector). Color is just a coverage-health flag.` +
-    `<div class="octant-rose">${order.map(cell).join("")}</div>` +
-    `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong> · Outliers trimmed this tick: <strong>${hyp.outliers_trimmed ?? 0}</strong></div>`;
-}
-
-// ── Layer 3 panel: Kalman gain summary + what it does ──────────────────
-function renderLayer3Panel(wxDoc) {
-  const el = document.getElementById("layer3-panel");
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
-  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
-  const K  = (hyp.kalman_gain == null)          ? null : Number(hyp.kalman_gain);
-  const wb = (hyp.weighted_bias == null)        ? null : Number(hyp.weighted_bias);
-  const Kh = (hyp.kalman_gain_humidity == null) ? null : Number(hyp.kalman_gain_humidity);
-  const wh = (hyp.weighted_bias_humidity == null) ? null : Number(hyp.weighted_bias_humidity);
-  const appliedTempBias = (K  != null && wb != null) ? K  * wb : null;
-  const appliedHumidBias = (Kh != null && wh != null) ? Kh * wh : null;
-  const pct  = (K  != null) ? Math.round(K  * 100) : null;
-  const pctH = (Kh != null) ? Math.round(Kh * 100) : null;
-  el.innerHTML =
-    `Kalman gain throttles how aggressively the Layer-2 bias is trusted. Few stations or high station-to-station scatter → low K → forecast moves less toward the network reading. ` +
-    `Applied to temperature and humidity with separate threshold functions (temp scatter is in °F, humidity scatter is in %, so a single K function would miscalibrate one or the other).` +
-    `<div class="meta-line"><strong>Temp:</strong> ` +
-      `K <strong>${fmt(K, 3)}</strong>${pct != null ? ` (${pct}% trusted)` : ""} · ` +
-      `Layer-2 bias <strong>${sgn(wb)}${fmt(wb)}°F</strong> · ` +
-      `applied <strong>${sgn(appliedTempBias)}${fmt(appliedTempBias)}°F</strong> · ` +
-      `scatter <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations` +
-    `</div>` +
-    `<div class="meta-line"><strong>Humidity:</strong> ` +
-      `K <strong>${fmt(Kh, 3)}</strong>${pctH != null ? ` (${pctH}% trusted)` : ""} · ` +
-      `Layer-2 bias <strong>${sgn(wh)}${fmt(wh, 1)}%</strong> · ` +
-      `applied <strong>${sgn(appliedHumidBias)}${fmt(appliedHumidBias, 1)}%</strong> · ` +
-      `scatter <strong>${fmt(hyp.bias_std_humidity, 2)}%</strong> across ${hyp.stations_used_humidity ?? "?"} stations` +
-    `</div>`;
-}
-
 // Draws a prominent zero line behind the dataset curves so the sign of the
 // fits (positive bias vs negative bias) is readable at a glance.
 const zeroLinePlugin = {
@@ -8975,8 +8193,6 @@ function fmtFixed(v, digits) {
 // Wyman Cove (matches LAT, LON in weather_collector/config.py)
 const WYMAN_COVE = [42.5014, -70.8750];
 
-let _biasMap = null;
-let _biasMapLayer = null;
 
 function _offsetColor(v) {
   // Proper diverging scale: blue if negative, red if positive — NEVER through
@@ -8992,101 +8208,6 @@ function _offsetColor(v) {
   const light = Math.round(70 - 20 * mag);
   return `hsl(${hue}, ${sat}%, ${light}%)`;
 }
-
-function renderBiasMap(stationRows) {
-  const container = document.getElementById("bias-map");
-  if (!container || typeof L === "undefined") return;
-
-  // First call: build the map + legend + Wyman Cove marker. Fully locked
-  // (no pan, no zoom, no scroll) — markers + popups still work.
-  if (!_biasMap) {
-    _biasMap = L.map(container, {
-      zoomControl: false,
-      attributionControl: true,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
-      boxZoom: false,
-      keyboard: false,
-    }).setView(WYMAN_COVE, 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "© OpenStreetMap",
-    }).addTo(_biasMap);
-    L.marker(WYMAN_COVE, {
-      icon: L.divIcon({
-        className: "wyman-cove-icon",
-        html: '<div style="background:#fff;border:2px solid #111;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,0.5);"></div>',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-      }),
-    }).addTo(_biasMap).bindPopup("<strong>Wyman Cove</strong>");
-    const legend = L.control({ position: "bottomright" });
-    legend.onAdd = () => {
-      const div = L.DomUtil.create("div", "bias-legend");
-      div.innerHTML =
-        '<strong>Temp bias</strong><br>' +
-        '−3°F<span class="scale"></span>+3°F<br>' +
-        '<span style="color:#8a93a3;">cool (under-reads) → warm (over-reads)</span><br>' +
-        '<span style="color:#6e7785;">⬭ hollow ring = calibrating (need 6 readings)</span>';
-      return div;
-    };
-    legend.addTo(_biasMap);
-  }
-
-  // Clear any previous station layer and rebuild.
-  if (_biasMapLayer) _biasMapLayer.remove();
-  _biasMapLayer = L.layerGroup().addTo(_biasMap);
-
-  const plotted = [];
-  for (const r of stationRows) {
-    if (typeof r.lat !== "number" || typeof r.lng !== "number") continue;
-    let marker;
-    if (r.temp == null) {
-      // Station fetched this tick but doesn't have a Kalman-tracked offset yet
-      // (needs MIN_READINGS=6 = ~1h of ticks). Render as a hollow gray ring so
-      // the geographic footprint is visible even when calibration is pending.
-      const popup =
-        `<strong>${r.station}</strong><br>` +
-        (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
-        `<span style="color:#8a93a3;">Calibrating — needs more readings</span>`;
-      marker = L.circleMarker([r.lat, r.lng], {
-        radius: 5,
-        fillColor: "transparent",
-        color: "#6e7785",
-        weight: 1.5,
-        fillOpacity: 0,
-        dashArray: "2,2",
-      }).bindPopup(popup);
-    } else {
-      const color = _offsetColor(r.temp);
-      const sign = r.temp >= 0 ? "+" : "";
-      const popup =
-        `<strong>${r.station}</strong><br>` +
-        (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
-        `Temp bias: <strong style="color:${color};">${sign}${r.temp.toFixed(2)}°F</strong>` +
-        (r.temp_day != null ? `<br>Day: ${r.temp_day >= 0 ? "+" : ""}${r.temp_day.toFixed(2)}°F` : "") +
-        (r.temp_night != null ? `<br>Night: ${r.temp_night >= 0 ? "+" : ""}${r.temp_night.toFixed(2)}°F` : "");
-      marker = L.circleMarker([r.lat, r.lng], {
-        radius: 7,
-        fillColor: color,
-        color: "#0f1115",
-        weight: 1.5,
-        fillOpacity: 0.9,
-      }).bindPopup(popup);
-    }
-    marker.addTo(_biasMapLayer);
-    plotted.push([r.lat, r.lng]);
-  }
-
-  // Fit to include all plotted stations + Wyman Cove.
-  if (plotted.length) {
-    plotted.push(WYMAN_COVE);
-    _biasMap.fitBounds(plotted, { padding: [30, 30], maxZoom: 14 });
-  }
-}
-
 // ── Section 3 (cont.): station bias offsets table ────────────────────────────
 
 const BIAS_COLS = [
@@ -9099,254 +8220,16 @@ const BIAS_COLS = [
 // Default sort: by distance ascending (nearest first).
 // sortDir: +1 = ascending, -1 = descending. For bias columns we sort by |value|;
 // for distance we sort by raw value. _biasSortMode tells which mode applies.
-let _biasState = { rows: [], sortKey: "distance_mi", sortDir: +1 };
 
 function _offsetCellClass(v) {
   if (v == null || Number.isNaN(v)) return "";
   if (Math.abs(v) < 0.05) return "zero";
   return v > 0 ? "warm" : "cool";
 }
-
-function _renderBiasTable() {
-  const wrap = document.getElementById("bias-table-wrap");
-  const { rows, sortKey, sortDir } = _biasState;
-  if (!rows.length) {
-    wrap.innerHTML = "";
-    return;
-  }
-  // distance and station sort by raw value; bias columns sort by |value|.
-  const isRawSort = (sortKey === "distance_mi" || sortKey === "station");
-  const sorted = [...rows].sort((a, b) => {
-    const av = a[sortKey], bv = b[sortKey];
-    if (av == null && bv == null) return 0;
-    if (av == null) return 1;   // nulls sink
-    if (bv == null) return -1;
-    if (isRawSort) {
-      if (typeof av === "string") return sortDir * av.localeCompare(bv);
-      return sortDir * (av - bv);
-    }
-    return sortDir * (Math.abs(bv) - Math.abs(av));
-  });
-  const head = `<tr>
-    <th data-col="station"     class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
-    <th data-col="distance_mi" class="${sortKey === 'distance_mi' ? 'sorted' : ''}">Dist (mi)</th>
-    ${BIAS_COLS.map(c => `<th data-col="${c.key}" class="${sortKey === c.key ? 'sorted' : ''}">${c.label}${c.unit ? ' (' + c.unit + ')' : ''}</th>`).join('')}
-  </tr>`;
-  const body = sorted.map(r => `<tr>
-    <td class="station">${r.station}</td>
-    <td>${r.distance_mi == null ? "—" : r.distance_mi.toFixed(2)}</td>
-    ${BIAS_COLS.map(c => {
-      const v = r[c.key];
-      const cls = _offsetCellClass(v);
-      const txt = v == null ? "—" : `${v >= 0 ? '+' : ''}${v.toFixed(c.digits)}`;
-      return `<td class="offset-cell ${cls}">${txt}</td>`;
-    }).join('')}
-  </tr>`).join('');
-  wrap.innerHTML = `<table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
-  wrap.querySelectorAll("th[data-col]").forEach(th => {
-    th.addEventListener("click", () => {
-      const col = th.dataset.col;
-      if (_biasState.sortKey === col) {
-        _biasState.sortDir *= -1;
-      } else {
-        _biasState.sortKey = col;
-        // Default direction: ascending for distance/station, desc-by-magnitude for bias.
-        _biasState.sortDir = (col === "distance_mi" || col === "station") ? +1 : -1;
-      }
-      _renderBiasTable();
-    });
-  });
-}
-
-function renderBiasSection(wxDoc) {
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  const offsets = hyp.station_offsets || {};
-  const stats = document.getElementById("stats-bias");
-
-  // Compose per-station rows by unioning every station mentioned across any
-  // offset type PLUS every station fetched this tick. Stations fetched but not
-  // yet calibrated (need MIN_READINGS=6 in Kalman tracker) will appear with
-  // null offset values — handled downstream by the map (hollow ring) and table
-  // (em-dash + sinks to bottom under nulls-last sort).
-  const stationIds = new Set();
-  for (const k of Object.keys(offsets)) {
-    const o = offsets[k];
-    if (o && typeof o === "object") Object.keys(o).forEach(s => stationIds.add(s));
-  }
-  for (const s of (wxDoc.wu_stations && wxDoc.wu_stations.stations) || []) {
-    if (s && s.station_id != null && s.distance_mi != null && s.distance_mi <= 2.5) {
-      stationIds.add(String(s.station_id));
-    }
-  }
-  for (const s of (wxDoc.tempest && wxDoc.tempest.stations) || []) {
-    if (s && s.station_id != null && s.distance_mi != null && s.distance_mi <= 2.5) {
-      stationIds.add(String(s.station_id));
-    }
-  }
-  if (!stationIds.size) {
-    showStatus("status-bias", "No stations yet — first collector tick after deploy.");
-    stats.hidden = true;
-    return;
-  }
-
-  // Build station_id → {distance_mi, lat, lng} lookups. WU stations are in
-  // wxDoc.wu_stations.stations (string IDs like "KMAMARBL4"); Tempest stations
-  // are in wxDoc.tempest.stations (numeric station_id). station_offsets mixes
-  // both, so we have to consult both sources.
-  const metaByStation = {};
-  const addMeta = (id, s) => {
-    metaByStation[id] = {
-      distance_mi: typeof s.distance_mi === "number" ? s.distance_mi : null,
-      lat: typeof s.latitude === "number" ? s.latitude : null,
-      lng: typeof s.longitude === "number" ? s.longitude : null,
-    };
-  };
-  for (const s of (wxDoc.wu_stations && wxDoc.wu_stations.stations) || []) {
-    if (s && s.station_id != null) addMeta(s.station_id, s);
-  }
-  for (const s of (wxDoc.tempest && wxDoc.tempest.stations) || []) {
-    if (s && s.station_id != null) {
-      addMeta(s.station_id, s);
-      addMeta(String(s.station_id), s);  // some keys come through as strings
-    }
-  }
-
-  const rows = [...stationIds].map(s => {
-    const meta = metaByStation[s] || {};
-    const r = {
-      station: s,
-      distance_mi: meta.distance_mi ?? null,
-      lat: meta.lat ?? null,
-      lng: meta.lng ?? null,
-    };
-    for (const c of BIAS_COLS) {
-      const v = offsets[c.key] && offsets[c.key][s];
-      r[c.key] = (typeof v === "number") ? v : null;
-    }
-    return r;
-  });
-  _biasState.rows = rows;
-  renderBiasMap(rows);
-  _renderBiasTable();
-
-  // Header stats panel
-  const fmt = (v, d=2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
-  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
-  const parts = [
-    `<span><strong>${hyp.stations_used ?? "?"}</strong> / ${hyp.stations_total ?? "?"} stations used · ${hyp.confidence ?? "—"} confidence</span>`,
-    `<span>weighted temp bias <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong></span>`,
-    hyp.weighted_bias_humidity != null ? `<span>weighted humidity bias <strong>${sgn(hyp.weighted_bias_humidity)}${fmt(hyp.weighted_bias_humidity, 1)}%</strong></span>` : "",
-    hyp.bias_wind_speed != null ? `<span>wind bias <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong></span>` : "",
-    hyp.bias_wind_gusts != null ? `<span>gust bias <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong></span>` : "",
-    hyp.kalman_gain != null ? `<span>Kalman gain (T) <strong>${fmt(hyp.kalman_gain, 3)}</strong></span>` : "",
-    hyp.kalman_gain_humidity != null ? `<span>Kalman gain (RH) <strong>${fmt(hyp.kalman_gain_humidity, 3)}</strong></span>` : "",
-    hyp.bias_std != null ? `<span>bias σ (T) <strong>${fmt(hyp.bias_std, 2)}°F</strong></span>` : "",
-    hyp.bias_std_humidity != null ? `<span>bias σ (RH) <strong>${fmt(hyp.bias_std_humidity, 2)}%</strong></span>` : "",
-    hyp.kbvy_temp_f != null ? `<span>KBVY <strong>${fmt(hyp.kbvy_temp_f, 1)}°F</strong> · local ${sgn(hyp.kbvy_local_delta)}${fmt(hyp.kbvy_local_delta, 1)}°F</span>` : "",
-  ];
-  stats.innerHTML = parts.filter(Boolean).join("");
-  stats.hidden = false;
-}
-
 // ── Per-station uptime table ────────────────────────────────────────────────
 // Reads hyperlocal.station_uptime, renders a sortable table with
 // uptime_pct / n_success / n_attempts per station. Color tier cues highlight
 // dead stations (0%) and degraded ones (<80%). Sort defaults to worst-first.
-const _uptimeState = { rows: [], sortKey: "uptime_pct", sortDir: +1 };
-
-function _uptimeTier(pct, n_attempts) {
-  if (pct == null) return "";
-  if (n_attempts === 0) return "";
-  if (pct === 0) return "dead";
-  if (pct < 80) return "bad";
-  if (pct < 95) return "warn";
-  return "good";
-}
-
-function _renderUptimeTable() {
-  const wrap = document.getElementById("uptime-table-wrap");
-  const { rows, sortKey, sortDir } = _uptimeState;
-  if (!rows.length) { wrap.innerHTML = ""; return; }
-  const sorted = [...rows].sort((a, b) => {
-    const av = a[sortKey], bv = b[sortKey];
-    if (av == null && bv == null) return 0;
-    if (av == null) return 1;
-    if (bv == null) return -1;
-    if (sortKey === "station") return sortDir * String(av).localeCompare(String(bv));
-    return sortDir * (av - bv);
-  });
-  const head = `<tr>
-    <th data-col="station"     class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
-    <th data-col="uptime_pct"  class="${sortKey === 'uptime_pct' ? 'sorted' : ''}">Uptime %</th>
-    <th data-col="n_success"   class="${sortKey === 'n_success' ? 'sorted' : ''}">Successes</th>
-    <th data-col="n_attempts"  class="${sortKey === 'n_attempts' ? 'sorted' : ''}">Attempts</th>
-  </tr>`;
-  const body = sorted.map(r => {
-    const tier = _uptimeTier(r.uptime_pct, r.n_attempts);
-    const pctTxt = r.uptime_pct == null ? "—" : `${r.uptime_pct.toFixed(1)}%`;
-    return `<tr>
-      <td class="station">${r.station}</td>
-      <td class="uptime-cell ${tier}">${pctTxt}</td>
-      <td>${r.n_success ?? "—"}</td>
-      <td>${r.n_attempts ?? "—"}</td>
-    </tr>`;
-  }).join('');
-  wrap.innerHTML = `<table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
-  wrap.querySelectorAll("th[data-col]").forEach(th => {
-    th.addEventListener("click", () => {
-      const col = th.dataset.col;
-      if (_uptimeState.sortKey === col) {
-        _uptimeState.sortDir *= -1;
-      } else {
-        _uptimeState.sortKey = col;
-        // Default direction: stations alphabetical, all numerics worst-first (ascending pct, descending counts)
-        _uptimeState.sortDir = (col === "station" || col === "uptime_pct") ? +1 : -1;
-      }
-      _renderUptimeTable();
-    });
-  });
-}
-
-function renderUptimeSection(wxDoc) {
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
-  const uptime = hyp.station_uptime || {};
-  const stats = document.getElementById("stats-uptime");
-  const stations = Object.keys(uptime);
-  if (!stations.length) {
-    showStatus("status-uptime", "No station_uptime data yet — appears once the uptime tracker has logged at least one tick.");
-    stats.hidden = true;
-    return;
-  }
-  const rows = stations.map(s => {
-    const u = uptime[s] || {};
-    return {
-      station: s,
-      uptime_pct: typeof u.uptime_pct === "number" ? u.uptime_pct : null,
-      n_success: typeof u.n_success === "number" ? u.n_success : null,
-      n_attempts: typeof u.n_attempts === "number" ? u.n_attempts : null,
-    };
-  });
-  _uptimeState.rows = rows;
-  _renderUptimeTable();
-
-  // Summary stats — dead-count, mean uptime, attempt window
-  const validPcts = rows.map(r => r.uptime_pct).filter(v => v != null);
-  const mean = validPcts.length ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null;
-  const dead = rows.filter(r => r.uptime_pct === 0).length;
-  const degraded = rows.filter(r => r.uptime_pct != null && r.uptime_pct > 0 && r.uptime_pct < 80).length;
-  const healthy = rows.filter(r => r.uptime_pct != null && r.uptime_pct >= 95).length;
-  const maxAttempts = Math.max(...rows.map(r => r.n_attempts ?? 0));
-  const parts = [
-    `<span><strong>${rows.length}</strong> stations · window <strong>${maxAttempts}</strong> ticks</span>`,
-    mean != null ? `<span>mean uptime <strong>${mean.toFixed(1)}%</strong></span>` : "",
-    `<span><strong>${healthy}</strong> healthy (≥95%)</span>`,
-    degraded ? `<span><strong>${degraded}</strong> degraded (&lt;80%)</span>` : "",
-    dead ? `<span><strong>${dead}</strong> dead (0%)</span>` : "",
-  ];
-  stats.innerHTML = parts.filter(Boolean).join("");
-  stats.hidden = false;
-}
-
 async function load() {
   let corrDoc, wxDoc, histDoc;
   try {
@@ -9510,56 +8393,13 @@ async function load() {
   // ── L1 router live state (v0.6.432) ──
   if (wxDoc && wxDoc.hourly) renderL1RouterLive(wxDoc);
 
-  // ── Top-of-page "right now" headline (plain-English) ──
-  if (wxDoc) renderHeadlineBox(wxDoc);
 
-  // ── Applicability map (Section D): global view of what fires when ──
-  if (wxDoc) renderApplicabilityMap(wxDoc);
 
   // ── Gate-firing frequency: what's actually contributing (7-day) ──
   renderGateFiring(gateFiringDoc);
 
-  // ── Layer 2 (Mesonet): octant rose, bias estimate, Kalman, station detail ──
-  if (wxDoc) {
-    renderOctantPanel(wxDoc);     // 2a
-    renderLayer2Panel(wxDoc);     // 2b
-    renderLayer3Panel(wxDoc);     // 2c (Kalman gain, function name kept for stability)
-    renderL2LeadDecay(wxDoc);     // 2e
-    renderBiasSection(wxDoc);     // per-station detail accordion
-    renderUptimeSection(wxDoc);   // per-station uptime accordion
-    const biasDetails = document.getElementById("bias-details");
-    if (biasDetails) {
-      biasDetails.addEventListener("toggle", () => {
-        if (biasDetails.open && _biasMap) {
-          setTimeout(() => _biasMap.invalidateSize(), 50);
-        }
-      });
-    }
-  }
-  // 2e. Post-mesonet forecast grid — the K-scaled output that feeds Layer 3.
-  if (wxDoc && wxDoc.hourly) {
-    let diurnalCurrent = null;
-    if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
-      diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
-        (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
-    }
-    const L2_COLOR = "rgba(170,180,200,1)";
-    const grid = document.getElementById("grid-layer2");
-    for (const f of FIELDS) {
-      const s = _drillComputeSeries(f, wxDoc, corrDoc, diurnalCurrent);
-      const digits = (f.key === "pp" || f.key === "cc" || f.key === "cl" || f.key === "cm" || f.key === "ch" || f.key === "sr" || f.key === "wd") ? 0 : ((f.key === "pr" || f.key === "pa") ? 3 : 1);
-      const now = s.l2.length ? fmtFixed(s.l2[0], digits) : "—";
-      const v24 = s.l2.length > 24 ? fmtFixed(s.l2[24], digits) : "—";
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
-        `<span class="summary">post-L2 now ${now}${f.unit} · +24h ${v24}${f.unit}</span></h3>` +
-        `<div class="chart-wrap"><canvas></canvas></div>`;
-      grid.appendChild(card);
-      buildLayeredChart(card.querySelector("canvas"), f, s.raw, s.l2, L2_COLOR);
-    }
-  }
+  // How the forecast takes the Mesonet: confidence K and the fade with lead time
+  if (wxDoc) { renderLayer3Panel(wxDoc); renderL2LeadDecay(wxDoc); }
 
   // L3 whitelist — same source the 3c badges read from. Used to tag each
   // chart in 3a/3b/3c so the field-level applied-vs-diagnostic status is
@@ -9889,7 +8729,7 @@ function initCollapsibleSections() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stored)); }
     catch (e) {}
   };
-  document.querySelectorAll("h2.section[id]").forEach(h2 => {
+  document.querySelectorAll("h2.section[id]:not(.fixed)").forEach(h2 => {
     const id = h2.id;
     // Collect siblings until next h2.section into a wrapper div
     const body = [];
@@ -9939,24 +8779,6 @@ function initResearchAccordions() {
 }
 initResearchAccordions();
 
-// Persist open/closed state of Layer 2's bias-accordion details
-// (#bias-details = per-station mesonet detail, #uptime-details = per-station
-// uptime). Same pattern as initResearchAccordions but keyed separately so the
-// stored states don't collide.
-function initBiasAccordions() {
-  const KEY = "forecastPipelineBiasAccordionsOpen";
-  let stored;
-  try { stored = JSON.parse(localStorage.getItem(KEY) || "{}"); }
-  catch (e) { stored = {}; }
-  document.querySelectorAll("details.bias-accordion[id]").forEach(d => {
-    if (stored[d.id]) d.open = true;
-    d.addEventListener("toggle", () => {
-      stored[d.id] = d.open;
-      try { localStorage.setItem(KEY, JSON.stringify(stored)); } catch (e) {}
-    });
-  });
-}
-initBiasAccordions();
 
 // TOC nav: clicking a section link opens every <details> inside that section
 // (and any <details> ancestors of the target), so the section is fully

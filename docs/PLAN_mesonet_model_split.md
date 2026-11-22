@@ -2,6 +2,18 @@
 
 Rewritten 2026-11-22 after a conversation with Joe that replaced the first draft. This is the working plan. A fresh session should be able to start from it without any other context. **Verified** = checked in code or data on 11-22. Anything not marked is a step to do, not a fact.
 
+## 0. DECISIONS (Joe, 11-22 and restated 11-22 PM). These override anything below that conflicts.
+
+1. **Two pages only.** `/mesonet` and `/model`. No notebook page, no `corrections_debug.html` (delete it; no redirect). Landing `/` and the move of the app to `/app` come last (Step 6).
+2. **`/mesonet` holds everything about the Mesonet, and nothing about it lives anywhere else:** current conditions, map, stations, offsets, coverage, uptime and station feed health, how the stations are combined, **all of L2**, and how good the Mesonet is.
+3. **L2 is the Mesonet** (the observation layer). It is **not a forecast layer**. The model page does not list or describe L2; it says once that the forecast starts from the Mesonet's current conditions, with a link. The old "L2 gain" box and columns are dropped.
+4. **`/model` holds the forecast only:** the question, scorecard, how it works, trend, then the engine detail (selector, L3, L4, specialists, gates, applicability map, archive). No Mesonet content.
+5. **Scoring split:** `/mesonet` scores the Mesonet (agreement, bias vs URMA/KBVY/buoy, qualify verdict, coverage, station health, wind and own-station tests, Cove adjustment, K, windows). `/model` scores the forecasts (scorecard, trend, detailed scoreboard, selector, shadows and ship ledger, sentries, dated reads, event scoring, truth table).
+6. **Rule:** a thing lives on the page of the module that owns it; the other page links, never copies. Crossover = links plus the cross-check columns on `/mesonet`.
+7. Authority: Joe's words in conversation beat this document. If they differ, change the document.
+
+(Sections 4-5 below that say "Notebook underneath on the same URL" or "L2 labelled as the link" are superseded by 1-3.)
+
 ## 1. The goal, in one paragraph
 
 This project is mostly for Joe. The question he wants answered is: *is my forecast for the Cove better than what a person reads on weather.gov, and is it improving?* Answering that needs one fixed, honest truth. Today the truth is partly the model (see §3), so we do not know whether we are winning: on temperature we lead weather.gov by 16% against URMA but trail by 1.5% against our stations. The pages follow from that. The **Mesonet** turns about 27 backyard stations into one honest "now at the Cove" value, says how it got there and how good that value is, and becomes the truth. The **Model** page opens with a short front section (the question, the method, the score, the trend) above the **Notebook** (today's debug page). Both are built for Joe first and made clear enough to show a curious visitor.

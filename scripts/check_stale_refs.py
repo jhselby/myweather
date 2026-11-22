@@ -2,7 +2,7 @@
 
 Codifies the transition-invalidation-sweep discipline that failed twice
 on 2026-07-16 (v0.6.352c missed 10+ refs Joe had to catch). Scans
-corrections_debug.html for the specific patterns that go stale as the
+model.html for the specific patterns that go stale as the
 week rolls forward, and reports any that are more than STALE_DAYS old.
 
 Deliberately narrow — only flags predictive-tense refs (day-counters,

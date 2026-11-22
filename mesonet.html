@@ -7,23 +7,109 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
+  /* SHARED SHELL START: identical in model.html and mesonet.html (tests/test_shared_shell.py) */
   :root {
-    --bg: #0f1115; --panel: #171b22; --line: #262c36; --text: #e6e9ef; --muted: #8a93a3;
-    --accent: #4aa3ff; --good: #5cc88a; --warn: #e0b050; --bad: #e07070;
+    --bg: #0f1115;
+    --panel: #171b22;
+    --ink: #e7ecf3;
+    --text: #e7ecf3;
+    --muted: #8a93a3;
+    --accent: #4aa3ff;
+    --warn: #ff9f4a;
+    --good: #5cc88a;
+    --bad: #e07070;
+    --line: #262c36;
+    --warm: rgba(239,100,80,0.9);
+    --cool: rgba(80,160,239,0.9);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 20px 24px 48px; }
+  html { scroll-padding-top: 72px; }
+  body {
+    margin: 0;
+    padding: 18px;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 4px;
+    padding-bottom: 0;
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .meta strong { color: var(--ink); font-weight: 500; }
+  .meta a { color: var(--accent); }
+  h2.section {
+    scroll-margin-top: 72px;
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-transform: none;
+    color: var(--ink);
+    margin: 34px -10px 14px;
+    padding: 14px 16px;
+    background: linear-gradient(90deg, rgba(74,163,255,0.10), rgba(74,163,255,0.00) 70%);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+  }
+  h3.subsection {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 18px 2px 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #242833;
+  }
+  h3.subsection:first-child { border-top: none; padding-top: 0; }
+  .fp-panel { border: 1px solid #253247; background: #0d141e; border-radius: 10px; padding: 12px 16px; }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,21,0.96);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid #242833;
+    padding: 8px 12px;
+    margin: 0 -12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  nav.toc a {
+    color: var(--ink);
+    background: #1a1f2a;
+    border: 1px solid #242833;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
+  nav.toc a.here { color: #fff; background: #1d3250; border-color: #3b6ea8; }
+  nav.toc .sep { width: 1px; background: #242833; margin: 2px 4px; }
+  @media (max-width: 640px) {
+    nav.toc {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    nav.toc::-webkit-scrollbar { display: none; }
+  }
+  /* SHARED SHELL END */
+  main { margin: 0; }
   .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
   .two > div > h2:first-child { margin-top: 0; }
   @media (max-width: 1000px) { .two { grid-template-columns: minmax(0, 1fr); } }
   table.dense th, table.dense td { padding: 5px 7px; font-size: 0.9em; }
   tr.off td { color: var(--muted); }
-  h1 { font-size: 1.6em; margin: 0 0 2px; }
-  h2 { font-size: 1.1em; margin: 28px 0 8px; padding-left: 10px; border-left: 3px solid var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 16px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .muted { color: var(--muted); }
   .small { font-size: 0.85em; }
   a { color: var(--accent); }
@@ -48,18 +134,68 @@
   .flag { background: #2a2414; border: 1px solid var(--warn); color: #f0d9a0; border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
   .verdict td:first-child { font-weight: 600; }
   ul { padding-left: 20px; margin: 6px 0; }
+  .meta-line { color: var(--muted); font-size: 0.88em; margin-top: 8px; }
+  .meta-line strong { color: var(--text); font-weight: 600; }
+  .meta-line code, .fp-panel code { background: #1d232d; padding: 0 4px; border-radius: 3px; font-size: 0.92em; }
+  .octant-rose {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    grid-template-rows: repeat(3, 36px);
+    gap: 4px;
+    margin: 10px 0 4px;
+    justify-content: start;
+  }
+  .octant-rose .oct {
+    border: 1px solid #242833;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
+    color: var(--text);
+    background: #131722;
+  }
+  .octant-rose .oct .lbl { color: var(--muted); font-size: 9.5px; letter-spacing: 0.04em; }
+  .octant-rose .oct .cnt { font-weight: 600; }
+  .octant-rose .oct.empty { background: #2a1818; border-color: #5a2828; }
+  .octant-rose .oct.sparse { background: #2a2418; border-color: #5a4a28; }
+  .octant-rose .oct.ok { background: #16241a; border-color: #2a5a32; }
+  .octant-rose .home {
+    background: transparent;
+    border: 1px dashed #3a3f48;
+    color: var(--muted);
+    font-size: 9.5px;
+  }
   footer { margin-top: 32px; color: var(--muted); font-size: 0.85em; }
 </style>
 </head>
 <body>
+<header>
+  <h1>What is the weather at Wyman Cove right now?</h1>
+  <span class="meta" id="asof">Loading…</span>
+</header>
+
+<nav class="toc">
+  <a href="/" style="color:#8a93a3;">← App</a>
+  <a href="mesonet.html" class="here">Mesonet</a>
+  <a href="model.html">Model</a>
+  <span class="sep"></span>
+  <a href="#sec-now">Now</a>
+  <a href="#sec-map">Map</a>
+  <a href="#sec-coverage">Coverage</a>
+  <a href="#sec-stations">Stations</a>
+  <a href="#sec-built">How it's built</a>
+  <a href="#sec-good">How good</a>
+  <a href="#sec-testing">Testing</a>
+</nav>
+
 <main>
-  <h1>Wyman Cove Mesonet</h1>
-  <p class="sub" id="asof">Loading…</p>
   <div id="flags"></div>
 
   <div class="two"><div>
-  <h2>Now</h2>
-  <div class="card scroll">
+  <h2 class="section" id="sec-now">Now</h2>
+  <div class="fp-panel scroll">
     <table>
       <thead><tr><th>Field</th><th>Mesonet</th><th>Cross-checks <span class="muted">(shown beside it, never mixed in)</span></th></tr></thead>
       <tbody id="now"><tr><td colspan="3" class="muted">loading…</td></tr></tbody>
@@ -68,27 +204,36 @@
   </div>
 
   </div><div>
-  <h2>Map</h2>
+  <h2 class="section" id="sec-map">Map</h2>
   <div id="map"></div>
   <p class="small muted">Circles: Tempest stations (used), coloured by correction: red reads warm and is corrected down, blue reads cold and is corrected up. Tan squares: Weather Underground stations (archived, not used). Teal square at the white dot: our own station. Tap any for details.</p>
   </div></div>
 
+  <h2 class="section" id="sec-coverage">Coverage by direction</h2>
   <div class="two"><div>
-  <h2>Stations minus model, now</h2>
-  <div class="card scroll"><div id="vsmodel" class="muted">loading…</div></div>
+  <div class="fp-panel scroll"><div id="octants" class="muted">loading…</div></div>
   </div><div>
-  <h2>Directions</h2>
-  <div class="card scroll"><div id="octants" class="muted">loading…</div></div>
+  <div class="fp-panel"><div id="octant-rose" class="muted">loading…</div></div>
   </div></div>
 
-  <h2>Tempest stations</h2>
-  <div class="card scroll"><div id="stations" class="muted">loading…</div></div>
+  <h2 class="section" id="sec-stations">Stations</h2>
+  <h3 class="subsection">Tempest (used in the Mesonet)</h3>
+  <div class="fp-panel scroll"><div id="stations" class="muted">loading…</div></div>
+  <h3 class="subsection">Weather Underground (archived, not used in the Mesonet)</h3>
+  <div class="fp-panel scroll"><div id="wu" class="muted">loading…</div></div>
+  <h3 class="subsection">Feed health</h3>
+  <div class="fp-panel">
+    <ul>
+      <li>Tempest is the only live station feed. It keeps its last good payload on a failed fetch, marks a run "degraded" under 75% valid stations, and the daily digest carries a Tempest line.</li>
+      <li>On a failed tick the forecast's start gets no last-good station input.</li>
+      <li>Tempest is a single point of failure: it depends on the WeatherFlow sign-in (anonymous access closed 10-15, v0.7.67). No backup source: CWOP was checked on 11-04 and has about one station near the Cove.</li>
+      <li>Per-station uptime is the last column of the Tempest table.</li>
+    </ul>
+  </div>
 
-  <h2>Weather Underground stations <span class="muted small">(archived, not used in the Mesonet)</span></h2>
-  <div class="card scroll"><div id="wu" class="muted">loading…</div></div>
-
-  <h2>How we got this</h2>
-  <div class="card">
+  <h2 class="section" id="sec-built">How it's built</h2>
+  <h3 class="subsection">From station to Mesonet</h3>
+  <div class="fp-panel">
     <ol style="padding-left:20px;margin:0;">
       <li><b>Correct each station.</b> Every station is compared with the other stations over the past weeks, separately by day and by night. A station that runs warm is corrected down by that amount. No forecast is involved.</li>
       <li><b>Drop outliers.</b> Within each compass direction from the Cove, a reading far from its neighbours is set aside.</li>
@@ -97,15 +242,29 @@
     </ol>
     <div id="how" class="small" style="margin-top:12px;"></div>
   </div>
+  <h3 class="subsection">How each field is combined (L2)</h3>
+  <div class="fp-panel">
+    <p style="margin:0 0 6px;">The forecast starts from the Mesonet's current reading. Each field is combined in its own way, suited to how noisy that field is. How much of the reading the forecast keeps at each lead time is on the <a href="model.html#sec-mesonet-use">Model page</a>.</p>
+    <div class="meta-line"><strong>Temperature, humidity, pressure (additive bias):</strong> each station's offset (rolling 48 h) → per direction, a <code>1/distance² × exp(−|elevation difference|/30)</code> weighted (station − model) gap → the plain mean across directions that have stations. Temperature and humidity are then scaled by a confidence K (<a href="model.html#sec-mesonet-use">Model page</a>); pressure applies in full.</div>
+    <div class="meta-line"><strong>Wind and gusts (direct selection):</strong> no per-station calibration and no additive bias. Per direction, the maximum gust; then the median across directions; blended linearly into the next 24 h (100% now → 0% at 24 h). <strong>Airport floor:</strong> if KBOS and KBVY both exceed 1.4× the direction median, their median is used. Direction is rejected if it is more than 60° off the airport, buoy and Tempest consensus. Gust is never below wind.</div>
+    <div class="meta-line"><strong>Cloud cover (Kalman METAR blend):</strong> KBOS and KBVY sky reports (BKN/SCT/FEW/OVC → percent, low/mid/high) blended against HRRR's current hour. K = 0.90 if the airports agree within 20 points, 0.70 at 20–40, 0.50 above 40, 0.35 with one source.</div>
+  </div>
+  <h3 class="subsection">Network bias estimate (full, before the confidence K)</h3>
+  <div class="fp-panel"><div id="biaspanel" class="muted">loading…</div></div>
 
-  <h2>How good is it</h2>
-  <div class="card scroll">
+  <h2 class="section" id="sec-good">How good is it</h2>
+  <div class="fp-panel scroll">
     <div id="val" class="muted">loading…</div>
   </div>
 
-  <footer>
-    <a href="./">Forecast app</a> · <a href="model.html">Model</a>
-  </footer>
+  <h2 class="section" id="sec-testing">Being tested next</h2>
+  <div class="fp-panel">
+    <ul>
+      <li><b>Nov 29: Cove adjustment.</b> A correction by hour of day for the Cove's own pattern (warmer at night, cooler at midday than the Marblehead average), measured against Neptune Rd and now Driftwood Rd, both on the Cove side of the Cliffs. Shadow only. If it holds with more weeks of data, temperature can be graded on the Mesonet instead of URMA.</li>
+      <li><b>Dec 2: own yard station.</b> KMAMARBL124 (5-minute readings since Nov 18), compared with the Mesonet, plus a test of whether the Weather Underground stations improve wind.</li>
+      <li><b>Always:</b> the held-out agreement, bias against URMA and coverage numbers above are re-measured as weeks are added. Autumn only so far.</li>
+    </ul>
+  </div>
 </main>
 
 <script>
@@ -133,16 +292,6 @@
              h: o.humidity || {}, p: o.pressure || {} };
   }
 
-  function vsModel(d) {
-    const h = d.hyperlocal || {}, c = d.current || {};
-    const r = (f, st, mo, dd, u) => `<tr><td>${f}</td><td class="num">${fx(st, dd)}${u}</td><td class="num">${fx(mo, dd)}${u}</td><td class="num"><b>${st == null || mo == null ? "—" : sg(st - mo, dd)}</b>${u}</td></tr>`;
-    $("vsmodel").classList.remove("muted");
-    $("vsmodel").innerHTML = `<table class="dense"><thead><tr><th>Field</th><th>Stations</th><th>Model (HRRR)</th><th>Stations − model</th></tr></thead><tbody>` +
-      r("Temperature", h.station_temp, h.model_temp, 1, "°") + r("Humidity", h.station_humidity, h.model_humidity, 1, "%") +
-      r("Pressure", h.corrected_pressure_in, h.model_pressure_in, 2, "") + r("Wind", c.wind_speed_stations, c.model_wind_speed, 1, "") +
-      r("Gusts", c.wind_gusts_stations, c.model_wind_gusts, 1, "") + `</tbody></table>` +
-      `<p class="small muted" style="margin:8px 0 0;">Spread between directions ±${fx(h.bias_std, 1)}°F. This gap is what the forecast's station layer (L2) uses; how much of it the forecast takes is on the <a href="model.html#sec-layer2">model notebook</a>.</p>`;
-  }
 
   function octants(d) {
     const h = d.hyperlocal || {}, O = offsetsNow(h), by = {};
@@ -155,7 +304,7 @@
       `<td class="small muted">${v.length === 0 ? "no station" : v.length < 3 ? "too few to drop an outlier" : ""}</td></tr>`; }).join("");
     $("octants").classList.remove("muted");
     $("octants").innerHTML = `<table class="dense"><thead><tr><th>Direction</th><th>Stations</th><th>Corrected temp</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
-      `<p class="small muted" style="margin:8px 0 0;">Each direction with a station counts equally in the Mesonet, however far away its stations are.</p>`;
+      `<p class="small muted" style="margin:8px 0 0;">Each direction with a station counts equally in the Mesonet, however far away its stations are. Spread between directions ±${fx(h.bias_std, 1)}°F.</p>`;
   }
 
   function stations(d) {
@@ -310,12 +459,64 @@
       `It is a test only, and needs more weeks before it is used.</p>`;
   }
 
+
+  // ── ported from the old L2 section (model page) ──
+  function renderOctantPanel(wxDoc) {
+    const el = document.getElementById("octant-rose");
+    const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+    const cov = hyp.octant_coverage || {};
+    const aggregation = hyp.aggregation || "—";
+    const wind_aggregation = (wxDoc && wxDoc.current && wxDoc.current.wind_aggregation) || "—";
+    const order = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];  // 3×3 compass grid
+    function cell(label) {
+      if (label === "C") return `<div class="oct home">Wyman<br>Cove</div>`;
+      const n = cov[label] || 0;
+      const cls = n === 0 ? "empty" : (n < 2 ? "sparse" : "ok");
+      return `<div class="oct ${cls}"><span class="lbl">${label}</span><span class="cnt">${n}</span></div>`;
+    }
+    // Fallback-mode banner: when the upstream forecast model is unavailable
+    // (Open-Meteo 429, etc.), hyperlocal takes a distance-weighted-mean branch
+    // that bypasses the octant-balanced L2 path. The octant counts are still
+    // accurate (v0.6.57+), but the rest of the L2 panel reads differently.
+    const fallbackBanner = hyp.note
+      ? `<div class="meta-line" style="color:#fbbf24;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:8px 10px;margin-bottom:10px;"><strong>⚠ Fallback mode:</strong> ${hyp.note}. L2 octant-balanced aggregation didn't run this tick — counts below are real, but bias aggregation, Kalman gain, and weighted-bias readings will be blank until the forecast model recovers.</div>`
+      : "";
+    el.classList.remove("muted"); el.innerHTML =
+      fallbackBanner +
+      `The number in each cell is how many stations reported from that compass sector this tick. ` +
+      `Color flags <strong>per-sector reliability</strong>: red = no data from that direction, amber = single station (noisy, no cross-check), green = ≥2 stations (cross-check possible). ` +
+      `Color does <em>not</em> imply weighting — the aggregator weights every non-empty sector equally regardless of count (so a 12-station Marblehead sector doesn't outvote a 2-station Salem sector). Color is just a coverage-health flag.` +
+      `<div class="octant-rose">${order.map(cell).join("")}</div>` +
+      `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong> · Outliers trimmed this tick: <strong>${hyp.outliers_trimmed ?? 0}</strong></div>`;
+  }
+  function renderLayer2Panel(wxDoc) {
+    const el = document.getElementById("biaspanel");
+    const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+    // Keep the static blurb's roster count in sync with live data so it doesn't
+    // drift after future culls/adds.
+    if (!el) return;   // 2b panel moved to /mesonet (plan step 2)
+    const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+    const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
+    el.classList.remove("muted"); el.innerHTML =
+      `What the local station network thinks the model is biased by right now. These are the FULL (un-confidence-scaled) values — the Model page shows the confidence K that decides how much of each the forecast applies.` +
+      `<div class="meta-line">` +
+        `Temp <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong> · ` +
+        `Humidity <strong>${sgn(hyp.weighted_bias_humidity)}${fmt(hyp.weighted_bias_humidity, 1)}%</strong> · ` +
+        `Wind <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong> · ` +
+        `Gust <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong> · ` +
+        `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
+        `${hyp.confidence ?? "—"} confidence` +
+      `</div>`;
+  }
+
+
+
   fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
     .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(d => {
       const t = d.generated_at ? new Date(d.generated_at) : null;
-      $("asof").textContent = t ? t.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "";
-      nowTable(d); flags(d); how(d); drawMap(d); vsModel(d); octants(d); stations(d);
+      $("asof").textContent = t ? "As of " + t.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) + " ET" : "";
+      nowTable(d); flags(d); how(d); drawMap(d); octants(d); stations(d); renderOctantPanel(d); renderLayer2Panel(d);
     })
     .catch(e => { $("now").innerHTML = `<tr><td colspan="3" class="muted">Could not load live data (${e.message}).</td></tr>`; });
   fetch("https://data.wymancove.com/mesonet.json?_=" + Date.now(), { cache: "no-store" })

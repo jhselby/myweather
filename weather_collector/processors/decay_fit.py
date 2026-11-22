@@ -48,7 +48,7 @@ TIDE_PHASE_HISTORY_PATH = "tide_phase_corrections_history.json"
 # per-field L3/L4 whitelist (v0.6.45) closed the live-correction questions
 # the Fitter was originally built to support. The hypothesis-only branches
 # below are gated off to save GCP compute; the code stays for future revival.
-# See `corrections_debug.html` → Research & Diagnostics → "Discarded
+# See `model.html` → Research & Diagnostics → "Discarded
 # hypotheses" for the final reports.
 RUN_TIDE_TRACKING = False  # weak signal entangled with diurnal — final 2026-06-08
 HISTORY_RETENTION_DAYS = 365  # ~annual cycle of fits; ~2.8 MB/year per history file
