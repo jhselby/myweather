@@ -1282,7 +1282,7 @@
   };
   const TRUTH = {
     urma: ["fp-t-ind", "Independent (URMA)", "NOAA's hourly analysis (URMA), built from satellite and surface reports. Independent of our stations and corrections."],
-    stn:  ["fp-t-stn", "Stations", "Our local weather stations only, with no model mixed in. Since Nov 2."],
+    stn:  ["fp-t-stn", "Mesonet, 6–47 h", "The Wyman Cove Mesonet (our stations only, no model mixed in), since Nov 2. Humidity is the only field it qualified for (see the Mesonet page). Leads 2–5 h are left out because the forecast's station layer reads the same stations there."],
     mix:  ["fp-t-mix", "Model-blended", "Station readings pulled toward the model forecast (the logged 'observed'). Flatters us: treat as optimistic. Last 7 days."],
     weak: ["fp-t-weak", "Weak (airport)", "Airport cloud reports pulled toward the model; ceilometers can't see above 12,000 ft. Treat as a rough guide."],
   };
@@ -1294,10 +1294,13 @@
     const rows = [];
     for (const [k, name, desc, unit, dec] of FIELDS) {
       let us = null, them = null, src = "NBM", truth = null, n = null;
-      const two = tc && tc.fields && tc.fields[k] ? tc.fields[k].lead_2h_plus : null;
-      if (k === "t" && two && two.n_urma > 500) {
+      // Truth rule (plan Step 3.1, 11-22): t, dp, ws, wg on URMA (the Mesonet did not qualify for t / dp;
+      // wind stays on URMA); h on the Mesonet at 6-47 h (the only field that qualified).
+      const fld = tc && tc.fields && tc.fields[k];
+      const two = fld ? (k === "h" ? fld.lead_6h_plus : fld.lead_2h_plus) : null;
+      if (["t", "dp", "ws", "wg"].includes(k) && two && two.n_urma > 500) {
         us = two.served_mae_urma; them = two.public_mae_urma; truth = "urma"; n = two.n_urma;
-      } else if (two && two.n > 500) {
+      } else if (k === "h" && two && two.n > 500) {
         us = two.served_mae_stations; them = two.public_mae_stations; truth = "stn"; n = two.n;
       } else if (k === "cc" && tc && tc.cc_urma && tc.cc_urma.bands) {
         let s = 0, p = 0, m = 0;   // leads 6-47h, matching the 2h+ rows above as closely as the bands allow
@@ -2237,7 +2240,7 @@
      stays in Forecast accuracy below. -->
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health <span style="font-weight:normal;opacity:0.75;">— are we beating what a person reads, field by field?</span></summary>
-  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; stations for h; logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Field lines start 08-25 (the oldest forecast rows we kept, with weather.gov's forecast saved alongside). The grey dashed "old score" measures something weaker: the median across 10 fields, on our own blended truth, against the raw model rather than weather.gov. Click any legend entry to hide it.</div>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Each line = one field's lift over the last 7 days: <code>(bar MAE − served MAE) / bar MAE</code>, errors pooled across the 7 days, leads 2–47 h. Above 0 = we beat it. Bar = <strong>weather.gov</strong> for t, dp, ws, wd, pp; <strong>raw NBM</strong> for wg, cc, h. Truth = <strong>URMA</strong> (NOAA's hourly analysis) for t, dp, ws, wg, cc; the <strong>Mesonet</strong> for h (leads 6–47 h, where the stations are not a forecast input); logged observed for wd, pp. Source: <code>truth_compare.json</code> <code>daily</code>. Field lines start 08-25 (the oldest forecast rows we kept, with weather.gov's forecast saved alongside). The grey dashed "old score" measures something weaker: the median across 10 fields, on our own blended truth, against the raw model rather than weather.gov. Click any legend entry to hide it.</div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
   </div>

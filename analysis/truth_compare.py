@@ -108,6 +108,11 @@ DAILY_SPEC = {
     "wd": ("weather.gov", "logged observed"), "pp": ("weather.gov", "logged observed"),
     "wg": ("raw NBM", "URMA"), "cc": ("raw NBM", "URMA"), "h": ("raw NBM", "stations"),
 }
+# 11-22 (plan Step 3.1/3.2): h is the only field graded on the Mesonet (stations), and at 2-5h the
+# forecast's L2 reads the same stations, so h is graded on leads 6-47h only. A rule change rebuilds that
+# field's stored history from the live log (h station truth starts 11-02, inside the live log).
+DAILY_MIN_LEAD = {"h": 6}
+DAILY_RULES = {"h": "stations, leads 6-47h"}
 DAILY_FIRST_DAY = "2026-08-25"   # backstamped log + URMA DPT/WIND/TCDC/GUST start here
 DAILY_HISTORY = "truth_compare_daily_history.json"   # finished days, kept forever (the live log and
                                                     # the cloud URMA stores only reach back ~25 days)
@@ -122,7 +127,7 @@ def _daily_new():
 
 def _daily_add(daily, f, row, srv_abs, bar_abs):
     lead, day = row.get("lead_h"), (row.get("valid_time") or "")[:10]
-    if lead is None or not 2 <= lead < 48 or day < DAILY_FIRST_DAY:
+    if lead is None or not DAILY_MIN_LEAD.get(f, 2) <= lead < 48 or day < DAILY_FIRST_DAY:
         return
     b = daily[f][day]
     b["n"] += 1; b["srv"] += srv_abs; b["bar"] += bar_abs
@@ -201,7 +206,7 @@ def _summ(b):
 
 def build(path=None):
     path = path or cached_path(PAIR_LOG_URL, max_age_hours=0.5)
-    split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new(), "lead_2_5h": _new()} for f in FIELDS}
+    split = {f: {"nowcast_0_1h": _new(), "lead_2h_plus": _new(), "lead_2_5h": _new(), "lead_6h_plus": _new()} for f in FIELDS}
     per_day = {f: defaultdict(_new) for f in FIELDS}
     first = last = None
     urma = _urma_t()
@@ -286,7 +291,8 @@ def build(path=None):
             last = day if last is None or day > last else last
             for b in (split[f]["nowcast_0_1h" if lead <= NOWCAST_MAX_LEAD else "lead_2h_plus"],
                       per_day[f][day] if lead > NOWCAST_MAX_LEAD else None,
-                      split[f]["lead_2_5h"] if NOWCAST_MAX_LEAD < lead <= L2_GRADE_MAX_LEAD else None):
+                      split[f]["lead_2_5h"] if NOWCAST_MAX_LEAD < lead <= L2_GRADE_MAX_LEAD else None,
+                      split[f]["lead_6h_plus"] if lead > L2_GRADE_MAX_LEAD else None):
                 if b is None:
                     continue
                 b["n"] += 1
@@ -313,6 +319,7 @@ def build(path=None):
             "nowcast_0_1h": _summ(split[f]["nowcast_0_1h"]),
             "lead_2h_plus": two,
             "lead_2_5h": _summ(split[f]["lead_2_5h"]),
+            "lead_6h_plus": _summ(split[f]["lead_6h_plus"]),
             "gap_pts_2h_plus": (None if not two or two["total_lift_shrunk_pct"] is None
                                 or two["total_lift_stations_pct"] is None
                                 else round(two["total_lift_shrunk_pct"] - two["total_lift_stations_pct"], 2)),
@@ -337,10 +344,10 @@ def build(path=None):
             "per_day_6_47h": {d: _cc_summ(b) for d, b in sorted(cc_day.items())},
         },
         "daily": {
-            "definition": ("Per valid day (ET), leads 2-47h: sums of |served error| (srv) and |bar error| (bar) "
+            "definition": ("Per valid day (ET), leads 2-47h (h: 6-47h, stations feed L2 below 6h): sums of |served error| (srv) and |bar error| (bar) "
                            "on each field's truth; served = error_{applied_layer}. Lift = (bar - srv) / bar. "
                            "Pool sums across days for a multi-day lift."),
-            "fields": {f: {"bar": DAILY_SPEC[f][0], "truth": DAILY_SPEC[f][1],
+            "fields": {f: {"bar": DAILY_SPEC[f][0], "truth": DAILY_SPEC[f][1], "rule": DAILY_RULES.get(f),
                            "days": {d: {"n": b["n"], "srv": round(b["srv"], 2), "bar": round(b["bar"], 2)}
                                     for d, b in sorted(daily[f].items()) if b["n"]}}
                        for f in DAILY_SPEC},
@@ -376,13 +383,22 @@ def merge_daily_history(payload, seed=False):
     load, save = _history_io()
     hist = load() if not seed else {}
     hf = hist.setdefault("fields", {})
+    rules = hist.setdefault("rules", {})
     last = (_today_et() - timedelta(days=DAILY_FINAL_LAG)).isoformat()
     first = DAILY_FIRST_DAY if seed else (_today_et() - timedelta(days=DAILY_FINAL_LAG + DAILY_FINAL_SPAN - 1)).isoformat()
     added = 0
     for f, v in payload["daily"]["fields"].items():
+        f_first = first
+        if rules.get(f) != DAILY_RULES.get(f):   # rule changed: rebuild this field from what the log has
+            hf[f], f_first = {}, DAILY_FIRST_DAY
+            if DAILY_RULES.get(f):
+                rules[f] = DAILY_RULES[f]
+            else:
+                rules.pop(f, None)
+            added += 1   # forces a save even if no day is final yet
         hd = hf.setdefault(f, {})
         for d, b in v["days"].items():
-            if first <= d <= last and d not in hd:
+            if f_first <= d <= last and d not in hd:
                 hd[d] = b
                 added += 1
         v["days"] = {**v["days"], **hd}   # history wins: fixed once final

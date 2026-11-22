@@ -1,5 +1,5 @@
 {
- "version": "v0.7.132",
+ "version": "v0.7.133",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.133",
+   "date": "November 22, 2026",
+   "iso": "2026-11-22",
+   "title": "Scorecard on one fixed truth per field",
+   "change": "truth_compare adds a 6\u201347 h bucket; the humidity line in the trend chart now uses 6\u201347 h and rebuilt its history from Nov 2."
+  },
   {
    "version": "v0.7.131",
    "date": "November 22, 2026",
@@ -222,6 +229,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.133",
+   "date": "November 22, 2026",
+   "iso": "2026-11-22",
+   "title": "Scorecard on one fixed truth per field"
+  },
+  {
    "version": "v0.7.132",
    "date": "November 22, 2026",
    "iso": "2026-11-22",
@@ -286,12 +299,6 @@
    "date": "November 19, 2026",
    "iso": "2026-11-19",
    "title": "showcase page removed"
-  },
-  {
-   "version": "v0.7.115\u2013v0.7.121",
-   "date": "November 19, 2026",
-   "iso": "2026-11-19",
-   "title": "debug page front: Current Conditions, sample size, truth labels, glossary"
   }
  ],
  "layers": {

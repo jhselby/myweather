@@ -118,7 +118,7 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 - Remove `#sec-mesonet` from the debug page and replace it with a one-line link to `/mesonet`.
 - Link `/mesonet` from the app's footer next to the debug link.
 - LAN preview, then ask to push. Version bump.
-- [ ] done
+- [x] done 11-22 (v0.7.131 + v0.7.132, live at wymancove.com/mesonet): Now + cross-checks, map (Tempest circles coloured by correction, WU squares + our station, real positions and names as Tempest/WU show them), stations minus model, directions, full Tempest table, WU table, method, validation. Debug `#sec-mesonet` is a link; app settings link it. Along the way: Driftwood Rd (0.21 mi W, harbour shore) added, Willow Rd + Harbor Ave culled (collector 19:19Z; all 8 directions now covered); WU live set polled 4x/day instead of every tick (~100 calls/day, was ~1,150; collector 19:23Z). Still on the debug page by design: L2 2c-2e (how the forecast uses the stations).
 
 ### Step 3. Fix the truth once and rescore the history
 3.1 **The truth rule, set before looking at scores:**
@@ -129,7 +129,23 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 
 3.2 **Circularity at short leads:** at 0-5h the forecast uses current station readings (L2). Grade those leads leave-one-station-out (the `l2_loo_score.py` method). At 6-47h, grade directly on the Mesonet; stations are not an input there (`mesonet_bench.py` note).
 
+**Final table (11-22, from the Step 1 verdicts; set before the rescore was looked at):**
+
+| Field | Truth | Bar | Leads |
+|---|---|---|---|
+| t | URMA (Mesonet failed B: +1 F warm at night) | weather.gov | 2-47h |
+| h | **Mesonet** (`observed_stations`, qualified) | raw NBM until h_nws has ~14 d (~12-06), then weather.gov | **6-47h** |
+| dp | URMA (Mesonet failed A and B) | weather.gov | 2-47h |
+| ws, wg | URMA (11-20; stations sheltered) | weather.gov (ws); raw NBM until wg_nws has ~14 d (wg) | 2-47h |
+| cc | URMA TCDC | raw NBM until cc_nws has ~14 d | 6-47h |
+| wd, pp | logged observed (no station truth), labelled model-blended | weather.gov | 2-47h |
+| pa, sr, cl/cm/ch | as today (per_field_scoring), labelled | NBM / HRRR | |
+
+3.2 as built (deviation from the text above, decided 11-22): only h is graded on the Mesonet, so the circularity only touches h. Leave-one-station-out is not a usable truth here: with ~18 stations, holding one out barely changes L2's input, and grading against one station's reading adds ~1 F-equivalent noise to both sides. h is graded on 6-47h only; 2-5h (9% of h rows) is reported separately in `lead_2_5h`.
+
 3.3 Change `analysis/truth_compare.py` so the scorecard (`#sec-front` and the digest) uses 3.1 and 3.2. Also the daily history: `truth_compare_daily_history.json` and the publisher.
+
+- 3.1-3.4 built 11-22 (v0.7.133): truth_compare adds `lead_6h_plus`; h daily on 6-47h; the stored h history rebuilds itself on a rule change (`DAILY_RULES`; h starts 11-02, inside the live log). Scorecard table: dp/ws/wg moved from stations to URMA (dp vs weather.gov +21.1% → +8.4%; ws +15.7% → +21.9%; **wg vs NBM +25.2% → −22.9%**, the known gust gap the station truth hid); h +36.6% → +35.6%. Headline 8/2/0 → 7/2/1. Needs `make deploy-publisher` before the page push.
 
 3.4 **Rescore the history:** rebuild the daily history on the new truth. Station-truth fields start 2026-11-02, the first `observed_stations` row; label the chart's start. Wind and cloud keep URMA history back to 08-25.
 

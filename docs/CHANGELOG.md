@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.133 • November 22, 2026 (Scorecard on one fixed truth per field)</strong></summary>
+
+- Debug page scorecard: each field is now graded on the truth fixed in the plan. Temperature, dew point, wind and gusts on URMA (NOAA's independent analysis); humidity on the Wyman Cove Mesonet, the only field it qualified for, at 6–47 hours (at 2–5 hours the forecast's station layer reads the same stations).
+- Dew point, wind and gusts were graded on our backyard stations until now, which disagreed with the trend chart below it. The headline goes from 8 better / 2 tied / 0 worse to 7 / 2 / 1: gusts move from 25% better than NBM to 23% worse. The stations sit in sheltered yards and made our low gusts look right; URMA shows the gap the gust blend (decision ~Nov 27) is meant to close. Dew point vs weather.gov moves from +21% to +8%, wind from +16% to +22%.
+- Architecture: truth_compare adds a 6–47 h bucket; the humidity line in the trend chart now uses 6–47 h and rebuilt its history from Nov 2.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.132 • November 22, 2026 (Mesonet page: full station detail)</strong></summary>
 
 - Mesonet page is now full width, in two columns on a computer.
