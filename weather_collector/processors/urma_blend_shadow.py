@@ -40,7 +40,7 @@ def validate_table(doc):
         return "missing fields.t.bands"
     if not cells:
         return "no bands"
-    for f in ("t", "ws", "wg"):
+    for f in ("t", "ws", "wg", "dp"):
         if f not in fields:
             continue
         for b, c in (fields[f].get("bands") or {}).items():
@@ -68,7 +68,8 @@ def _fresh(doc):
 
 def stamp(entry, lead_h):
     """Stamp entry['t_urmab'] at 6-47h, and the shadows entry['ws_urmab'] (6-47h, v0.7.123) and
-    entry['wg_urmab'] (0-47h, v0.7.125; HRRR/NBM only, ECMWF weight 0) when the inputs and a fresh
+    entry['wg_urmab'] (0-47h, v0.7.125; HRRR/NBM only, ECMWF weight 0) and
+    entry['dp_urmab'] (6-47h, v0.7.135; weights only, bias 0) when the inputs and a fresh
     table exist. Only t is ever served; the pair log scores the others as forecast_urmab."""
     if not ENABLED or _band(lead_h, WG_BANDS) is None:
         return
@@ -80,7 +81,7 @@ def stamp(entry, lead_h):
         return
     if not doc or not _fresh(doc):
         return
-    for f, floor, bands in (("t", None, BANDS), ("ws", 0.0, WG_BANDS), ("wg", 0.0, WG_BANDS)):
+    for f, floor, bands in (("t", None, BANDS), ("ws", 0.0, WG_BANDS), ("wg", 0.0, WG_BANDS), ("dp", None, BANDS)):
         band = _band(lead_h, bands)
         cell = ((doc["fields"].get(f) or {}).get("bands") or {}).get(band) if band else None
         if not cell:

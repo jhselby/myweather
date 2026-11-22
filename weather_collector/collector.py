@@ -837,11 +837,13 @@ def main():
             _eh = (fetched.daily_data or {}).get("hourly") or {}
             _et, _eh_h, _ews = (_eh.get("temperature_2m") or []), (_eh.get("relative_humidity_2m") or []), (_eh.get("wind_speed_10m") or [])
             _esr = _eh.get("shortwave_radiation") or []
+            _edp = _eh.get("dew_point_2m") or []
             ecmwf_hourly = {
                 ts[:13]: {"t": _et[i] if i < len(_et) else None,
                           "h": _eh_h[i] if i < len(_eh_h) else None,
                           "ws": _ews[i] if i < len(_ews) else None,
-                          "sr": _esr[i] if i < len(_esr) else None}
+                          "sr": _esr[i] if i < len(_esr) else None,
+                          "dp": _edp[i] if i < len(_edp) else None}
                 for i, ts in enumerate(_eh.get("time") or [])
             } or None
     except Exception as e:

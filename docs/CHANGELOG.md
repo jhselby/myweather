@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.135 • November 22, 2026 (Dew point blend on URMA, shadow)</strong></summary>
+
+- Served dew point copies the old truth's dry bias: 0.7–0.95 °F below URMA, while raw NBM runs +0.7 °F and raw HRRR −2.7 °F. A blend of HRRR, NBM and ECMWF dew point fit on URMA beat served dew point in walk-forward on the days since Nov 3 by 19.8% at 6–11 h and 18.3% at 12–23 h (both pass the ship rule), and beat weather.gov by 24.9% and 23.5%. At 24–47 h it gains 10.4% but the interval touches zero, so it does not pass.
+- This release only records the new value (`dp_urmab`) next to the served one. Nothing served changes. The collector now keeps ECMWF dew point, and the daily URMA table fit adds dew point weights for 6–47 h.
+- Not served yet: served dew point is computed from served temperature and humidity, and the collector rebuilds humidity from them, so serving a separate dew point needs its own test of what it does to humidity.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.134 • November 22, 2026 (Model page)</strong></summary>
 
 - The debug page is now the Wyman Cove Model page (model.html; the old address forwards to it). It opens with the question it answers, "Is this forecast for Wyman Cove better than weather.gov?", then the scorecard, how the forecast is built, and the trend chart. Everything else sits below under "Notebook", unchanged.

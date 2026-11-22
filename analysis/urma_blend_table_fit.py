@@ -191,6 +191,21 @@ def best_w(e3):
     return [float(x) for x in GRID3[int(np.abs(e3 @ GRID3.T).sum(0).argmin())]]
 
 
+def load_dpt():
+    """{UTC 'YYYY-MM-DDTHH': URMA 2 m dew point, F} from the cloud store or the local file."""
+    out = {}
+    if _cloud():
+        from weather_collector.gcs_io import load_json
+        for k, nb in (load_json(GCS_STORE_DPT) or {}).items():
+            out[k] = _idw_f(nb)
+    elif URMA_FILE.exists():
+        for line in open(URMA_FILE):
+            if '"DPT"' in line:
+                r = json.loads(line)
+                out[r["valid"][:13]] = _idw_f(r["nb"])
+    return out
+
+
 def load_wind(var="WIND", store=None):
     """{UTC 'YYYY-MM-DDTHH': URMA 10 m wind (or GUST), mph} from the cloud store or the local file."""
     store = store or (GCS_STORE_GUST if var == "GUST" else GCS_STORE_WIND)
@@ -288,7 +303,11 @@ def fit():
         by_day[d] = by_day.get(d, 0) + 1
     days = sorted(d for d, n in by_day.items() if n >= MIN_HOURS_PER_DAY)[-WIN:]
     dset = set(days)
-    eh = tb.ecmwf_history(days[0], days[-1]) if days else {}
+    tb.E_VARS["dp"] = "dew_point_2m"   # dp needs ECMWF dew point in the same previous-runs pull; per_field_scoring reads E_VARS, so undo below
+    try:
+        eh = tb.ecmwf_history(days[0], days[-1]) if days else {}
+    finally:
+        tb.E_VARS.pop("dp", None)
     fields = {}
     bands, used = _fit_bands("t", _rows("t", truth, dset), eh, use_bias=True)
     fields["t"] = {"bands": bands}
@@ -301,15 +320,21 @@ def fit():
         fields["ws"] = {"bands": wbands}
     # v0.7.125 wg shadow (wg_urmab): debiased HRRR/NBM 2-way on URMA 10 m gust, 0-47h. Walk-forward
     # 20 days: vs served +42/+27/+22/+17% (0-5/6-11/12-23/24-47, holdout all pass); vs raw NBM +15% at 0-5.
+    # v0.7.135 dp shadow (dp_urmab): weights only on URMA 2 m dew point, 6-47h. Walk-forward 77 days
+    # (analysis/urma_blend_wf_dp.py): holdout vs served +19.8% (6-11h) and +18.3% (12-23h) pass, 24-47h +10.4% [-0.5, +20.3] does not.
+    dpt = load_dpt()
+    dbands, dused = _fit_bands("dp", _rows("dp", dpt, dset), eh, use_bias=False) if dpt else ({}, 0)
+    if dbands:
+        fields["dp"] = {"bands": dbands}
     gust = load_wind("GUST")
     gbands, gused = _fit_bands_2way("wg", _rows("wg", gust, dset), WG_BANDS) if gust else ({}, 0)
     if gbands:
         fields["wg"] = {"bands": gbands}
-    wused += gused
+    wused += gused + dused
     out = {"fitted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"), "window_days": WIN,
            "truth": "urma_idw_4cell", "days": [days[0], days[-1]] if days else None,
            "n_rows_kept": used + wused, "fields": fields,
-           "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h). "
+           "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h); dp: SHADOW dp_urmab (weights only, bias 0, 6-47h). "
                     "Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."}
     with open(OUT_PATH, "w") as f:
         json.dump(out, f, indent=2)
