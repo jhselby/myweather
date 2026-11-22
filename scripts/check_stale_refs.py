@@ -23,7 +23,7 @@ import sys
 from datetime import date, timedelta
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEBUG_PAGE = os.path.join(REPO_ROOT, "corrections_debug.html")
+DEBUG_PAGE = os.path.join(REPO_ROOT, "model.html")
 
 # Anything older than this in a predictive-tense ref is stale.
 STALE_DAYS = 2

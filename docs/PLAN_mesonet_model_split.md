@@ -171,7 +171,7 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
   4. **The trend:** the Stack health chart on the fixed truth.
 - Below it, a heading **"Notebook"**, then everything else as it is. L2 is labelled "the link from the Mesonet".
 - Version bump. LAN preview, then ask to push.
-- [ ] done
+- [x] built 11-22 (v0.7.134, not yet pushed): model.html = question (page title) → Scorecard → How it works (4 · Grade names the fixed truths) → Stack health → **Notebook** (Conditions, Mesonet link, What's new, Detailed scoreboard, Where things stand, layers…). corrections_debug.html is a redirect (keeps #anchors). References updated: index.html (link + text), build.py, js/corrections.js, tests, scripts/check_stale_refs.py, mesonet.html. 3.5 old-truth banner above the Applicability map + layers; regression sentry moved to the fixed truths.
 
 ### Step 5. Retrain on the clean truth (changes the served forecast)
 - Refit L2 and the blends (t_urmab, ws_urmab, wg_urmab and the rest) and the selector against the Step 3 truth via `analysis/_truth.py`. Self-refitting tables must refit in the cloud refitter, not the digest.

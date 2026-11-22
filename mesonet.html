@@ -104,7 +104,7 @@
   </div>
 
   <footer>
-    <a href="./">Forecast app</a> · <a href="corrections_debug.html">Model notebook</a>
+    <a href="./">Forecast app</a> · <a href="model.html">Model</a>
   </footer>
 </main>
 
@@ -141,7 +141,7 @@
       r("Temperature", h.station_temp, h.model_temp, 1, "°") + r("Humidity", h.station_humidity, h.model_humidity, 1, "%") +
       r("Pressure", h.corrected_pressure_in, h.model_pressure_in, 2, "") + r("Wind", c.wind_speed_stations, c.model_wind_speed, 1, "") +
       r("Gusts", c.wind_gusts_stations, c.model_wind_gusts, 1, "") + `</tbody></table>` +
-      `<p class="small muted" style="margin:8px 0 0;">Spread between directions ±${fx(h.bias_std, 1)}°F. This gap is what the forecast's station layer (L2) uses; how much of it the forecast takes is on the <a href="corrections_debug.html#sec-layer2">model notebook</a>.</p>`;
+      `<p class="small muted" style="margin:8px 0 0;">Spread between directions ±${fx(h.bias_std, 1)}°F. This gap is what the forecast's station layer (L2) uses; how much of it the forecast takes is on the <a href="model.html#sec-layer2">model notebook</a>.</p>`;
   }
 
   function octants(d) {

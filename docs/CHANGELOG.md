@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.134 • November 22, 2026 (Model page)</strong></summary>
+
+- The debug page is now the Wyman Cove Model page (model.html; the old address forwards to it). It opens with the question it answers, "Is this forecast for Wyman Cove better than weather.gov?", then the scorecard, how the forecast is built, and the trend chart. Everything else sits below under "Notebook", unchanged.
+- How it works now names the truth: every forecast hour is graded on URMA, or the Wyman Cove Mesonet for humidity.
+- A banner marks the Applicability map and the layer sections as graded on the old model-blended truth until the corrections are refit on the clean truth. L2 is labelled as the link from the Mesonet.
+- The digest's regression sentry now uses the same truths as the scorecard. Today's false dew point alarm is gone. Humidity still fires: on the Mesonet, served humidity lost to raw HRRR on 3 of the 4 days from Nov 18 to 21, when NBM and ECMWF were 13–19% off. Walk-forward tests found no change worth shipping yet; watching it.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.133 • November 22, 2026 (Scorecard on one fixed truth per field)</strong></summary>
 
 - Debug page scorecard: each field is now graded on the truth fixed in the plan. Temperature, dew point, wind and gusts on URMA (NOAA's independent analysis); humidity on the Wyman Cove Mesonet, the only field it qualified for, at 6–47 hours (at 2–5 hours the forecast's station layer reads the same stations).

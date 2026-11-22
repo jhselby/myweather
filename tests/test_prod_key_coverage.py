@@ -1,6 +1,6 @@
 """
 Debug-page prod-key coverage: PROD_PRIORITY and _prodKey in
-corrections_debug.html must include every currently-ENABLED specialist in
+model.html must include every currently-ENABLED specialist in
 weather_collector/processors/. If a specialist ships ENABLED=True but its
 key isn't in the priority list, the pf-mae / pf-today fallback silently
 picks a stale layer — same class as v0.6.390j (shadow-write applied_layer
@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 REPO = Path(__file__).resolve().parent.parent
 PROCESSORS = REPO / "weather_collector" / "processors"
-DEBUG_HTML = REPO / "corrections_debug.html"
+DEBUG_HTML = REPO / "model.html"
 
 # Filename → (key surfaced in pair-log / applied_layer stamp, field(s) it touches).
 # When a new specialist ships, add its entry here. This is the canonical
@@ -65,10 +65,10 @@ def _is_enabled(src):
 
 def _load_prod_priority():
     """Return dict field → list-of-layer-keys from the PROD_PRIORITY literal
-    in corrections_debug.html."""
+    in model.html."""
     html = DEBUG_HTML.read_text()
     m = re.search(r"const\s+PROD_PRIORITY\s*=\s*\{(.*?)\};", html, re.S)
-    assert m, "PROD_PRIORITY not found in corrections_debug.html"
+    assert m, "PROD_PRIORITY not found in model.html"
     body = m.group(1)
     out = {}
     for line in body.splitlines():
@@ -90,13 +90,13 @@ def _load_prod_key_list():
         r"const\s+_prodKey\s*=.*?for\s*\(\s*const\s+k\s+of\s+\[([^\]]+)\]",
         html, re.S,
     )
-    assert m, "_prodKey priority list not found in corrections_debug.html"
+    assert m, "_prodKey priority list not found in model.html"
     return [s.strip().strip('"').strip("'") for s in m.group(1).split(",") if s.strip()]
 
 
 def _load_applied_map():
     """Return dict specialist_key → set(fields), unioned across every
-    `const _applied = ...` block in corrections_debug.html. The debug page
+    `const _applied = ...` block in model.html. The debug page
     has two implementations (renderStackOverview + renderPerFieldSnapshot);
     tolerate either `k/f` or `layerKey/fieldKey` variable naming."""
     html = DEBUG_HTML.read_text()
@@ -144,7 +144,7 @@ def test_prod_priority_covers_enabled_specialists():
             if key not in chain:
                 missing.append(f"{f} chain missing '{key}': {chain}")
     assert not missing, (
-        "PROD_PRIORITY in corrections_debug.html is missing ENABLED specialists.\n"
+        "PROD_PRIORITY in model.html is missing ENABLED specialists.\n"
         "Add them to the priority list for the fields they touch:\n  "
         + "\n  ".join(missing)
     )
@@ -155,7 +155,7 @@ def test_prod_key_list_covers_enabled_specialists():
     enabled = discover_enabled_specialists()
     missing = [key for key, _fields in enabled if key not in key_list]
     assert not missing, (
-        "_prodKey's priority array in corrections_debug.html is missing "
+        "_prodKey's priority array in model.html is missing "
         f"ENABLED specialists: {missing}. "
         "Add them to the `for (const k of [...])` list in _prodKey."
     )
@@ -171,7 +171,7 @@ def test_applied_map_covers_enabled_specialists():
             if f not in mapped:
                 missing.append(f"_applied('{key}', '{f}') → not mapped (currently maps to {sorted(mapped) or 'nothing'})")
     assert not missing, (
-        "_applied in corrections_debug.html doesn't map ENABLED specialists "
+        "_applied in model.html doesn't map ENABLED specialists "
         "to the fields they touch:\n  " + "\n  ".join(missing)
     )
 

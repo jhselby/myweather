@@ -234,7 +234,7 @@ function _renderDecayCorrections(data) {
   const l3Count = (dm.layer_3_fields || []).length;
   const headerLeft = '+24h forecast adjustment';
   const headerRight = l3Count > 0 ? `L3 on: ${(dm.layer_3_fields || []).join('/')}` : 'L3/L4 paused';
-  const footerText = `Applied ${dm.applied_at || '?'} · per-field L3/L4 since v0.6.45 · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">why →</a>`;
+  const footerText = `Applied ${dm.applied_at || '?'} · per-field L3/L4 since v0.6.45 · <a href="/model.html" target="_blank" style="color:rgba(120,180,239,0.9);">why →</a>`;
   const title = 'Forecast Corrections at +24h ▾';
   container.innerHTML = `
     <div style="margin-top:14px;">

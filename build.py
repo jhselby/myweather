@@ -319,7 +319,7 @@ def _refresh_debug_page(base_dir):
     version. Ships past their watch window are left alone.
     """
     from datetime import date as _dt_date
-    debug_path = base_dir / 'corrections_debug.html'
+    debug_path = base_dir / 'model.html'
     if not debug_path.is_file():
         return
     today = _dt_date.today()
