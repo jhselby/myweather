@@ -212,6 +212,10 @@ def main():
         subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'architecture_state.py')], check=False)
         # mesonet.json for the debug page station map (public-safe station dots + dated measurements); needs gsutil, so best-effort.
         subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'mesonet_state.py')], check=False)
+        # /mesonet "How good is it": Step 1 validation results, served next to mesonet.html.
+        _mv = base_dir / 'analysis' / 'mesonet_validation.json'
+        if _mv.exists():
+            (base_dir / 'mesonet_validation.json').write_text(_mv.read_text())
 
         # Bump sw.js CACHE_VERSION to match — without this, the service worker
         # keeps serving the previous version's app shell (index.html, app.css,

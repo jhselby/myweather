@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.131 • November 22, 2026 (Wyman Cove Mesonet page; Driftwood Rd station added)</strong></summary>
+
+- New page: Wyman Cove Mesonet (mesonet.html, linked from the app's settings next to the debug page). It shows what the weather is at the Cove right now from the neighbourhood's stations alone, with KBVY, the forecast model and the buoy beside it as cross-checks, a station map, how the value is built, and how good it is (station agreement and bias against NOAA's URMA, Nov 8 to 22). Humidity qualifies as a truth to grade forecasts on; temperature and dew point do not yet.
+- New station: Driftwood Rd, 0.21 miles west on the harbour shore at the Cove's height. It is the nearest station and the first one to the west. Willow Rd and Harbor Ave have stopped reporting and are removed.
+- The debug page's draft Mesonet section is replaced by a link to the new page.
+- Weather Underground: the 8 stations we archive closely (incl. your own) are now fetched 4 times a day instead of every 10 minutes. Each fetch returns the whole day, so the archive is the same with about 100 calls a day instead of about 1,150.
+- The station map shows each Tempest station at its real position with its name, as Tempest and Weather Underground do.
+- Architecture: analysis/mesonet_validation.py writes mesonet_validation.json (copied to the site by build.py); analysis/mesonet_wu_test.py showed that adding the live Weather Underground set changes the Mesonet by under 0.05°F, so it stays archive-only.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.130 • November 22, 2026 (weather.gov humidity, gust, cloud and rain amount recorded)</strong></summary>
 
 - The collector now saves weather.gov's forecast for humidity, gusts, cloud cover and rain amount next to ours, as it already did for temperature, dew point, wind, wind direction and rain chance. Nothing in the app changes. After about two weeks of rows the scorecard can compare these four fields against weather.gov instead of raw NBM; until then it stays on NBM.

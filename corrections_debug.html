@@ -1176,52 +1176,7 @@
 
 <section class="fp" id="sec-mesonet">
 <h2 class="section" id="sec-mesonet-h">Wyman Cove Mesonet</h2>
-<div class="fp-card" style="padding:14px 18px;">
-  <div style="color:#9aa6b6;font-size:0.88em;line-height:1.5;margin-bottom:10px;">Our estimate of conditions at the Cove right now, built from <b id="mn-n">—</b> stations with the model as a starting point. Every forecast starts here.</div>
-  <table class="fp-table">
-    <thead><tr><th>Field</th><th>Cove mesonet</th><th title="The stations' own readings, with no model mixed in.">Stations only</th><th>Model</th></tr></thead>
-    <tbody id="mn-rows"><tr><td colspan="4" style="color:#7f8ba0;">loading…</td></tr></tbody>
-  </table>
-  <div class="fp-sample" id="mn-t" style="margin-top:10px;"></div>
-  <details style="margin-top:6px;"><summary id="mn-sum" style="cursor:pointer;color:#7fb3ff;font-size:0.9em;">Stations</summary>
-    <table class="fp-table" style="margin-top:6px;">
-      <thead><tr><th>Station</th><th>Miles</th><th>Age</th><th>Temp</th><th>Offset</th><th>Wind</th></tr></thead>
-      <tbody id="mn-stn"></tbody>
-    </table>
-  </details>
-  <div style="margin-top:12px;color:#7f8ba0;font-size:0.82em;">How good is it? Not measured yet. The error on stations held out of the estimate will go here.</div>
-</div>
-<script>
-(function () {
-  const $ = id => document.getElementById(id);
-  const med = a => { a = a.filter(v => v != null).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
-  const f = (v, d) => v == null ? "—" : Number(v).toFixed(d);
-  fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
-    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(d => {
-      const c = d.current || {}, h = d.hyperlocal || {}, all = (d.tempest || {}).stations || [], S = all.filter(s => s.valid);
-      $("mn-n").textContent = S.length + " of " + all.length;
-      const m = k => med(S.map(s => s[k]));
-      const rows = [
-        ["Temperature", "°F", h.corrected_temp, h.station_temp, h.model_temp, 1],
-        ["Humidity", "%", c.humidity, m("relative_humidity"), null, 0],
-        ["Dew point", "°F", c.dew_point, m("dew_point_f"), null, 1],
-        ["Pressure", "mb", c.pressure, m("sea_level_pressure_mb"), null, 1],
-        ["Wind speed", "mph", c.wind_speed, c.wind_speed_stations, c.model_wind_speed, 1],
-        ["Gusts", "mph", c.wind_gusts, c.wind_gusts_stations, c.model_wind_gusts, 1],
-      ];
-      $("mn-rows").innerHTML = rows.map(r => `<tr><td class="fp-field">${r[0]}</td><td><span class="fp-big">${f(r[2], r[5])}</span> <span style="color:#7f8ba0;font-size:0.82em;">${r[1]}</span></td><td class="fp-nums"><b>${f(r[3], r[5])}</b></td><td class="fp-nums"><b>${f(r[4], r[5])}</b></td></tr>`).join("");
-      if (h.kalman_gain != null) $("mn-t").innerHTML = `Temperature: the model says <b>${f(h.model_temp, 1)}</b>, the stations say <b>${f(h.station_temp, 1)}</b>, and the mesonet takes <b>${Math.round(h.kalman_gain * 100)}%</b> of that ${f(h.weighted_bias, 1)}° gap (spread ±${f(h.bias_std, 1)}°, ${h.stations_used} of ${h.stations_total} stations).`;
-      const off = (h.station_offsets || {}).temp || {};
-      $("mn-sum").textContent = "Stations (" + S.length + " of " + all.length + " reporting)";
-      $("mn-stn").innerHTML = all.slice().sort((a, b) => a.distance_mi - b.distance_mi).map(s => {
-        const o = off[String(s.station_id)];
-        return `<tr style="${s.valid ? "" : "opacity:0.45;"}"><td class="fp-field">${s.station_name || s.station_id}${s.waterfront ? " <small>waterfront</small>" : ""}</td><td class="fp-nums">${f(s.distance_mi, 2)}</td><td class="fp-nums">${s.valid ? f(s.age_minutes, 0) + " min" : "not reporting"}</td><td class="fp-nums">${f(s.temperature_f, 1)}</td><td class="fp-nums">${o == null ? "—" : (o > 0 ? "+" : "") + f(o, 1)}</td><td class="fp-nums">${f(s.wind_avg_mph, 1)}</td></tr>`;
-      }).join("");
-    })
-    .catch(e => { $("mn-rows").innerHTML = `<tr><td colspan="4" style="color:#e08a70;">mesonet unavailable (${e.message})</td></tr>`; });
-})();
-</script>
+<div class="fp-card" style="padding:12px 18px;">Moved to its own page: <a href="mesonet.html">Wyman Cove Mesonet</a> (live station values, cross-checks, how it is built and how good it is).</div>
 </section>
 
 <section class="fp" id="sec-front">

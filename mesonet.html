@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyman Cove Mesonet</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171b22; --line: #262c36; --text: #e6e9ef; --muted: #8a93a3;
+    --accent: #4aa3ff; --good: #5cc88a; --warn: #e0b050; --bad: #e07070;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 1.6em; margin: 0 0 2px; }
+  h2 { font-size: 1.1em; margin: 28px 0 8px; padding-left: 10px; border-left: 3px solid var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.85em; }
+  a { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 0.82em; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .big { font-size: 1.35em; font-weight: 700; }
+  .unit { color: var(--muted); font-size: 0.8em; }
+  td .tag { margin: 2px 4px 2px 0; }
+  @media (max-width: 560px) { body { font-size: 14px; } th, td { padding: 6px 5px; } .big { font-size: 1.15em; } }
+  .tag { display: inline-block; font-size: 0.72em; padding: 1px 7px; border-radius: 9px; margin-left: 4px;
+         border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .tag.good { color: var(--good); border-color: var(--good); }
+  .tag.warn { color: var(--warn); border-color: var(--warn); }
+  .tag.bad { color: var(--bad); border-color: var(--bad); }
+  .scroll { overflow-x: auto; }
+  #map { height: 340px; border-radius: 10px; border: 1px solid var(--line); }
+  .leaflet-tile-pane { filter: brightness(0.65) contrast(1.05); }
+  .leaflet-container { background: #1a1f2a; font: inherit; }
+  .legend { background: var(--panel); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 12px; line-height: 1.4; }
+  .flag { background: #2a2414; border: 1px solid var(--warn); color: #f0d9a0; border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
+  .verdict td:first-child { font-weight: 600; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 0.85em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Wyman Cove Mesonet</h1>
+  <p class="sub" id="asof">Loading…</p>
+  <div id="flags"></div>
+
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Field</th><th>Mesonet</th><th>Cross-checks <span class="muted">(shown beside it, never mixed in)</span></th></tr></thead>
+      <tbody id="now"><tr><td colspan="3" class="muted">loading…</td></tr></tbody>
+    </table>
+    <p class="small muted" style="margin:10px 0 0;">The Mesonet value uses station readings only. No forecast model goes into it. The model column shows what the forecast model (HRRR) has for this hour, for comparison.</p>
+  </div>
+
+  <h2>The stations</h2>
+  <div id="map"></div>
+  <p class="small muted">Each dot is a Tempest station; tap one for its name and reading. Colour is the station's correction right now: red reads warm and is corrected down, blue reads cold and is corrected up. The white dot is the Cove.</p>
+
+  <h2>How we got this</h2>
+  <div class="card">
+    <ol style="padding-left:20px;margin:0;">
+      <li><b>Correct each station.</b> Every station is compared with the other stations over the past weeks, separately by day and by night. A station that runs warm is corrected down by that amount. No forecast is involved.</li>
+      <li><b>Drop outliers.</b> Within each compass direction from the Cove, a reading far from its neighbours is set aside.</li>
+      <li><b>Weight by distance.</b> Nearer stations count more, and stations at a very different height count less.</li>
+      <li><b>Balance the directions.</b> Each compass direction is averaged first, then the directions are averaged, so a cluster of stations on one side cannot dominate.</li>
+    </ol>
+    <div id="how" class="small" style="margin-top:12px;"></div>
+  </div>
+
+  <h2>How good is it</h2>
+  <div class="card scroll">
+    <div id="val" class="muted">loading…</div>
+  </div>
+
+  <footer>
+    <a href="./">Forecast app</a> · <a href="corrections_debug.html">Model notebook</a>
+  </footer>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const fx = (v, d) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const sg = (v, d) => v == null ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(d);
+  const med = a => { a = a.filter(v => v != null && !Number.isNaN(v)).sort((x, y) => x - y);
+    return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
+  const dewF = (tf, rh) => { if (tf == null || rh == null || rh <= 0) return null;
+    const tc = (tf - 32) * 5 / 9, g = Math.log(rh / 100) + 17.625 * tc / (243.04 + tc);
+    return (243.04 * g / (17.625 - g)) * 9 / 5 + 32; };
+  const KT = 1.150779, COVE = [42.5014, -70.8750];
+  const OCT = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+  function nowTable(d) {
+    const c = d.current || {}, h = d.hyperlocal || {}, k = d.kbvy || {}, b = d.buoy_44013 || {};
+    const S = ((d.tempest || {}).stations || []).filter(s => s.valid);
+    const mT = h.station_temp, mH = h.station_humidity, mDp = dewF(mT, mH);
+    const kDp = k.dewpoint_c == null ? null : k.dewpoint_c * 9 / 5 + 32;
+    const xc = (label, v, d0, u) => v == null ? "" : `<span class="tag">${label} ${fx(v, d0)}${u}</span>`;
+    const rows = [
+      { f: "Temperature", u: "°F", v: mT, d: 1, tag: '<span class="tag warn">not yet the truth</span>',
+        x: xc("KBVY", k.temp_f, 0, "°") + xc("model", h.model_temp, 1, "°") + xc("buoy air", b.air_temp_f, 1, "°") },
+      { f: "Humidity", u: "%", v: mH, d: 0, tag: '<span class="tag good">qualifies as truth</span>',
+        x: xc("model", h.model_humidity, 0, "%") },
+      { f: "Dew point", u: "°F", v: mDp, d: 1, tag: '<span class="tag warn">not yet the truth</span>',
+        x: xc("KBVY", kDp, 1, "°") + xc("model", dewF(h.model_temp, h.model_humidity), 1, "°") },
+      { f: "Pressure", u: "inHg", v: h.corrected_pressure_in, d: 2, tag: "",
+        x: xc("KBVY", k.pressure_hpa == null ? null : k.pressure_hpa / 33.8639, 2, "") + xc("model", h.model_pressure_in, 2, "") },
+      { f: "Wind", u: "mph", v: c.wind_speed_stations, d: 1, tag: '<span class="tag bad">weak: sheltered yards</span>',
+        x: xc("KBVY", k.wind_speed_kt == null ? null : k.wind_speed_kt * KT, 0, "") + xc("model", c.model_wind_speed, 1, "") },
+      { f: "Gusts", u: "mph", v: c.wind_gusts_stations, d: 1, tag: '<span class="tag bad">weak: sheltered yards</span>',
+        x: xc("KBVY", k.wind_gust_kt == null ? null : k.wind_gust_kt * KT, 0, "") + xc("model", c.model_wind_gusts, 1, "") },
+      { f: "Rain, last hour", u: "in", v: med(S.map(s => s.precip_accum_1hr_in)), d: 2, tag: "", x: "" },
+      { f: "Sunshine", u: "W/m²", v: med(S.map(s => s.solar_radiation_wm2)), d: 0, tag: "", x: "" },
+      { f: "Cloud cover", u: "%", v: null, d: 0, tag: '<span class="tag">stations do not measure this</span>',
+        x: xc("KBVY", k.cloud_cover_pct, 0, "%") },
+    ];
+    $("now").innerHTML = rows.map(r => `<tr><td>${r.f}${r.tag ? "<br>" + r.tag : ""}</td>` +
+      `<td class="num">${r.v == null ? '<span class="muted">—</span>' : `<span class="big">${fx(r.v, r.d)}</span> <span class="unit">${r.u}</span>`}</td>` +
+      `<td>${r.x || '<span class="muted small">—</span>'}</td></tr>`).join("");
+  }
+
+  function flags(d) {
+    const h = d.hyperlocal || {}, cov = h.octant_coverage || {}, out = [];
+    const empty = OCT.filter(o => !cov[o]);
+    if (empty.length) out.push(`No Tempest station to the ${empty.join(", ")} of the Cove. ` +
+      (empty.includes("W") ? "The west is covered by a Weather Underground station we archive but do not yet use: adding it and the other six changed the Mesonet by under 0.05°F in a 5-day test (Nov 18-22)." : "The Mesonet leans on the other directions."));
+    if (h.stations_used != null && h.stations_used < 12) out.push(`Low coverage: only ${h.stations_used} stations reporting.`);
+    $("flags").innerHTML = out.map(t => `<div class="flag small">${t}</div>`).join("");
+  }
+
+  function offColor(v) {
+    if (v == null) return "#666";
+    const m = Math.min(3, Math.abs(v)) / 3;
+    if (m < 0.05) return "hsl(0,0%,62%)";
+    return `hsl(${v < 0 ? 220 : 0},${Math.round(30 + 55 * m)}%,${Math.round(70 - 20 * m)}%)`;
+  }
+
+  function drawMap(d) {
+    if (typeof L === "undefined") return;
+    const h = d.hyperlocal || {}, o = h.station_offsets || {};
+    const hr = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }).format(new Date()));
+    const split = (hr >= 7 && hr < 19) ? (o.temp_day || {}) : (o.temp_night || {});
+    const off = { ...(o.temp || {}), ...split };
+    const map = L.map("map", { zoomControl: false, scrollWheelZoom: false, dragging: !L.Browser.mobile }).setView(COVE, 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    const pts = [COVE];
+    for (const s of ((d.tempest || {}).stations || [])) {
+      if (typeof s.latitude !== "number") continue;
+      const p = [s.latitude, s.longitude];
+      const v = off[String(s.station_id)];
+      L.circleMarker(p, { radius: 7, fillColor: s.valid ? offColor(v) : "transparent", color: s.valid ? "#0f1115" : "#6e7785",
+        weight: 1.5, fillOpacity: 0.9, dashArray: s.valid ? null : "2,2" })
+        .bindPopup(`<b>${s.station_name || s.station_id}</b> (Tempest ${s.station_id})<br>${fx(s.distance_mi, 2)} mi from the Cove` +
+          (s.valid ? `<br>Reads ${fx(s.temperature_f, 1)}°F, correction ${sg(v == null ? null : -v, 1)}°F` : "<br>Not reporting"))
+        .addTo(map);
+      pts.push(p);
+    }
+    L.circleMarker(COVE, { radius: 7, fillColor: "#fff", color: "#111", weight: 2, fillOpacity: 1 }).bindPopup("Wyman Cove").addTo(map);
+    map.fitBounds(pts, { padding: [20, 20] });
+  }
+
+  function how(d) {
+    const h = d.hyperlocal || {}, cov = h.octant_coverage || {};
+    const all = (d.tempest || {}).stations || [];
+    $("how").innerHTML =
+      `<b>Right now:</b> ${h.stations_used ?? "—"} of ${all.length} stations used, ${h.outliers_trimmed ?? 0} set aside as outliers, ` +
+      `${h.octants_used ?? "—"} of 8 directions covered.<br>` +
+      `<span class="muted">Stations by direction: ${OCT.map(o => `${o} ${cov[o] || 0}`).join(" · ")}</span><br>` +
+      `<span class="muted">The forecast model's own temperature for now is ${fx(h.model_temp, 1)}°F; the stations say ${fx(h.station_temp, 1)}°F.</span>`;
+  }
+
+  function validation(v) {
+    if (!v) { $("val").textContent = "Validation results are not available."; return; }
+    const V = v.verdict || {}, L1 = v.loo_held_out || {}, X = v.cross_check || {}, cv = v.cove_adjustment_shadow || {};
+    const u = { t: "°F", h: "%", dp: "°F" };
+    const name = { t: "Temperature", h: "Humidity", dp: "Dew point" };
+    const row = f => { const r = V[f]; if (!r) return "";
+      const tag = r.qualifies ? '<span class="tag good">qualifies</span>' : '<span class="tag warn">not yet</span>';
+      return `<tr><td>${name[f]} ${tag}</td><td class="num">${fx(r.loo_mae, f === "h" ? 1 : 2)}${u[f]} <span class="muted small">(limit ${r.loo_max})</span></td>` +
+        `<td class="num">${sg(r.urma_bias, 2)}${u[f]} <span class="muted small">(limit ±${r.bias_max})</span></td>` +
+        `<td class="num">${sg(r.kbvy_bias, 1)}${u[f]}</td></tr>`; };
+    const ag = (f, d0) => fx(((L1[f] || {}).all || {}).mae, d0), ub = f => sg(((X[f] || {}).urma || {}).bias, 1);
+    const night = (cv.by_period || {}).night || {}, mid = (cv.by_period || {}).midday || {};
+    $("val").classList.remove("muted");
+    $("val").innerHTML =
+      `<p class="small muted" style="margin-top:0;">${v.window}. ${v.n_hours} hours.</p>` +
+      `<p style="margin:0 0 8px;">Two tests, with limits set before scoring. <b>Agreement:</b> each station is predicted from all the others; the typical miss. ` +
+      `<b>Bias:</b> the Mesonet against URMA, NOAA's independent hourly analysis. To grade forecasts, a field must pass both. KBVY (Beverly airport, 6 mi inland) is shown for reference only.</p>` +
+      `<table class="verdict"><thead><tr><th>Field</th><th>Agreement</th><th>Bias vs URMA</th><th>vs KBVY</th></tr></thead><tbody>` +
+      row("t") + row("h") + row("dp") + `</tbody></table>` +
+      `<p class="small" style="margin:12px 0 4px;"><b>Other fields</b> (shown, not graded on the Mesonet). Pressure: stations agree to ${ag("pr", 3)} inHg. ` +
+      `Wind and gusts: the Mesonet reads ${ub("ws")} and ${ub("wg")} mph against URMA, because backyard anemometers sit in sheltered yards; wind is graded on URMA.</p>` +
+      `<p class="small" style="margin:12px 0 0;"><b>Why temperature does not pass yet.</b> At night the Mesonet runs about 1°F warmer than URMA; at midday they agree. ` +
+      `The stations nearest the water run warmest at night, which fits the bay holding heat that URMA's 2.5 km grid smooths out. ` +
+      `The Mesonet also averages all of Marblehead, so it blurs the Cove's own pattern: a waterfront station on the Cove side of the Cliffs runs warmer than the Mesonet at night and cooler at midday. ` +
+      (cv.mesonet_vs_proxy ? `A test correction for that pattern (learned from earlier days only) cuts the miss against that station from ${fx(cv.mesonet_vs_proxy.mae, 2)}°F to ${fx(cv.mesonet_plus_adj_vs_proxy.mae, 2)}°F ` +
+        `(night bias ${sg(night.mesonet && night.mesonet.bias, 1)} → ${sg(night.adjusted && night.adjusted.bias, 1)}°F, midday ${sg(mid.mesonet && mid.mesonet.bias, 1)} → ${sg(mid.adjusted && mid.adjusted.bias, 1)}°F). ` : "") +
+      `It is a test only, and needs more weeks before it is used.</p>`;
+  }
+
+  fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(d => {
+      const t = d.generated_at ? new Date(d.generated_at) : null;
+      $("asof").textContent = t ? t.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "";
+      nowTable(d); flags(d); how(d); drawMap(d);
+    })
+    .catch(e => { $("now").innerHTML = `<tr><td colspan="3" class="muted">Could not load live data (${e.message}).</td></tr>`; });
+  fetch("mesonet_validation.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null).then(validation).catch(() => validation(null));
+})();
+</script>
+</body>
+</html>

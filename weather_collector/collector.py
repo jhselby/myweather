@@ -231,7 +231,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     from .processors.station_readings_log import append_station_readings
     append_station_readings(weather_data, tempest_data, _station_offsets)
 
-    # Dormant (WU_ARCHIVE_ENABLED False): ~160 calls/day WU archive once a working key exists.
+    # WU archive (WU_ARCHIVE_ENABLED): live set 4x/day + the rest 2x/day; archive only, nothing served reads it.
     from .processors import wu_archive
     if wu_archive.WU_ARCHIVE_ENABLED:
         from .fetchers.wu_scraper_realtime import STATIONS as _WU_IDS

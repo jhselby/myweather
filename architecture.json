@@ -1,5 +1,5 @@
 {
- "version": "v0.7.130",
+ "version": "v0.7.131",
  "components": [
   {
    "name": "HRRR cascade",
@@ -65,6 +65,13 @@
   "urma_blend_shadow_curated.json"
  ],
  "changes": [
+  {
+   "version": "v0.7.131",
+   "date": "November 22, 2026",
+   "iso": "2026-11-22",
+   "title": "Wyman Cove Mesonet page; Driftwood Rd station added",
+   "change": "analysis/mesonet_validation.py writes mesonet_validation.json (copied to the site by build.py); analysis/mesonet_wu_test.py showed that adding the live Weather Underground set changes the Mesonet by under 0.05\u00b0F, so it stays archive-only."
+  },
   {
    "version": "v0.7.128",
    "date": "November 21, 2026",
@@ -215,6 +222,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.131",
+   "date": "November 22, 2026",
+   "iso": "2026-11-22",
+   "title": "Wyman Cove Mesonet page; Driftwood Rd station added"
+  },
+  {
    "version": "v0.7.130",
    "date": "November 22, 2026",
    "iso": "2026-11-22",
@@ -279,12 +292,6 @@
    "date": "November 19, 2026",
    "iso": "2026-11-19",
    "title": "temperature now comes from the new blend"
-  },
-  {
-   "version": "v0.7.110\u2013v0.7.113",
-   "date": "November 18, 2026",
-   "iso": "2026-11-18",
-   "title": "Weather Underground collection back on, with your own station"
   }
  ],
  "layers": {

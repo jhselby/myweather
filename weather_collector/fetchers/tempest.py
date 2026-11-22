@@ -28,7 +28,6 @@ import logging
 # for wind direction.
 TEMPEST_STATIONS = [
     # Original 1.5mi set
-    {"id": 204883, "name": "Willow Rd",    "waterfront": True},
     {"id": 192019, "name": "Neptune Rd",   "waterfront": True},
     {"id": 193183, "name": "Baldwin Rd",   "waterfront": False},
     {"id": 193746, "name": "Maple St",     "waterfront": False},
@@ -36,6 +35,9 @@ TEMPEST_STATIONS = [
     {"id": 135494, "name": "Lincoln Ave",  "waterfront": False},
     {"id": 192607, "name": "Willard Ln",   "waterfront": False},
     {"id": 86357,  "name": "ColleeninMHD", "waterfront": False},
+    # Added 2026-11-22: 0.21 mi W, harbour shore at the Cove's height (Joe: best match for the Cove).
+    # Found on the Tempest map scan; fills the empty west direction.
+    {"id": 226429, "name": "Driftwood Rd", "waterfront": True},
     # Added 2026-06-02: 1.5–2.5mi expansion (16 new)
     {"id": 130945, "name": "Gallison Ave",                   "waterfront": False},
     {"id": 142949, "name": "Coolidge Rd",                    "waterfront": False},
@@ -45,7 +47,6 @@ TEMPEST_STATIONS = [
     {"id": 211335, "name": "Manton Rd",                      "waterfront": False},
     {"id": 178102, "name": "Broad St",                       "waterfront": False},
     {"id": 109319, "name": "South Essex Sewerage District",  "waterfront": False},
-    {"id": 92837,  "name": "Harbor Ave",                     "waterfront": False},
     {"id": 165151, "name": "Ocean ave MHD",                  "waterfront": False},
     {"id": 170101, "name": "Marblehead Neck",                "waterfront": False},
 ]
@@ -68,6 +69,9 @@ CULLED_TEMPEST_STATIONS = [
     # Culled 2026-06-22 — 7-day uptime 5.7% (57/1008 successes). Either offline
     # or has the same field-level sharing restriction as the 06-04 batch.
     {"id": 85569,  "name": "Preston Ct"},
+    # Culled 2026-11-22 — no observations since before 11-08 and gone from the Tempest map.
+    {"id": 204883, "name": "Willow Rd"},
+    {"id": 92837,  "name": "Harbor Ave"},
 ]
 
 _BUILD    = "181"
