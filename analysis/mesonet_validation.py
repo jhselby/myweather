@@ -41,6 +41,8 @@ OUT = Path(__file__).parent / "mesonet_validation.json"
 MS_TO_MPH = 2.236936
 KT_TO_MPH = 1.150779
 MIN_OTHERS = 5
+COVE_PROXY = "192019"   # Neptune Rd: 0.4 mi, waterfront, below the Cliffs on Joe's side (Joe 11-22)
+COVE_MIN_PRIOR_DAYS = 3
 
 # The rule, fixed in the plan doc (Step 1) before any score was computed. Units of the field.
 RULE = {
@@ -177,6 +179,46 @@ def kbvy(d0, d1):
     return out
 
 
+def cove_adjustment(mes_t, proxy):
+    """1.7 shadow: Cove value = Mesonet + mean(proxy raw - Mesonet) by ET hour over PRIOR days only
+    (walk-forward), scored against the proxy on each later day. Stations only, no forecast. The proxy
+    is also one of the Mesonet's stations (offset-corrected), a small pull toward it."""
+    by_day = collections.defaultdict(dict)
+    for h, v in proxy.items():
+        if h in mes_t:
+            by_day[day_et(h)][h] = v - mes_t[h]
+    days = sorted(by_day)
+    plain, adj, nb = [], [], collections.defaultdict(lambda: [[], []])
+    for i, D in enumerate(days):
+        if i < COVE_MIN_PRIOR_DAYS:
+            continue
+        hist = collections.defaultdict(list)
+        for d in days[:i]:
+            for h, x in by_day[d].items():
+                hist[datetime.fromtimestamp(h, ET).hour].append(x)
+        for h, x in by_day[D].items():
+            hr = datetime.fromtimestamp(h, ET).hour
+            if not hist[hr]:
+                continue
+            a = st.mean(hist[hr])
+            plain.append(-x)          # Mesonet - proxy
+            adj.append(a - x)         # Mesonet + adj - proxy
+            k = "night" if (hr >= 19 or hr < 7) else "midday" if 10 <= hr < 16 else "other"
+            nb[k][0].append(-x); nb[k][1].append(a - x)
+    table = collections.defaultdict(list)
+    for d in days:
+        for h, x in by_day[d].items():
+            table[datetime.fromtimestamp(h, ET).hour].append(x)
+    return {"proxy": COVE_PROXY, "scored_days": max(0, len(days) - COVE_MIN_PRIOR_DAYS),
+            "mesonet_vs_proxy": _stats(plain), "mesonet_plus_adj_vs_proxy": _stats(adj),
+            "by_period": {k: {"mesonet": _stats(v[0]), "adjusted": _stats(v[1])} for k, v in nb.items()},
+            "adjustment_by_hour_et_all_days": {hr: round(st.mean(v), 2) for hr, v in sorted(table.items())}}
+
+
+def day_et(h):
+    return datetime.fromtimestamp(h, ET).strftime("%Y-%m-%d")
+
+
 def _stats(errs):
     if not errs:
         return None
@@ -195,6 +237,7 @@ def main():
     loo_by_n = {f: collections.defaultdict(list) for f in ("t", "h", "dp")}
     hourly = collections.defaultdict(lambda: collections.defaultdict(list))
     rain_hours = collections.Counter()
+    proxy_acc = collections.defaultdict(list)
     n_stations, n_octants = [], []
     for ts in order:
         t = ticks[ts]
@@ -221,11 +264,17 @@ def main():
             if wet:
                 rain_hours[(ts[:13], wet, len(ps["rain"]))] += 1
         h = snap(T.timestamp())
+        pr_ = t["readings"].get(COVE_PROXY) or {}
+        if h is not None and pr_.get("valid") and pr_.get("t") is not None and (pr_.get("age_min") or 0) < 15:
+            proxy_acc[h].append(pr_["t"])
         if h is not None:
             for f, v in mesonet_tick(t, ps, octs).items():
                 if v is not None:
                     hourly[h][f].append(v)
     mes = {h: {f: st.mean(v) for f, v in fs.items()} for h, fs in hourly.items()}
+
+    cove = cove_adjustment({h: v["t"] for h, v in mes.items() if "t" in v},
+                           {h: st.mean(v) for h, v in proxy_acc.items()})
 
     ref_urma = {
         "t": urma("urma_truth_t.json", lambda k: (k - 273.15) * 9 / 5 + 32),
@@ -297,6 +346,7 @@ def main():
         "gain_question": {"station_temp": cross["t"], "corrected_temp": cross["t_corrected"]},
         "rain": {"wet_hours": len(wet), "mean_fraction_of_stations_wet": round(st.mean(wet.values()), 2) if wet else None},
         "verdict": verdict,
+        "cove_adjustment_shadow": cove,
     }
     OUT.write_text(json.dumps(out, indent=1, default=str))
 
@@ -312,6 +362,10 @@ def main():
     print(f"gain question vs URMA: station_temp {cross['t']['urma']['mae'] if cross['t']['urma'] else '-'} "
           f"corrected_temp {cross['t_corrected']['urma']['mae'] if cross['t_corrected']['urma'] else '-'}")
     print(f"low coverage below {cov_threshold} stations; stations/tick {out['stations_per_tick']}")
+    print(f"1.7 Cove adjustment (shadow, proxy Neptune Rd, walk-forward {cove['scored_days']} days): "
+          f"Mesonet vs proxy {cove['mesonet_vs_proxy']} -> adjusted {cove['mesonet_plus_adj_vs_proxy']}")
+    for k, v in cove["by_period"].items():
+        print(f"   {k:6} Mesonet {v['mesonet']} -> adjusted {v['adjusted']}")
     for f, v in verdict.items():
         print(f"VERDICT {f}: {'QUALIFIES' if v['qualifies'] else 'DOES NOT QUALIFY'} "
               f"(A held-out {v['loo_mae']} <= {v['loo_max']}: {v['pass_A']}; B |URMA bias| {v['urma_bias']} <= {v['bias_max']}: {v['pass_B']})")

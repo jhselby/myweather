@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T18:20Z",
+ "generated_at": "2026-11-22T18:31Z",
  "window": "2026-11-08 to 2026-11-22, autumn only (Tempest archive starts 11-08)",
  "n_ticks": 2013,
  "n_hours": 336,
@@ -1018,6 +1018,84 @@
    "pass_B": false,
    "qualifies": false,
    "bar": "served 1.63 F station-truth MAE; lead over weather.gov 0.12 F on URMA"
+  }
+ },
+ "cove_adjustment_shadow": {
+  "proxy": "192019",
+  "scored_days": 12,
+  "mesonet_vs_proxy": {
+   "n": 278,
+   "bias": -0.079,
+   "mae": 1.066
+  },
+  "mesonet_plus_adj_vs_proxy": {
+   "n": 278,
+   "bias": -0.078,
+   "mae": 0.744
+  },
+  "by_period": {
+   "night": {
+    "mesonet": {
+     "n": 139,
+     "bias": -0.662,
+     "mae": 0.84
+    },
+    "adjusted": {
+     "n": 139,
+     "bias": -0.133,
+     "mae": 0.586
+    }
+   },
+   "other": {
+    "mesonet": {
+     "n": 69,
+     "bias": -0.405,
+     "mae": 0.907
+    },
+    "adjusted": {
+     "n": 69,
+     "bias": -0.141,
+     "mae": 0.606
+    }
+   },
+   "midday": {
+    "mesonet": {
+     "n": 70,
+     "bias": 1.401,
+     "mae": 1.673
+    },
+    "adjusted": {
+     "n": 70,
+     "bias": 0.092,
+     "mae": 1.194
+    }
+   }
+  },
+  "adjustment_by_hour_et_all_days": {
+   "0": 0.5,
+   "1": 0.59,
+   "2": 0.67,
+   "3": 0.8,
+   "4": 0.56,
+   "5": 0.64,
+   "6": 0.57,
+   "7": 0.69,
+   "8": 0.02,
+   "9": -1.14,
+   "10": -1.75,
+   "11": -2.34,
+   "12": -1.59,
+   "13": -1.19,
+   "14": -1.0,
+   "15": -0.25,
+   "16": 0.4,
+   "17": 1.05,
+   "18": 1.19,
+   "19": 0.89,
+   "20": 0.7,
+   "21": 0.74,
+   "22": 0.69,
+   "23": 0.54
   }
  }
 }
