@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.132 • November 22, 2026 (Mesonet page: full station detail)</strong></summary>
+
+- Mesonet page is now full width, in two columns on a computer.
+- Carried over from the debug page's station section: stations minus model now, the eight directions (stations and corrected temperature per direction), and a full Tempest table (distance, direction, height, reading, correction now and by day / night, corrected reading, humidity, pressure, wind, age, 7-day uptime).
+- New: the Weather Underground stations we archive, with your own station, in a table and on the map as squares. They are not used in the Mesonet: adding the neighbours changed it by under 0.05°F, and your station at 0.04 miles would outweigh every other station.
+- Driftwood Rd is live: all eight directions now have a station.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.131 • November 22, 2026 (Wyman Cove Mesonet page; Driftwood Rd station added)</strong></summary>
 
 - New page: Wyman Cove Mesonet (mesonet.html, linked from the app's settings next to the debug page). It shows what the weather is at the Cove right now from the neighbourhood's stations alone, with KBVY, the forecast model and the buoy beside it as cross-checks, a station map, how the value is built, and how good it is (station agreement and bias against NOAA's URMA, Nov 8 to 22). Humidity qualifies as a truth to grade forecasts on; temperature and dew point do not yet.

@@ -14,7 +14,12 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+  main { max-width: 1500px; margin: 0 auto; padding: 20px 24px 48px; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .two > div > h2:first-child { margin-top: 0; }
+  @media (max-width: 1000px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  table.dense th, table.dense td { padding: 5px 7px; font-size: 0.9em; }
+  tr.off td { color: var(--muted); }
   h1 { font-size: 1.6em; margin: 0 0 2px; }
   h2 { font-size: 1.1em; margin: 28px 0 8px; padding-left: 10px; border-left: 3px solid var(--accent); }
   .sub { color: var(--muted); margin: 0 0 16px; }
@@ -36,7 +41,7 @@
   .tag.warn { color: var(--warn); border-color: var(--warn); }
   .tag.bad { color: var(--bad); border-color: var(--bad); }
   .scroll { overflow-x: auto; }
-  #map { height: 340px; border-radius: 10px; border: 1px solid var(--line); }
+  #map { height: 520px; border-radius: 10px; border: 1px solid var(--line); }
   .leaflet-tile-pane { filter: brightness(0.65) contrast(1.05); }
   .leaflet-container { background: #1a1f2a; font: inherit; }
   .legend { background: var(--panel); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 12px; line-height: 1.4; }
@@ -52,6 +57,8 @@
   <p class="sub" id="asof">Loading…</p>
   <div id="flags"></div>
 
+  <div class="two"><div>
+  <h2>Now</h2>
   <div class="card scroll">
     <table>
       <thead><tr><th>Field</th><th>Mesonet</th><th>Cross-checks <span class="muted">(shown beside it, never mixed in)</span></th></tr></thead>
@@ -60,9 +67,25 @@
     <p class="small muted" style="margin:10px 0 0;">The Mesonet value uses station readings only. No forecast model goes into it. The model column shows what the forecast model (HRRR) has for this hour, for comparison.</p>
   </div>
 
-  <h2>The stations</h2>
+  </div><div>
+  <h2>Map</h2>
   <div id="map"></div>
-  <p class="small muted">Each dot is a Tempest station; tap one for its name and reading. Colour is the station's correction right now: red reads warm and is corrected down, blue reads cold and is corrected up. The white dot is the Cove.</p>
+  <p class="small muted">Circles: Tempest stations (used), coloured by correction: red reads warm and is corrected down, blue reads cold and is corrected up. Tan squares: Weather Underground stations (archived, not used). Teal square at the white dot: our own station. Tap any for details.</p>
+  </div></div>
+
+  <div class="two"><div>
+  <h2>Stations minus model, now</h2>
+  <div class="card scroll"><div id="vsmodel" class="muted">loading…</div></div>
+  </div><div>
+  <h2>Directions</h2>
+  <div class="card scroll"><div id="octants" class="muted">loading…</div></div>
+  </div></div>
+
+  <h2>Tempest stations</h2>
+  <div class="card scroll"><div id="stations" class="muted">loading…</div></div>
+
+  <h2>Weather Underground stations <span class="muted small">(archived, not used in the Mesonet)</span></h2>
+  <div class="card scroll"><div id="wu" class="muted">loading…</div></div>
 
   <h2>How we got this</h2>
   <div class="card">
@@ -97,6 +120,79 @@
     return (243.04 * g / (17.625 - g)) * 9 / 5 + 32; };
   const KT = 1.150779, COVE = [42.5014, -70.8750];
   const OCT = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const octOf = (lat, lon) => { if (lat == null || lon == null) return null;
+    const r = Math.PI / 180, l1 = COVE[0] * r, l2 = lat * r, dl = (lon - COVE[1]) * r;
+    const b = (Math.atan2(Math.sin(dl) * Math.cos(l2), Math.cos(l1) * Math.sin(l2) - Math.sin(l1) * Math.cos(l2) * Math.cos(dl)) / r + 360) % 360;
+    return OCT[Math.floor(((b + 22.5) % 360) / 45)]; };
+  const MAX_MI = 2.5;
+  function offsetsNow(h) {
+    const o = h.station_offsets || {};
+    const hr = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }).format(new Date()));
+    const day = hr >= 7 && hr < 19;
+    return { day, t: { ...(o.temp || {}), ...((day ? o.temp_day : o.temp_night) || {}) }, td: o.temp_day || {}, tn: o.temp_night || {},
+             h: o.humidity || {}, p: o.pressure || {} };
+  }
+
+  function vsModel(d) {
+    const h = d.hyperlocal || {}, c = d.current || {};
+    const r = (f, st, mo, dd, u) => `<tr><td>${f}</td><td class="num">${fx(st, dd)}${u}</td><td class="num">${fx(mo, dd)}${u}</td><td class="num"><b>${st == null || mo == null ? "—" : sg(st - mo, dd)}</b>${u}</td></tr>`;
+    $("vsmodel").classList.remove("muted");
+    $("vsmodel").innerHTML = `<table class="dense"><thead><tr><th>Field</th><th>Stations</th><th>Model (HRRR)</th><th>Stations − model</th></tr></thead><tbody>` +
+      r("Temperature", h.station_temp, h.model_temp, 1, "°") + r("Humidity", h.station_humidity, h.model_humidity, 1, "%") +
+      r("Pressure", h.corrected_pressure_in, h.model_pressure_in, 2, "") + r("Wind", c.wind_speed_stations, c.model_wind_speed, 1, "") +
+      r("Gusts", c.wind_gusts_stations, c.model_wind_gusts, 1, "") + `</tbody></table>` +
+      `<p class="small muted" style="margin:8px 0 0;">Spread between directions ±${fx(h.bias_std, 1)}°F. This gap is what the forecast's station layer (L2) uses; how much of it the forecast takes is on the <a href="corrections_debug.html#sec-layer2">model notebook</a>.</p>`;
+  }
+
+  function octants(d) {
+    const h = d.hyperlocal || {}, O = offsetsNow(h), by = {};
+    for (const s of ((d.tempest || {}).stations || [])) {
+      if (!s.valid || s.temperature_f == null || s.distance_mi > MAX_MI) continue;
+      const o = octOf(s.latitude, s.longitude); (by[o] = by[o] || []).push(s.temperature_f - (O.t[String(s.station_id)] || 0));
+    }
+    const rows = OCT.map(o => { const v = by[o] || []; return `<tr${v.length ? "" : ' class="off"'}><td>${o}</td><td class="num">${v.length}</td>` +
+      `<td class="num">${v.length ? fx(v.reduce((a, b) => a + b, 0) / v.length, 1) + "°" : "—"}</td>` +
+      `<td class="small muted">${v.length === 0 ? "no station" : v.length < 3 ? "too few to drop an outlier" : ""}</td></tr>`; }).join("");
+    $("octants").classList.remove("muted");
+    $("octants").innerHTML = `<table class="dense"><thead><tr><th>Direction</th><th>Stations</th><th>Corrected temp</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
+      `<p class="small muted" style="margin:8px 0 0;">Each direction with a station counts equally in the Mesonet, however far away its stations are.</p>`;
+  }
+
+  function stations(d) {
+    const h = d.hyperlocal || {}, O = offsetsNow(h), up = h.station_uptime || {};
+    const S = ((d.tempest || {}).stations || []).slice().sort((a, b) => (a.distance_mi || 99) - (b.distance_mi || 99));
+    const rows = S.map(s => {
+      const id = String(s.station_id), off = O.t[id], u = up[id] || {};
+      const used = s.valid && s.distance_mi <= MAX_MI;
+      return `<tr${used ? "" : ' class="off"'}><td>${s.station_name || id}${s.waterfront ? ' <span class="tag">waterfront</span>' : ""}</td>` +
+        `<td class="num">${fx(s.distance_mi, 2)}</td><td>${octOf(s.latitude, s.longitude) || "—"}</td><td class="num">${fx(s.elevation_ft, 0)}</td>` +
+        `<td class="num">${fx(s.temperature_f, 1)}</td><td class="num">${sg(off == null ? null : -off, 1)}</td>` +
+        `<td class="num"><b>${s.temperature_f == null ? "—" : fx(s.temperature_f - (off || 0), 1)}</b></td>` +
+        `<td class="num">${sg(O.td[id] == null ? null : -O.td[id], 1)} / ${sg(O.tn[id] == null ? null : -O.tn[id], 1)}</td>` +
+        `<td class="num">${fx(s.relative_humidity, 0)}</td><td class="num">${s.sea_level_pressure_mb == null ? "—" : fx(s.sea_level_pressure_mb / 33.8639, 2)}</td>` +
+        `<td class="num">${fx(s.wind_avg_mph, 1)} / ${fx(s.wind_gust_mph, 1)}</td><td class="num">${fx(s.age_minutes, 0)}</td>` +
+        `<td class="num">${u.uptime_pct == null ? "—" : fx(u.uptime_pct, 0) + "%"}</td>` +
+        `<td class="small">${used ? "used" : !s.valid ? "not reporting" : "beyond 2.5 mi"}</td></tr>`;
+    }).join("");
+    $("stations").classList.remove("muted");
+    $("stations").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>mi</th><th>Dir</th><th>Elev ft</th><th>Reads °F</th>` +
+      `<th>Correction now</th><th>Corrected °F</th><th>Day / night correction</th><th>RH %</th><th>Pressure inHg</th><th>Wind / gust mph</th><th>Age min</th><th>Uptime 7 d</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
+      `<p class="small muted" style="margin:8px 0 0;">${h.outliers_trimmed || 0} set aside as outliers this run. Corrections are measured against the other stations, day (7 am to 7 pm) and night separately.</p>`;
+  }
+
+  function wu(m) {
+    if (!m) { $("wu").textContent = "Not available."; return; }
+    if (window.__wuMarkers) window.__wuMarkers(m); else window.__wuPending = m;
+    const ago = ts => ts ? Math.round((Date.now() - Date.parse(ts)) / 60000) + " min" : "—";
+    const row = (s, name) => `<tr><td>${name}</td><td>${s.lat == null ? "—" : octOf(s.lat, s.lon)}</td><td class="num">${fx(s.t, 1)}</td><td class="num">${fx(s.rh, 0)}</td>` +
+      `<td class="num">${fx(s.p, 2)}</td><td class="num">${ago(s.ts)}</td><td class="num">${sg(s.od, 1)} / ${sg(s.on, 1)}</td><td class="num">${fx(s.rmse, 2)}</td></tr>`;
+    const c = m.counts || {};
+    $("wu").classList.remove("muted");
+    $("wu").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>Dir</th><th>°F</th><th>RH %</th><th>inHg</th><th>Last reading</th><th>Day / night vs URMA</th><th>Error vs URMA</th></tr></thead><tbody>` +
+      (m.own ? row(m.own, "Our station (KMAMARBL124, not on the map)") : "") + (m.live || []).map(s => row(s, s.id)).join("") + `</tbody></table>` +
+      `<p class="small muted" style="margin:8px 0 0;">These 8 are fetched 4 times a day; ${c.wu_configured ?? "—"} configured in all (${c.wu_ok ?? "—"} working, ${c.wu_silent ?? "—"} silent), the rest twice a day. ` +
+      `Adding the 7 neighbours to the Mesonet changed it by under 0.05°F (Nov 18-22), so they stay archive-only. As of ${m.generated_at || "—"}.</p>`;
+  }
 
   function nowTable(d) {
     const c = d.current || {}, h = d.hyperlocal || {}, k = d.kbvy || {}, b = d.buoy_44013 || {};
@@ -163,6 +259,14 @@
         .addTo(map);
       pts.push(p);
     }
+    // Weather Underground stations (archived, not in the Mesonet): squares, positions as WU publishes them.
+    const sq = (p, html, col) => L.marker(p, { icon: L.divIcon({ className: "", iconSize: [12, 12], iconAnchor: [6, 6],
+      html: `<div style="width:12px;height:12px;background:${col};border:1.5px solid #0f1115;"></div>` }) }).bindPopup(html).addTo(map);
+    window.__wuMarkers = m => {
+      for (const s of (m.live || [])) if (s.lat != null) { sq([s.lat, s.lon], `<b>${s.id}</b> (Weather Underground)<br>Archived, not used in the Mesonet<br>Reads ${fx(s.t, 1)}°F`, "#c9a86a"); pts.push([s.lat, s.lon]); }
+      sq(COVE, `<b>Our station (KMAMARBL124)</b><br>Archived, kept out of the Mesonet: at 0.04 mi it would outweigh every other station<br>Reads ${fx((m.own || {}).t, 1)}°F`, "#7fd1c1");
+    };
+    if (window.__wuPending) window.__wuMarkers(window.__wuPending);
     L.circleMarker(COVE, { radius: 7, fillColor: "#fff", color: "#111", weight: 2, fillOpacity: 1 }).bindPopup("Wyman Cove").addTo(map);
     map.fitBounds(pts, { padding: [20, 20] });
   }
@@ -211,9 +315,11 @@
     .then(d => {
       const t = d.generated_at ? new Date(d.generated_at) : null;
       $("asof").textContent = t ? t.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) : "";
-      nowTable(d); flags(d); how(d); drawMap(d);
+      nowTable(d); flags(d); how(d); drawMap(d); vsModel(d); octants(d); stations(d);
     })
     .catch(e => { $("now").innerHTML = `<tr><td colspan="3" class="muted">Could not load live data (${e.message}).</td></tr>`; });
+  fetch("https://data.wymancove.com/mesonet.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : fetch("mesonet.json").then(x => x.ok ? x.json() : null)).then(wu).catch(() => wu(null));
   fetch("mesonet_validation.json?_=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null).then(validation).catch(() => validation(null));
 })();
