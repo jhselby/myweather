@@ -1035,6 +1035,7 @@
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← App</a>
   <a href="#sec-now">Conditions</a>
+  <a href="#sec-mesonet">Mesonet</a>
   <a href="#sec-front">Scorecard</a>
   <a href="#sec-engine-scoreboard">Detailed scoreboard</a>
   <a href="#sec-stack-health" class="accuracy">Trend</a>
@@ -1173,12 +1174,62 @@
 </div>
 </section>
 
+<section class="fp" id="sec-mesonet">
+<h2 class="section" id="sec-mesonet-h">Wyman Cove Mesonet</h2>
+<div class="fp-card" style="padding:14px 18px;">
+  <div style="color:#9aa6b6;font-size:0.88em;line-height:1.5;margin-bottom:10px;">Our estimate of conditions at the Cove right now, built from <b id="mn-n">—</b> stations with the model as a starting point. Every forecast starts here.</div>
+  <table class="fp-table">
+    <thead><tr><th>Field</th><th>Cove mesonet</th><th title="The stations' own readings, with no model mixed in.">Stations only</th><th>Model</th></tr></thead>
+    <tbody id="mn-rows"><tr><td colspan="4" style="color:#7f8ba0;">loading…</td></tr></tbody>
+  </table>
+  <div class="fp-sample" id="mn-t" style="margin-top:10px;"></div>
+  <details style="margin-top:6px;"><summary id="mn-sum" style="cursor:pointer;color:#7fb3ff;font-size:0.9em;">Stations</summary>
+    <table class="fp-table" style="margin-top:6px;">
+      <thead><tr><th>Station</th><th>Miles</th><th>Age</th><th>Temp</th><th>Offset</th><th>Wind</th></tr></thead>
+      <tbody id="mn-stn"></tbody>
+    </table>
+  </details>
+  <div style="margin-top:12px;color:#7f8ba0;font-size:0.82em;">How good is it? Not measured yet. The error on stations held out of the estimate will go here.</div>
+</div>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const med = a => { a = a.filter(v => v != null).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
+  const f = (v, d) => v == null ? "—" : Number(v).toFixed(d);
+  fetch("https://data.wymancove.com/weather_data.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(d => {
+      const c = d.current || {}, h = d.hyperlocal || {}, all = (d.tempest || {}).stations || [], S = all.filter(s => s.valid);
+      $("mn-n").textContent = S.length + " of " + all.length;
+      const m = k => med(S.map(s => s[k]));
+      const rows = [
+        ["Temperature", "°F", h.corrected_temp, h.station_temp, h.model_temp, 1],
+        ["Humidity", "%", c.humidity, m("relative_humidity"), null, 0],
+        ["Dew point", "°F", c.dew_point, m("dew_point_f"), null, 1],
+        ["Pressure", "mb", c.pressure, m("sea_level_pressure_mb"), null, 1],
+        ["Wind speed", "mph", c.wind_speed, c.wind_speed_stations, c.model_wind_speed, 1],
+        ["Gusts", "mph", c.wind_gusts, c.wind_gusts_stations, c.model_wind_gusts, 1],
+      ];
+      $("mn-rows").innerHTML = rows.map(r => `<tr><td class="fp-field">${r[0]}</td><td><span class="fp-big">${f(r[2], r[5])}</span> <span style="color:#7f8ba0;font-size:0.82em;">${r[1]}</span></td><td class="fp-nums"><b>${f(r[3], r[5])}</b></td><td class="fp-nums"><b>${f(r[4], r[5])}</b></td></tr>`).join("");
+      if (h.kalman_gain != null) $("mn-t").innerHTML = `Temperature: the model says <b>${f(h.model_temp, 1)}</b>, the stations say <b>${f(h.station_temp, 1)}</b>, and the mesonet takes <b>${Math.round(h.kalman_gain * 100)}%</b> of that ${f(h.weighted_bias, 1)}° gap (spread ±${f(h.bias_std, 1)}°, ${h.stations_used} of ${h.stations_total} stations).`;
+      const off = (h.station_offsets || {}).temp || {};
+      $("mn-sum").textContent = "Stations (" + S.length + " of " + all.length + " reporting)";
+      $("mn-stn").innerHTML = all.slice().sort((a, b) => a.distance_mi - b.distance_mi).map(s => {
+        const o = off[String(s.station_id)];
+        return `<tr style="${s.valid ? "" : "opacity:0.45;"}"><td class="fp-field">${s.station_name || s.station_id}${s.waterfront ? " <small>waterfront</small>" : ""}</td><td class="fp-nums">${f(s.distance_mi, 2)}</td><td class="fp-nums">${s.valid ? f(s.age_minutes, 0) + " min" : "not reporting"}</td><td class="fp-nums">${f(s.temperature_f, 1)}</td><td class="fp-nums">${o == null ? "—" : (o > 0 ? "+" : "") + f(o, 1)}</td><td class="fp-nums">${f(s.wind_avg_mph, 1)}</td></tr>`;
+      }).join("");
+    })
+    .catch(e => { $("mn-rows").innerHTML = `<tr><td colspan="4" style="color:#e08a70;">mesonet unavailable (${e.message})</td></tr>`; });
+})();
+</script>
+</section>
+
 <section class="fp" id="sec-front">
   <h2 class="section" id="sec-front-q">Scorecard</h2>
 
   <div class="fp-verdict" id="fp-verdict"><span style="color:#7f8ba0;">loading scorecard…</span></div>
   <div class="fp-sample" id="fp-sample"></div>
-  <details class="fp-legend" style="margin:0 4px 12px 4px;"><summary style="cursor:pointer;">how to read this, and terms</summary><div style="margin-top:6px;line-height:1.6;">Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Raw NBM alone is a softer bar: at the Cove it runs ~3°F cold at night. Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.<br>The 8 / 1 / 1 count is a tally of separate per-field tests, each against its own bar and truth, not one score.<br><br>
+  <details class="fp-legend" style="margin:0 4px 12px 4px;"><summary style="cursor:pointer;">how to read this, and terms</summary><div style="margin-top:6px;line-height:1.6;">Our bar is what a person actually reads: the <b>NWS forecast on weather.gov</b> for every field it carries (temperature, dew point, wind speed and direction, rain chance), and the <b>NBM</b> model blend for the rest (raw <b>HRRR</b> where NBM doesn't publish the field). Every number is our average error against theirs on the same hours, graded on the most independent truth each field has, leads 2–47 hours.<br>The 8 / 1 / 1 count is a tally of separate per-field tests, each against its own bar and truth, not one score.<br><br>
     <b>weather.gov</b> the NWS forecast a person sees on the weather.gov page. <b>NBM</b> NOAA's National Blend of Models, a public blended forecast. <b>HRRR</b> NOAA's hourly high-resolution model. <b>ECMWF</b> the European model.<br>
     <b>URMA</b> NOAA's hourly analysis of what the weather actually was, built from satellite and surface reports; independent of our stations and corrections. <b>Stations</b> our local weather stations only. <b>Model-blended truth</b> the logged "observed": station readings pulled toward the model forecast, so it flatters us.<br>
     <b>L1</b> the raw model. <b>L2</b> local station bias correction (first 5 h). <b>L3</b> lead-time decay. <b>L4</b> time-of-day correction. <b>Selector</b> picks which source or blend is served per field, weather pattern and lead time.<br>
@@ -1186,7 +1237,7 @@
 
   <div class="fp-card">
     <table class="fp-table">
-      <thead><tr><th>Field</th><th title="Our bar: the NWS forecast on weather.gov where it carries the field, otherwise NBM (HRRR where NBM has none). Same hours, same truth.">vs the bar</th><th title="Raw NBM, the softer bar; same hours, same truth.">vs raw NBM</th><th class="fp-bars">Our error <span style="color:#4fb3ff;">■</span> vs theirs <span style="color:#59606c;">■</span></th><th>Average error</th><th>Graded on</th></tr></thead>
+      <thead><tr><th>Field</th><th title="Our bar: the NWS forecast on weather.gov where it carries the field, otherwise NBM (HRRR where NBM has none). Same hours, same truth.">vs the bar</th><th class="fp-bars">Our error <span style="color:#4fb3ff;">■</span> vs theirs <span style="color:#59606c;">■</span></th><th>Average error</th><th>Graded on</th></tr></thead>
       <tbody id="fp-rows"></tbody>
     </table>
   </div>
@@ -1195,7 +1246,7 @@
     <b style="color:#7fc4ff;">Station truth</b> = our local weather stations only, no model mixed in. ·
     <b style="color:#e6c46a;">Model-blended truth</b> = stations pulled toward the model; it flatters us, so read these as optimistic. ·
     <b style="color:#9aa6b6;">Weak truth</b> = airport cloud reports, which can't see above 12,000 ft.
-    A field counts as a win or a loss only beyond ±2%. The bar is weather.gov where it carries the field and NBM (HRRR for the cloud layers) elsewhere; "vs raw NBM" is the softer comparison. <span id="fp-stamp"></span>
+    A field counts as a win or a loss only beyond ±2%. The bar is weather.gov where it carries the field and NBM (HRRR for the cloud layers) elsewhere. <span id="fp-stamp"></span>
   </div>
 
 </section>
@@ -1211,9 +1262,11 @@
       <div class="fp-h">Coming up <span>· earliest decision dates, not release dates</span></div>
       <ul class="fp-list">
         <li class="fp-done"><span class="fp-date">Nov 19</span><span><b>Temperature blend is live</b> for 6–47 h (bias removed against URMA, three models blended; v0.7.114). It cleared 5 of 6 or better days in every range. Re-evaluate on unseen days after about Nov 27; a switch turns it off if it scores worse.</span></li>
-        <li><span class="fp-date">Nov 21+</span><span><b>Which humidity truth is right?</b> Our stations read 0.6°F drier dew points than URMA; the airport sensor breaks the tie. Humidity and dew point wait on this.</span></li>
-        <li><span class="fp-date">Nov 22+</span><span><b>Wind on the water:</b> pick the stations that read like open water, then regrade wind and gusts on them.</span></li>
-        <li><span class="fp-date">Nov 24+</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours.</span></li>
+        <li class="fp-done"><span class="fp-date">Nov 21</span><span><b>Humidity truth settled:</b> the digest and Stack health grade dew point on NOAA URMA (+6% over weather.gov); the scorecard grades it on our stations (+22%), which read drier than URMA.</span></li>
+        <li><span class="fp-date">Nov 23</span><span><b>Gust lead 45–47 h:</b> re-read on runs since Nov 18, after the NBM horizon fix.</span></li>
+        <li><span class="fp-date">Nov 24+</span><span><b>Cloud cover:</b> re-read the one long-lead blend that passed on a single week, with a satellite check added. On 11-18 the satellite agreed with airport and URMA truth: served cloud cover ties NBM past 5 hours. <b>Dew point:</b> re-read on rows since the temperature blend went live.</span></li>
+        <li><span class="fp-date">Nov 27</span><span><b>Wind and gusts, scored on URMA now:</b> bias-removed blends for wind and gusts are scoring in the background. Served gusts run about 21% worse than raw NBM on URMA (about 3 mph low); serving the gust blend would raise them 2–3 mph. Decision after 5 of 7 forward days.</span></li>
+        <li><span class="fp-date">Dec 4+</span><span><b>Rain chance:</b> re-read after two weeks of clean rows (rain truth is now hourly totals; weather.gov rain chance was missing on dry hours until Nov 21).</span></li>
       </ul>
       <div style="margin-top:8px;font-size:0.8em;"><a href="#sec-state-now" style="color:#7fb3ff;">Full detail, killed ideas and what's not built →</a></div>
     </div>
@@ -1264,11 +1317,11 @@
     ["ch", "High cloud",     "cloud above ~20,000 ft",        "%",    1],
   ];
   const NOTES = {
-    t:  "A new temperature blend went live Nov 19 (6–47 h). The scored window still mostly predates it, so the 24–47 h line should move as days are added.",
-    h:  "Our stations read drier than URMA; which one is right is decided no earlier than ~Nov 21.",
-    dp: "On URMA truth we lose to NBM here; which truth is right is decided no earlier than ~Nov 21.",
-    ws: "Backyard anemometers, not wind on the water; that truth comes no earlier than ~Nov 22.",
-    wg: "Backyard anemometers, not wind on the water; that truth comes no earlier than ~Nov 22.",
+    t:  "A new temperature blend went live Nov 19 (6–47 h). Days before it still sit in the 7-day window, so the line keeps moving as they roll off.",
+    h:  "A URMA humidity blend was tested again Nov 20 and rejected.",
+    dp: "Follows the temperature blend. One bad day, Nov 19; re-read ~Nov 24.",
+    ws: "A new wind blend is scoring; serve decision ~Nov 27.",
+    wg: "We run about 3 mph low. A new gust blend is scoring; serve decision ~Nov 27.",
     pa: "Served is raw HRRR passed through; NBM is a hair better, within rounding. A pipeline limit, not a system failure.",
     pp: "Over 78 days NBM ties us at 0–23h and does worse at 24–47h, so we keep HRRR.",
   };
@@ -1306,14 +1359,14 @@
       }
       if (us == null || them == null) continue;
       let nws = null;
-      if (two && k === "t" && two.lift_vs_nws_urma_pct != null) nws = two.lift_vs_nws_urma_pct;
+      if (two && truth === "urma" && two.lift_vs_nws_urma_pct != null) nws = two.lift_vs_nws_urma_pct;
       else if (two && truth === "stn" && two.lift_vs_nws_stations_pct != null) nws = two.lift_vs_nws_stations_pct;
       else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) nws = tc.nws_shrunk[k].lift_vs_nws_pct;
       // The bar: NWS forecast (weather.gov) where it carries the field, else NBM/HRRR.
       let bUs = us, bThem = them, bSrc = src;
       if (nws != null) {
         let nu = null, nt = null;
-        if (k === "t" && two && two.nws_mae_urma != null) { nu = two.served_mae_urma_nwsrows; nt = two.nws_mae_urma; }
+        if (two && truth === "urma" && two.nws_mae_urma != null) { nu = two.served_mae_urma_nwsrows; nt = two.nws_mae_urma; }
         else if (two && truth === "stn" && two.nws_mae_stations != null) { nu = two.served_mae_stations_nwsrows; nt = two.nws_mae_stations; }
         else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) { nu = tc.nws_shrunk[k].served_mae; nt = tc.nws_shrunk[k].nws_mae; }
         if (nu != null && nt != null) { bUs = nu; bThem = nt; bSrc = "weather.gov"; }
@@ -1335,11 +1388,10 @@
       const [cls, label, tip] = TRUTH[r.truth];
       const per = Math.max(r.bUs, r.bThem);
       const rc = r.lift > 2 ? "#6fe3a8" : r.lift < -2 ? "#ff9a8a" : "#c9d1dc";
-      const sep = (r.k === "cl") ? `<tr><td colspan="6" style="color:#7f8ba0;font-size:0.82em;padding:12px 12px 4px;">Cloud layers: the app uses these for sky and sunset; there is no good truth for them yet, so take these lightly.</td></tr>` : "";
+      const sep = (r.k === "cl") ? `<tr><td colspan="5" style="color:#7f8ba0;font-size:0.82em;padding:12px 12px 4px;">Cloud layers: the app uses these for sky and sunset; there is no good truth for them yet, so take these lightly.</td></tr>` : "";
       return sep + `<tr>
         <td class="fp-field">${r.name}<small>${r.desc}</small></td>
         <td><span class="fp-big" style="color:${c};">${r.bar > 0 ? "+" : ""}${fmt(r.bar, 0)}%</span> <span style="color:${c};font-size:0.82em;">${word}</span><small style="display:block;color:#7f8ba0;font-size:0.78em;">vs ${r.bSrc}</small></td>
-        <td><span style="font-weight:650;font-variant-numeric:tabular-nums;color:${rc};">${r.lift > 0 ? "+" : ""}${fmt(r.lift, 0)}%</span></td>
         <td class="fp-bars"><div class="fp-bar us" style="width:${(r.bUs / per * 100).toFixed(1)}%"></div><div class="fp-bar them" style="width:${(r.bThem / per * 100).toFixed(1)}%"></div></td>
         <td class="fp-nums">ours <b>${fmt(r.bUs, r.dec)}</b> vs ${r.bSrc} <b>${fmt(r.bThem, r.dec)}</b> ${r.unit}${NOTES[r.k] ? `<span class="fp-note">${NOTES[r.k]}</span>` : ""}</td>
         <td><span class="fp-truth ${cls}" title="${tip} n=${(r.n || 0).toLocaleString()} hour-forecasts.">${label}</span></td>
@@ -2463,7 +2515,7 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.2% agg; l6_nbm v0.6.453 scaffold ENABLED=False)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> of corrected HRRR, corrected NBM and raw ECMWF IFS, one weight per lead band, refit daily (v0.7.74 bands, v0.7.75 ECMWF, v0.7.85 ECMWF-timing fix). L2 additive station correction feeds the HRRR side and is worth ~5h. Live 6–11h loses to HRRR 5–15% (coin-flip by day): v0.7.75 HOLD, re-read 11-05. The Selector column is the fallback, not what is served.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served 6–47h: t_urmab</strong> (v0.7.114, 11-19): per-source bias against URMA removed, then the 3-way blend of corrected HRRR, corrected NBM and raw ECMWF IFS, one weight per lead band, refit daily. 0–5h is still the 3-way blend (v0.7.74/75/85). L2 additive station correction feeds the HRRR side and is worth ~5h. Kill switch <code>runtime_tables/urma_blend_serve.json</code>; ship rule at 14 holdout days ~11-27. The Selector column is the fallback, not what is served.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
@@ -2475,19 +2527,19 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.5% agg)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> (HRRR / NBM / ECMWF) per lead band (v0.7.81), replacing the 6–11h terminal blend (dropped v0.7.69) and the frontal-only 24–47h blend. 11-05 gate tests dropping ECMWF. L2 wind blend is useful to ~3h only. wsbp calm-only gate <code>ENABLED=False</code>.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: 3-way blend</strong> (HRRR / NBM / ECMWF) per lead band (v0.7.81), replacing the 6–11h terminal blend (dropped v0.7.69) and the frontal-only 24–47h blend. Since the 11-06 refit served ws ≈ NBM at 6–23h (ECMWF weight 0 there). Graded on URMA since 11-20; <code>ws_urmab</code> shadow scoring, serve decision ~11-27. L2 wind blend is useful to ~3h only. wsbp calm-only gate <code>ENABLED=False</code>.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct → L3 lead-decay → L4 diurnal <span style="opacity:0.6;">(09-24 v0.7.1)</span> → wg residual persistence <span style="opacity:0.6;">(dormant)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm</div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: HRRR / NBM blend</strong>, one weight (v0.7.71, refit daily). Stack: L3 + L4 with SKIP tables; NBM L3_NBM runs nw_flow/6-11 (v0.7.66). L2 useful to ~3h. wg residual persistence <code>ENABLED=False</code>.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Served: HRRR / NBM blend</strong>, one weight (v0.7.71, refit daily); on URMA gusts it loses to raw NBM ~21% (served ~3 mph low). <code>wg_urmab</code> shadow scoring, serve decision ~11-27. Stack: L3 + L4 with SKIP tables; NBM L3_NBM runs nw_flow/6-11 (v0.7.66). L2 useful to ~3h. wg residual persistence <code>ENABLED=False</code>.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive → L3 skip-table → dpbp → dp residual persistence <span style="opacity:0.6;">(dormant)</span> <span style="opacity:0.55;">(derived from corrected t, h via Magnus)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Derived, not blended:</strong> Magnus(blended t, blended h) on every blended hour (v0.7.72). No independent skill chain. dpbp LIVE since 08-04. L2 gain holds out past 9h.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Derived, not blended:</strong> Magnus(blended t, blended h) on every blended hour (v0.7.72), so it follows t_urmab since 11-19; graded on URMA, beats weather.gov. No independent skill chain. dpbp LIVE since 08-04. L2 gain holds out past 9h.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover <span style="font-size:0.72em;opacity:0.55;">(derived)</span></td>
@@ -2558,7 +2610,7 @@
 
 
 <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-state-now">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Where things stand — 2026-11-15 (v0.7.105) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· rebuilt 11-04, evaluation list swept 11-15; the 10-09 version is in the Archive</span></summary>
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">Where things stand — 2026-11-22 (v0.7.128) <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">· rebuilt 11-04, evaluation list swept 11-22; the 10-09 version is in the Archive</span></summary>
 <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
 
   <!-- Measurement -->
@@ -2647,15 +2699,16 @@
     <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">Being evaluated next</div>
     <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
       <ul style="margin:0 0 8px 16px;padding:0;">
-        <li><strong>t_urmab — SERVED since v0.7.114 (Nov 19, 6–47h; shadow from v0.7.97):</strong> per-source bias against URMA removed, then HRRR / NBM / ECMWF blended, 6–47h. Walk-forward over 69 days +12 / +18 / +17% over served at 6–11 / 12–23 / 24–47h; holdout intervals still span zero. Its cloud refit only started working 11-14 (see refitter below). Served after 5 of 6 or better forward days positive in every band; the old served value is logged as t_pre_urmab and a switch (runtime_tables/urma_blend_serve.json) reverts it with no deploy. Still to come: the ship rule at 14 holdout days, about 11-27. Daily read: <code>analysis/urma_shadow_score.py</code>.</li>
+        <li><strong>t_urmab — SERVED since v0.7.114 (Nov 19, 6–47h; shadow from v0.7.97):</strong> per-source bias against URMA removed, then HRRR / NBM / ECMWF blended, 6–47h. Walk-forward over 69 days +12 / +18 / +17% over served at 6–11 / 12–23 / 24–47h; holdout intervals still span zero. Served after 5 of 6 or better forward days positive in every band; on 11-22 the forward score vs the old value was +33 / +35 / +42% (7 of 7 days, tripwire ok); the old served value is logged as t_pre_urmab and a switch (runtime_tables/urma_blend_serve.json) reverts it with no deploy. Still to come: the ship rule at 14 holdout days, about 11-27. Daily read: <code>analysis/urma_shadow_score.py</code>.</li>
         <li><strong>Daily refit was failing — FIXED 11-14 (v0.7.100):</strong> the refitter ran out of memory at 8 GB on 11-13 and 11-14, so the served blend weights were last refit 11-12 and the URMA shadow had never refit in the cloud. Now 16 GB, each table fitted in its own process, status written after every table, and <code>analysis/refitter_status.py</code> fails the digest when any table is more than a day old.</li>
-        <li><strong>~11-17 — t station-truth fit, RERUN before any flip:</strong> 11-14 early run, station-fit weights vs today's shrunk-fit weights, scored on station truth: −4.7% [−14.3, +0.9], 3/8 days (−5.7% on URMA). The station fit had only 5–13 days against 14; rerun with a full 14-day window (<code>analysis/t_station_truth_wf.py</code>). Flip only if it passes the ship rule.</li>
-        <li><strong>~11-21 — moisture truth tie-breaker (gates h):</strong> on the same rows the stations read 2.5% RH and 0.6°F dew point drier than URMA, and the dp verdict flips with the truth (served dp beats NBM +5..13% on stations, loses −19..−36% on URMA; NBM is calibrated to URMA). KBVY dew point logs since v0.7.98; compare Tempest / KBVY / URMA after a week. h stays on today's truth until then.</li>
+        <li><strong>t station-truth fit — CLOSED 11-16:</strong> fails on both stations and URMA; no flip. The station fit does not beat the served blend.</li>
+        <li><strong>Moisture truth — CLOSED 11-21:</strong> dew point is graded on URMA, where served beats weather.gov (+6.4% since 11-02; +4.2% on 11-20 read). Station-graded dew point (+21.8%) was flattered, since stations read 0.6°F drier. h stays on stations vs raw NBM; the URMA h blend was rejected again 11-20. Weather Underground re-rank dropped (~1% on forecast).</li>
         <li><strong>Cloud truth — done 11-15 (v0.7.102):</strong> cc is graded on URMA cloud cover. On it, raw NBM is the best cloud source at every lead (MAE 16–17; ECMWF ~40% worse, HRRR 50–75% worse) and served cc ties it at 6–47h (+2% at 0–5h). Every HRRR-side cloud layer (L1–L6) is 33–50% worse than NBM. A walk-forward HRRR/NBM/ECMWF blend on URMA finds nothing over 72 days; one 24–47h holdout pass rests on one week (re-read ~11-24). cc is at the normal source; cl/cm/ch still have no truth (needs GOES layer products).</li>
-        <li><strong>NBM feed fixes — 11-15 (v0.7.103–105), verify ~11-17/18:</strong> (1) we read NBM out to only 47 hours of a 2–6 hour old run, so 45–47h had no NBM on any field and fell back to HRRR (error jumped there: t +10%, h +23%, dp +40%, wg +34%, cc +25% vs 44h); now 55 hours, 3-hourly steps filled in. (2) NBM sunshine is 3-hourly from ~34h, so 2 of 3 daylight hours at 34–44h were raw HRRR (104 W/m² off vs 58 with NBM); filled per field now. (3) the pull skipped the newest complete NBM run; now one hour fresher. Check in the pair log that the 45h jump and the sr gap are gone.</li>
-        <li><strong>~11-22 — wind-on-water truth:</strong> only Neptune Rd is a live waterfront station; rank the rest against it over two weeks of <code>station_readings</code>, then the airport floor, split-network L2 and wg stronger L2 (held, +2.4% on shrunk truth).</li>
-        <li><strong>~11-19 — C1b revival:</strong> refit the cluster-spread cuts on <code>cluster_spread_tempest_log.json</code>, then point the confidence layer at it.</li>
-        <li><strong>Backups:</strong> weekly bucket copy (last 11-08, next 11-15); 12-06 next pair-log archive snapshot. Refitter memory stays at 16 GB: the per-table peak is 8.3 GB, all from the learned selector (which currently finds no cells); 12 GB is the only safe smaller size (checked 11-15).</li>
+        <li><strong>NBM feed fixes — 11-15 (v0.7.103–105):</strong> 55 h read with 3-hourly steps filled, per-field sunshine fill, newest complete run. The 45-hour error step is gone everywhere except gusts; wg lead 45–47 re-read ~11-23 (its L3 bins were under the 20-pair floor until 11-18). sr 34–47h daylight re-read ~11-29.</li>
+        <li><strong>Wind and gusts on URMA (Joe 11-20):</strong> Neptune Rd, the only live waterfront anemometer, correlates 0.35 with URMA wind (worst of 17), so wind is graded on URMA instead of a waterfront-only truth. <code>ws_urmab</code> (0–47h, v0.7.123/126) and <code>wg_urmab</code> (v0.7.125) are bias-removed blends scoring as shadows; first scores 11-22 had only 1–2 days (tripwire needs 3). Serve decision at 5 of 7 forward days, ~11-27, against both served and raw NBM. Serving gusts raises them 2–3 mph.</li>
+        <li><strong>pp re-read ~12-04:</strong> rain truth is Tempest hourly accumulation since v0.7.124, and weather.gov rain chance was missing on dry hours until v0.7.127 (11-21); earlier pp-vs-weather.gov scores used a wet-heavy row set.</li>
+        <li><strong>C1b revival:</strong> refit the cluster-spread cuts on <code>cluster_spread_tempest_log.json</code>, then point the confidence layer at it. Not started; no date.</li>
+        <li><strong>Backups:</strong> weekly bucket copy (last 11-22); 12-06 next pair-log archive snapshot. Artifact Registry cleanup is live (10.2 GB to 1.1 GiB, 11-22); the publisher runs every 3 h. Refitter memory stays at 16 GB: the per-table peak is 8.3 GB, all from the learned selector (which currently finds no cells); 12 GB is the only safe smaller size (checked 11-15).</li>
       </ul>
       <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Not built</div>
       <ul style="margin:0 0 8px 16px;padding:0;">
@@ -5981,7 +6034,7 @@ async function renderPerFieldScoring() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     d = await res.json();
   } catch (err) {
-    host.innerHTML = `<div style="opacity:0.6;padding:8px;">per_field_scoring.json not yet available (${err.message}). Publisher runs hourly; check back in ~1h.</div>`;
+    host.innerHTML = `<div style="opacity:0.6;padding:8px;">per_field_scoring.json not yet available (${err.message}). Publisher runs every 3 h; check back later.</div>`;
     return;
   }
   const pf7 = (d.windows && d.windows["7d"] && d.windows["7d"].per_field) || {};

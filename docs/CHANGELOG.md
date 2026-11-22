@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.129 • November 22, 2026 (Debug page staleness sweep)</strong></summary>
+
+- Debug page: the scorecard drops the "vs raw NBM" column. "Coming up" now lists what is actually next (gust lead 45–47 re-read Nov 23, cloud and dew point re-reads Nov 24, wind and gust serve decision Nov 27, rain chance Dec 4) and marks the humidity-truth question done.
+- Debug page: the per-field notes under the scoreboard, the "Where things stand" evaluation list and the t / ws / wg / dp architecture rows now say what is live (temperature blend served since Nov 19; wind and gust blends scoring as shadows; wind graded on URMA). Closed items (t station-truth fit, moisture truth) are marked closed, and stale "re-read 11-05" text is gone.
+- Debug page: new "Wyman Cove Mesonet" section after Current Conditions: the estimate of conditions at the Cove right now (mesonet vs stations only vs model, with how far the mesonet pulls toward the stations) and the station list. Validation (error on held-out stations) is not measured yet and says so.
+- Backups and the publisher cadence line now match the server (weekly copy ran Nov 22; Artifact Registry down from 10.2 GB to 1.1 GiB).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.128 • November 21, 2026 (Stack health chart reaches back to August 25)</strong></summary>
 
 - Debug page: the Stack health field lines now start August 25 instead of late October. August 25 is the oldest day we still have every forecast for, with weather.gov's forecast saved alongside. Gust truth (URMA) was backfilled to August 25 so gusts start there too.
