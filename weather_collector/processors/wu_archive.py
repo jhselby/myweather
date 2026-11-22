@@ -22,7 +22,7 @@ from ..gcs_io import load_json, upload_json
 from ..utils import redact_secrets
 
 WU_ARCHIVE_ENABLED = True
-# Joe's own station (16 Indianhead Circle, HomeKit sensor: t/rh/p only). Archived with the
+# Joe's own station (at the Cove reference point; HomeKit sensor: t/rh/p only). Archived with the
 # neighbours but kept out of wu_scraper_realtime.STATIONS: at ~0.04 mi its 1/d^2 weight would
 # swamp the live aggregate if WU_ENABLED were ever turned back on.
 OWN_STATION = "KMAMARBL124"

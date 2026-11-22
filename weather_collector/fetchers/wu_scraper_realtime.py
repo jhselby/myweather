@@ -68,7 +68,7 @@ CULLED_STATIONS = [
     "KMASALEM18", "KMASWAMP24",
 ]
 
-# Wyman Cove reference point (16 Indianhead Circle)
+# Wyman Cove reference point
 WYMAN_COVE_LAT = 42.5014
 WYMAN_COVE_LON = -70.8750
 WYMAN_COVE_ELEV_FT = 30.0  # Basement walkout elevation

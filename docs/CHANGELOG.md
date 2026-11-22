@@ -111,7 +111,7 @@
 
 * **Your own key and station**
   - Weather Underground readings are being collected again with your own key. The old key was never yours and had been refused since October.
-  - Your own station (Indianhead, KMAMARBL124: temperature, humidity and pressure) is collected first on every run. It is kept out of the live station average, where its distance of about 0.04 miles would give it a weight far above every neighbour.
+  - Your own station (KMAMARBL124: temperature, humidity and pressure) is collected first on every run. It is kept out of the live station average, where its distance of about 0.04 miles would give it a weight far above every neighbour.
 * **Eight stations every 10 minutes**
   - Your station plus one neighbour per compass direction (the closest healthy one) are collected every 10 minutes, about 1,150 calls a day. The other 27 working neighbours are collected twice a day, since one call returns a whole day. Total is about 1,200 calls a day against a free limit of about 1,500, and a refusal stops the whole run.
   - A liveness check of all 41 neighbours found 35 reporting and 6 silent.
