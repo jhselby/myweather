@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.137 • November 22, 2026 (Shadow stations for the Mesonet)</strong></summary>
+
+- Six of the eight directions have two stations or fewer, so no outlier can be dropped there. A scan of the Tempest map found nine more stations with complete, live data, 2.9–4.4 miles out (past the 2.5-mile limit). The collector now reads them and archives their readings under a separate "shadow" key. They are not in the Mesonet and the forecast does not use them.
+- After about two weeks the held-out test is re-run with and without them. They are added only if the typical miss drops and the near stations' corrections do not move.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.136 • November 22, 2026 (Two pages: Mesonet and Model)</strong></summary>
 
 - The Mesonet page now holds everything about the Mesonet, including the old L2 observation layer: how each field is combined, the compass coverage chart, the network bias estimate, and station feed health. It also lists what is being tested next (the Cove adjustment on Nov 29, your yard station on Dec 2).

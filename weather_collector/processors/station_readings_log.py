@@ -57,7 +57,7 @@ def _applied_offsets(station_offsets, now_utc):
 def build_entry(weather_data, tempest_data, station_offsets, now_utc):
     stations = (tempest_data or {}).get("stations") or []
     if not stations:
-        return None, {}
+        return None, {}, {}
     temp_o, hum_o, pres_o = _applied_offsets(station_offsets, now_utc)
     readings, meta = {}, {}
     for s in stations:
@@ -80,7 +80,22 @@ def build_entry(weather_data, tempest_data, station_offsets, now_utc):
         "l2": {k: hyp.get(k) for k in _ANCHOR_KEYS if hyp.get(k) is not None},
         "readings": readings,
     }
-    return entry, meta
+    # v0.7.137: shadow stations (outside the 2.5 mi Mesonet limit) under their own keys, so
+    # nothing that reads "readings" / "stations" can pick them up. No offsets: never in the Mesonet.
+    shadow, shadow_meta = {}, {}
+    for s in (tempest_data or {}).get("shadow_stations") or []:
+        sid = str(s.get("station_id") or "")
+        if not sid:
+            continue
+        row = {"valid": bool(s.get("valid")), "age_min": s.get("age_minutes")}
+        for src, dst in _READING_KEYS.items():
+            if s.get(src) is not None:
+                row[dst] = s[src]
+        shadow[sid] = row
+        shadow_meta[sid] = {k: s.get(k) for k in _META_KEYS}
+    if shadow:
+        entry["shadow"] = shadow
+    return entry, meta, shadow_meta
 
 
 def append_station_readings(weather_data, tempest_data, station_offsets, now_utc=None):
@@ -88,18 +103,20 @@ def append_station_readings(weather_data, tempest_data, station_offsets, now_utc
     Best-effort: failures log a warning and never affect the run."""
     now_utc = now_utc or datetime.now(timezone.utc)
     try:
-        entry, meta = build_entry(weather_data, tempest_data, station_offsets, now_utc)
+        entry, meta, shadow_meta = build_entry(weather_data, tempest_data, station_offsets, now_utc)
         if entry is None:
             return
         path = f"{GCS_PREFIX}{now_utc.strftime('%Y-%m-%d')}.json"
         doc = load_json(path, default=None) or {"schema": 1, "stations": {}, "ticks": []}
         doc["stations"].update(meta)
+        if shadow_meta:
+            doc.setdefault("shadow_stations", {}).update(shadow_meta)
         if doc["ticks"] and doc["ticks"][-1].get("ts") == entry["ts"]:
             doc["ticks"][-1] = entry  # rerun of the same tick
         else:
             doc["ticks"].append(entry)
         upload_json(doc, path, path)
         logging.info(f"  ✓ station_readings: {len(entry['readings'])} stations, "
-                     f"{len(doc['ticks'])} ticks today")
+                     f"{len(doc['ticks'])} ticks today" + (f", {len(entry.get('shadow', {}))} shadow" if entry.get("shadow") else ""))
     except Exception as e:
         logging.warning(f"  ⚠  station_readings log failed: {redact_secrets(e)}")

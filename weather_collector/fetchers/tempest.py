@@ -74,6 +74,22 @@ CULLED_TEMPEST_STATIONS = [
     {"id": 92837,  "name": "Harbor Ave"},
 ]
 
+# SHADOW stations (v0.7.137): complete-data Tempest stations 2.9-4.4 mi out, beyond the 2.5 mi
+# Mesonet limit. Fetched and archived (station_readings "shadow" key) but never used by the
+# Mesonet or the forecast. Purpose: after ~2 weeks, re-run the held-out test with and without them
+# (6 of 8 directions have <= 2 stations, so no outlier trimming there). Found by the 11-22 map scan.
+SHADOW_TEMPEST_STATIONS = [
+    {"id": 79483,  "name": "MacArthur Cir"},
+    {"id": 147166, "name": "Fisherman's Beach"},
+    {"id": 91116,  "name": "Dark Ln"},
+    {"id": 23426,  "name": "Hopkins Ave"},
+    {"id": 231972, "name": "Lawnbank Rd"},
+    {"id": 8167,   "name": "White Chimneys"},
+    {"id": 204618, "name": "Warren St"},
+    {"id": 148190, "name": "Aberdeen Ave"},
+    {"id": 233715, "name": "Thissell St"},
+]
+
 _BUILD    = "181"
 _BASE_URL = "https://swd.weatherflow.com/swd/rest/observations/location"
 _SIGNIN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
@@ -139,6 +155,43 @@ def _fetch_station(sid, token):
     if not m:
         raise ValueError(f"unexpected response format for station {sid}")
     return json.loads(m.group(1))
+
+
+def _fetch_shadow(token, now_epoch):
+    """Slim entries (the archived fields only) for the shadow stations. Never raises."""
+    out = []
+    for st in SHADOW_TEMPEST_STATIONS:
+        try:
+            raw = _fetch_station(st["id"], token)
+            if raw.get("status", {}).get("status_code") != 0:
+                continue
+            obs = (raw.get("obs") or [{}])[0]
+            slat, slon = raw.get("latitude"), raw.get("longitude")
+            dist = _haversine_mi(LAT, LON, slat, slon) if slat and slon else None
+            ts = obs.get("timestamp")
+            temp_c, wind_ms = obs.get("air_temperature"), obs.get("wind_avg")
+            out.append({
+                "station_id": st["id"],
+                "station_name": raw.get("public_name") or raw.get("station_name", st["name"]),
+                "latitude": slat, "longitude": slon, "elevation_ft": raw.get("elevation"),
+                "distance_mi": round(dist, 2) if dist is not None else None,
+                "valid": temp_c is not None and wind_ms is not None,
+                "age_minutes": round((now_epoch - ts) / 60, 1) if ts else None,
+                "temperature_f": _c_to_f(temp_c),
+                "dew_point_f": _c_to_f(obs.get("dew_point")),
+                "relative_humidity": obs.get("relative_humidity"),
+                "sea_level_pressure_mb": obs.get("sea_level_pressure"),
+                "wind_avg_mph": _ms_to_mph(wind_ms),
+                "wind_gust_mph": _ms_to_mph(obs.get("wind_gust")),
+                "wind_lull_mph": _ms_to_mph(obs.get("wind_lull")),
+                "wind_direction": obs.get("wind_direction"),
+                "solar_radiation_wm2": obs.get("solar_radiation"),
+                "precip_rate_in": _mm_to_in(obs.get("precip")),
+                "precip_accum_1hr_in": _mm_to_in(obs.get("precip_accum_last_1hr")),
+            })
+        except Exception as e:  # noqa: BLE001
+            logging.warning(f"  ⚠  Tempest shadow {st['id']}: {e}")
+    return out
 
 
 def fetch_tempest():
@@ -238,4 +291,10 @@ def fetch_tempest():
         meta["status"] = "degraded"
         logging.error(f"  ⚠  Tempest degraded: {meta['stations_valid']}/{len(TEMPEST_STATIONS)} valid stations")
 
-    return {"best": results[0], "stations": results}, meta
+    shadow = []
+    try:
+        shadow = _fetch_shadow(token, now_epoch)
+        meta["shadow_fetched"] = len(shadow)
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"  ⚠  Tempest shadow fetch failed: {e}")
+    return {"best": results[0], "stations": results, "shadow_stations": shadow}, meta
