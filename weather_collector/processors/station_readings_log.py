@@ -42,7 +42,7 @@ _READING_KEYS = {
 _META_KEYS = ("station_name", "waterfront", "latitude", "longitude", "elevation_ft", "distance_mi")
 _ANCHOR_KEYS = ("model_temp", "weighted_bias", "kalman_gain", "station_temp", "bias_std",
                 "model_humidity", "weighted_bias_humidity", "kalman_gain_humidity", "station_humidity",
-                "aggregation", "octants_used", "stations_used")
+                "aggregation", "octants_used", "stations_used", "cove_temp", "cove_humidity", "cove_adjust_t", "cove_adjust_h")
 
 
 def _applied_offsets(station_offsets, now_utc):

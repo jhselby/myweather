@@ -31,6 +31,7 @@ from weather_collector.processors.solar_correction import validate_table as _lsr
 from weather_collector.processors.sr_sea_breeze_lsr_override import validate_table as _sb_structure
 from weather_collector.processors.terminal_static_blend import validate_field_table as _fblend_structure
 from weather_collector.processors.urma_blend_shadow import validate_table as _urma_structure
+from weather_collector.processors.cove_value import validate_table as _cove_structure
 
 MIN_ROWS_RATIO = 0.5   # refuse a fit that saw < half the rows of the previous one
 
@@ -270,5 +271,13 @@ TABLES = [
         "summary": lambda new, prev: ", ".join(
             f"{b} w={c['w']} bias={c['bias']}" for b, c in
             ((new.get("fields") or {}).get("t", {}).get("bands") or {}).items()),
+    },
+    {   # Cove adjustment (v0.7.138, SHADOW): Mesonet -> Cove value, learned from Neptune Rd. Reads the station archive.
+        "name": "mesonet_cove_adjust_curated.json",
+        "out": "weather_collector/data/mesonet_cove_adjust_curated.json",
+        "steps": [{"module": "analysis.mesonet_cove_adjust_fit", "call": "fit"}],
+        "guard": _rows_guard(_cove_structure, "n_rows_kept", 200),
+        "summary": lambda new, prev: ", ".join(
+            f"{f} {len(v.get('hourly') or {})}h/{v.get('n_days')}d" for f, v in (new.get("fields") or {}).items()),
     },
 ]

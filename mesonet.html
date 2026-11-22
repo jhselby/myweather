@@ -200,7 +200,7 @@
       <thead><tr><th>Field</th><th>Mesonet</th><th>Cross-checks <span class="muted">(shown beside it, never mixed in)</span></th></tr></thead>
       <tbody id="now"><tr><td colspan="3" class="muted">loading…</td></tr></tbody>
     </table>
-    <p class="small muted" style="margin:10px 0 0;">The Mesonet value uses station readings only. No forecast model goes into it. The model column shows what the forecast model (HRRR) has for this hour, for comparison.</p>
+    <p class="small muted" style="margin:10px 0 0;">The Mesonet value uses station readings only. No forecast model goes into it. "Cove-adjusted" adds a correction learned from Neptune Rd for the Cove's own daily swing; it is being tested against the Cove-side stations and is not used anywhere yet. The model column shows what the forecast model (HRRR) has for this hour, for comparison.</p>
   </div>
 
   </div><div>
@@ -350,11 +350,11 @@
     const kDp = k.dewpoint_c == null ? null : k.dewpoint_c * 9 / 5 + 32;
     const xc = (label, v, d0, u) => v == null ? "" : `<span class="tag">${label} ${fx(v, d0)}${u}</span>`;
     const rows = [
-      { f: "Temperature", u: "°F", v: mT, d: 1, tag: '<span class="tag warn">not yet the truth</span>',
+      { f: "Temperature", u: "°F", v: mT, d: 1, cove: h.cove_temp, tag: '<span class="tag warn">not yet the truth</span>',
         x: xc("KBVY", k.temp_f, 0, "°") + xc("model", h.model_temp, 1, "°") + xc("buoy air", b.air_temp_f, 1, "°") },
-      { f: "Humidity", u: "%", v: mH, d: 0, tag: '<span class="tag good">qualifies as truth</span>',
+      { f: "Humidity", u: "%", v: mH, d: 0, cove: h.cove_humidity, tag: '<span class="tag good">qualifies as truth</span>',
         x: xc("model", h.model_humidity, 0, "%") },
-      { f: "Dew point", u: "°F", v: mDp, d: 1, tag: '<span class="tag warn">not yet the truth</span>',
+      { f: "Dew point", u: "°F", v: mDp, d: 1, cove: h.cove_dew_point, tag: '<span class="tag warn">not yet the truth</span>',
         x: xc("KBVY", kDp, 1, "°") + xc("model", dewF(h.model_temp, h.model_humidity), 1, "°") },
       { f: "Pressure", u: "inHg", v: h.corrected_pressure_in, d: 2, tag: "",
         x: xc("KBVY", k.pressure_hpa == null ? null : k.pressure_hpa / 33.8639, 2, "") + xc("model", h.model_pressure_in, 2, "") },
@@ -368,7 +368,8 @@
         x: xc("KBVY", k.cloud_cover_pct, 0, "%") },
     ];
     $("now").innerHTML = rows.map(r => `<tr><td>${r.f}${r.tag ? "<br>" + r.tag : ""}</td>` +
-      `<td class="num">${r.v == null ? '<span class="muted">—</span>' : `<span class="big">${fx(r.v, r.d)}</span> <span class="unit">${r.u}</span>`}</td>` +
+      `<td class="num">${r.v == null ? '<span class="muted">—</span>' : `<span class="big">${fx(r.v, r.d)}</span> <span class="unit">${r.u}</span>`}` +
+      `${r.cove != null ? `<div class="small muted" title="Mesonet plus an adjustment learned from Neptune Rd (waterfront, Cove side). Test only: not the value used anywhere.">Cove-adjusted <b>${fx(r.cove, r.d)}</b> <span class="tag">test</span></div>` : ""}</td>` +
       `<td>${r.x || '<span class="muted small">—</span>'}</td></tr>`).join("");
   }
 

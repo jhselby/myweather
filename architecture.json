@@ -1,5 +1,5 @@
 {
- "version": "v0.7.137",
+ "version": "v0.7.138",
  "components": [
   {
    "name": "HRRR cascade",
@@ -62,7 +62,8 @@
   "l1_selector_by_regime_walker.json",
   "l1_learned_selector_curated.json",
   "terminal_blend_field_curated.json",
-  "urma_blend_shadow_curated.json"
+  "urma_blend_shadow_curated.json",
+  "mesonet_cove_adjust_curated.json"
  ],
  "changes": [
   {
@@ -229,6 +230,12 @@
  ],
  "releases": [
   {
+   "version": "v0.7.138",
+   "date": "November 22, 2026",
+   "iso": "2026-11-22",
+   "title": "Cove value, shadow"
+  },
+  {
    "version": "v0.7.137",
    "date": "November 22, 2026",
    "iso": "2026-11-22",
@@ -293,12 +300,6 @@
    "date": "November 21, 2026",
    "iso": "2026-11-21",
    "title": "Stack health chart rebuilt; weather.gov rain chance fix"
-  },
-  {
-   "version": "v0.7.126",
-   "date": "November 20, 2026",
-   "iso": "2026-11-20",
-   "title": "wind shadow extended to 0-5h"
   }
  ],
  "layers": {

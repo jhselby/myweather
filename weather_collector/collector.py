@@ -224,6 +224,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     _station_history = load_history(_gcs, BUCKET)
     _station_offsets = compute_offsets(_station_history)
     build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data, station_offsets=_station_offsets, kbvy_data=kbvy_data)
+    try:   # v0.7.138 shadow: Cove value = Mesonet + adjustment learned from Neptune Rd
+        from .processors.cove_value import apply as _cove_apply
+        _cove_apply(weather_data.get("hyperlocal"))
+    except Exception as _e:  # noqa: BLE001
+        logging.warning(f"  ⚠  cove_value hook failed ({_e})")
     update_history(_station_history, wu_data, tempest_data)
     save_history(_station_history, _gcs, BUCKET)
 

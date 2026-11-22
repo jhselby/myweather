@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.138 • November 22, 2026 (Cove value, shadow)</strong></summary>
+
+- The Mesonet averages the stations around the Cove, so it cannot show the Cove's own daily swing: warmer nights and cooler days than the stations around it. A correction learned from Neptune Rd (the waterfront station on the Cove side) fixes that. In a walk-forward test (each day scored with a correction learned only from earlier days), the miss against Neptune Rd fell from 1.59 to 0.99 °F, and against your yard sensor, which was never used to learn it, the day and night level moved from +1.6 / −1.3 °F to +0.3 / −0.4 °F.
+- The refitter now learns the hourly correction for temperature and humidity every morning. The collector publishes a "Cove-adjusted" temperature, humidity and dew point next to the Mesonet value, and logs them in the station archive. The Mesonet page shows them labelled "test". Nothing served or scored reads them.
+- It becomes the Cove value of record only after it passes the Cove-side test in the plan (at least 10 nights against the yard sensor, Neptune Rd and Driftwood Rd).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.137 • November 22, 2026 (Shadow stations for the Mesonet)</strong></summary>
 
 - Six of the eight directions have two stations or fewer, so no outlier can be dropped there. A scan of the Tempest map found nine more stations with complete, live data, 2.9–4.4 miles out (past the 2.5-mile limit). The collector now reads them and archives their readings under a separate "shadow" key. They are not in the Mesonet and the forecast does not use them.
