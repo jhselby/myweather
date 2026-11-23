@@ -11,6 +11,9 @@ CAUTION (11-23): this truth runs ~13 points cloudier than URMA TCDC (448 shared 
 URMA 42.6, MAE 21.8, corr 0.76). Raw HRRR cc, which is ~12-15 points too cloudy on URMA/METAR, "beats"
 served here by 11-20% only because of that offset; on URMA TCDC and METAR it loses by 14-55%. Never
 read a source's win here without checking the same comparison on URMA TCDC and METAR-observed.
+The offset is not the 'probably cloudy' class: counting only ACM class 3 (cloudy) on 72 sampled hours
+still leaves GOES +10.6 pts above URMA (classes 2-3: +16.3; corr 0.70 either way). It is what the satellite
+sees (thin / high cloud), not a threshold choice.
 """
 import json
 import sys
