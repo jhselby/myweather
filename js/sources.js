@@ -19,7 +19,7 @@ const SOURCE_META = {
 
 const STATIC_SOURCES = [
   { name: "IEM NEXRAD",   desc: "Radar tile source — NOAA NEXRAD base reflectivity composite via Iowa Environmental Mesonet, 5-minute archives (mesonet.agron.iastate.edu)" },
-  { name: "CartoDB",      desc: "Dark Matter basemap tiles for radar view — no API key required (carto.com)" },
+  { name: "Esri",         desc: "Gray basemap tiles for the radar view (Esri Canvas, no API key required)" },
   { name: "SunCalc",      desc: "Client-side sun/moon position and phase calculations (mourner/suncalc)" },
   { name: "VSOP87",       desc: "Client-side planetary position calculations — solar system card (truncated series, ~1° accuracy)" },
   { name: "Open-Meteo",   desc: "Cloud layer data (low/mid/high) for sunset quality forecast — HRRR product" },

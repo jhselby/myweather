@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.145 • November 23, 2026 (Radar map fixed)</strong></summary>
+
+- The radar card's map showed "API KEY REQUIRED" across it. The basemap provider (CARTO) now charges for tiles. The radar card and its small preview map now use Esri's free gray map, with place names on the full radar. No key needed.
+- The Sources page lists Esri in place of CartoDB.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.144 • November 23, 2026 (Sources page: retired PWS row removed)</strong></summary>
 
 - The Sources card no longer shows the old single-station PWS source. It was switched off when Weather Underground was retired on Nov 8, but the collector kept reporting it as an error, so the card showed a red flag for a source we no longer use.

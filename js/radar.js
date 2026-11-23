@@ -123,17 +123,21 @@ function initRadar() {
     attributionControl: true,
   });
 
-  function radarBaseTileUrl() {
-    const isLight = document.body.classList.contains('theme-light');
-    return isLight
-      ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  // Esri gray canvas (no key). CARTO basemaps began returning "API KEY REQUIRED" tiles in Nov 2026.
+  const ESRI_GRAY = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+  function radarBaseTileUrl(kind) {
+    const tone = document.body.classList.contains('theme-light') ? "Light" : "Dark";
+    return `${ESRI_GRAY}World_${tone}_Gray_${kind || "Base"}/MapServer/tile/{z}/{y}/{x}`;
   }
   function radarApplyBaseTile() {
     if (!radarMap) return;
     if (radarTileLayers._base) radarMap.removeLayer(radarTileLayers._base);
-    radarTileLayers._base = L.tileLayer(radarBaseTileUrl(), { maxZoom: 19, attribution: '&copy; <a href="https://carto.com/">CartoDB</a>' });
+    if (radarTileLayers._labels) radarMap.removeLayer(radarTileLayers._labels);
+    radarTileLayers._base = L.tileLayer(radarBaseTileUrl("Base"), { maxZoom: 16, attribution: 'Tiles &copy; Esri' });
+    radarTileLayers._labels = L.tileLayer(radarBaseTileUrl("Reference"), { maxZoom: 16 });
     radarTileLayers._base.addTo(radarMap);
+    radarTileLayers._labels.addTo(radarMap);
+    radarTileLayers._labels.bringToBack();
     radarTileLayers._base.bringToBack();
   }
   radarTileLayers.street = { addTo: () => {} };
@@ -220,11 +224,9 @@ function initCollapsedRadarMap() {
   
   // Use light or dark tiles based on theme
   const isDarkMode = !document.body.classList.contains("theme-light");
-  const tileUrl = isDarkMode 
-    ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
+  const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${isDarkMode ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
   L.tileLayer(tileUrl, {
-    maxZoom: 19
+    maxZoom: 16
   }).addTo(miniMap);
   
   // No filter - just use natural light map colors
