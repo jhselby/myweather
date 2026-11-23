@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.144 • November 23, 2026 (Sources page: retired PWS row removed)</strong></summary>
+
+- The Sources card no longer shows the old single-station PWS source. It was switched off when Weather Underground was retired on Nov 8, but the collector kept reporting it as an error, so the card showed a red flag for a source we no longer use.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.143 • November 23, 2026 (Landing page; app moves to /app)</strong></summary>
 
 - New landing page at `/`: a short weather report (headline, subheadline, conditions, high, low, rain, wind, humidity, sunrise and sunset), then three doors: the app, the Mesonet and the model. The Mesonet and model each get a short live summary and a link to the full page.

@@ -382,7 +382,7 @@ function loadWeatherData() {
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         var _duEl = document.getElementById("dataUpdated2"); if (_duEl) _duEl.textContent = fmtRelAge(data.generated_at || data.location?.updated);
-        renderSources(data.sources, (data.pws || {}).stale);
+        renderSources(data.sources);
         renderFrostTracker(data.frost_log);
         renderBirds(data.birds);
         renderSunsetQuality(data);

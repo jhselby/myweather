@@ -4,7 +4,6 @@ const SOURCE_META = {
   gfs_current:  { name: "GFS",          desc: "Global Forecast System — current conditions baseline (NOAA)" },
   hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA via Open-Meteo). Default L1 seed for every field; for t / ws / wd at leads ≥6h the L1 router (v0.6.432) substitutes NBM instead." },
   ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
-  pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
   wu_stations:  { name: "Mesonet",      desc: "Distance- and elevation-weighted, quality-filtered local personal weather stations" },
   kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
   kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
@@ -44,7 +43,7 @@ function _fmtError(err) {
   return s.replace(/\s+/g, ' ').slice(0, 50);
 }
 
-function renderSources(sources, pwsStale) {
+function renderSources(sources) {
   if (!sources) return;
   const order = Object.keys(SOURCE_META);
 
@@ -70,7 +69,6 @@ function renderSources(sources, pwsStale) {
   const tableModal = document.getElementById("sourcesTableModal");
   if (!table && !tableModal) return;
   const renderTarget = table || tableModal;
-  const pwsName = pwsStale ? "PWS (cached)" : "PWS (live)";
 
   const rowStyle = "display:flex;gap:8px;align-items:baseline;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;";
   const nameStyle = "font-weight:800;color:rgba(255,255,255,0.9);font-size:0.85rem;min-width:90px;flex-shrink:0;";
@@ -100,7 +98,7 @@ function renderSources(sources, pwsStale) {
         age = Math.round(s.age_minutes) + "m ago";
       }
       const meta = SOURCE_META[key];
-      const name = key === "pws" ? pwsName : meta.name;
+      const name = meta.name;
 
       let extraDetail = "";
       let descOverride = null;
