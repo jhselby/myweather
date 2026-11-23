@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.7.149 • November 23, 2026 (Outside review: honest counts, ranges and metrics)</strong></summary>
+
+- **Mesonet count.** The page said "18 of 18 stations used" while also saying one was set aside. It now reads "18 reporting, 17 in the average, 1 set aside", and the station table marks the excluded station (the collector now records which station the outlier trim dropped; the mark appears after the next collector run).
+- **Humidity truth, stated plainly.** Humidity is a forecast that starts from the Mesonet, scored against later Mesonet readings; it is not an independent site. The page now says so, and names the planned held-out test with our own yard station. Humidity's pass on the Mesonet page is labelled provisional, with its margin and the 354-hour window.
+- **Ranges on the scorecard.** Each field's percentage now carries a 95% range from resampling whole days (hours inside a day share the weather). Several "better" results include 0: dew point, temperature's low end is +4%. "Tied" is defined as a display rule (within ±2%), not a significance test.
+- **Rain chance is scored on Brier**, the proper score for a probability, not plain error: +8% against weather.gov on Brier, +4% on plain error, with a range that includes 0. `truth_compare.json` now carries `pp_brier` per day.
+- **Compared against / Verified against** replace the old column names, and the Brier note shows the plain-error numbers beside it.
+- **Cove adjustment test** now states how it is held out (learned from earlier days only, first 3 days train, 13 days scored) and that the proxy station is also in the Mesonet. The agreement test now says its stations' steady offsets are removed first and no outliers are dropped. A line on sensor bias versus real microclimate was added.
+- **Landing page.** The lead is labelled "Today and tonight"; rain reads "% chance" and "in expected, whole day"; the model card links to how each field is compared and verified. The selector section on /model is banner-labelled "Diagnostic only: older, model-influenced truth".
+
+</details>
+
+<details open>
 <summary><strong>v0.7.148 • November 23, 2026 (Gust wording on /model)</strong></summary>
 
 - The /model page now says the gust blend trails raw NBM so far (the old text implied it was on track to win), and that it serves only if it beats raw NBM over 7 days.

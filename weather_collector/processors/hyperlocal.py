@@ -37,6 +37,23 @@ def _octant_index(station_lat, station_lon):
     return int(((bearing + 22.5) % 360) / 45)
 
 
+def _trimmed_indices(items):
+    """Indices of the (value, weight) items the per-octant MAD trim drops."""
+    if len(items) < MIN_FOR_TRIMMING:
+        return set()
+    vals = [v for v, _ in items]
+    median = statistics.median(vals)
+    mad = statistics.median([abs(v - median) for v in vals])
+    # MAD = 0 means all values are identical (or all but one); no trimming so
+    # we don't reject every non-median point.
+    if mad <= 0:
+        return set()
+    # MAD * 1.4826 ≈ std for normal distributions; OUTLIER_K is multiples of std-equivalent
+    threshold = OUTLIER_K * 1.4826 * mad
+    drop = {i for i, (v, _) in enumerate(items) if abs(v - median) > threshold}
+    return set() if len(drop) == len(items) else drop  # never trim everything
+
+
 def _trimmed_weighted_mean(items):
     """MAD-trimmed weighted mean of (value, weight) tuples.
 
@@ -53,20 +70,8 @@ def _trimmed_weighted_mean(items):
         if total_w <= 0:
             return None, 0
         return sum(v * w for v, w in items) / total_w, 0
-    vals = [v for v, _ in items]
-    median = statistics.median(vals)
-    abs_devs = [abs(v - median) for v in vals]
-    mad = statistics.median(abs_devs)
-    # MAD = 0 means all values are identical (or all but one); fall back to
-    # no trimming so we don't reject every non-median point.
-    if mad <= 0:
-        kept = items
-    else:
-        # MAD * 1.4826 ≈ std for normal distributions; OUTLIER_K is multiples of std-equivalent
-        threshold = OUTLIER_K * 1.4826 * mad
-        kept = [(v, w) for v, w in items if abs(v - median) <= threshold]
-    if not kept:
-        kept = items  # safety: never trim everything
+    drop = _trimmed_indices(items)
+    kept = [it for i, it in enumerate(items) if i not in drop]
     n_trimmed = len(items) - len(kept)
     total_w = sum(w for _, w in kept)
     if total_w <= 0:
@@ -202,6 +207,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         # Two-pass keeps outlier detection robust: a single +5°F busted sensor
         # in a sparse octant gets dropped before contributing to the network bias.
         oct_temp = [[] for _ in range(8)]
+        oct_temp_ids = [[] for _ in range(8)]
         oct_h    = [[] for _ in range(8)]
         oct_p    = [[] for _ in range(8)]
         oct_station_count = [0] * 8
@@ -240,6 +246,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             corrected_temp_s = station_temp - temp_offsets.get(sid, 0.0)
             bias_at_station = corrected_temp_s - model_t
             oct_temp[oct].append((bias_at_station, weight))
+            oct_temp_ids[oct].append(sid)
             oct_station_count[oct] += 1
             station_biases.append(bias_at_station)
             stations_used += 1
@@ -273,6 +280,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         h_octant_means    = [m for m, _ in h_results    if m is not None]
         p_octant_means    = [m for m, _ in p_results    if m is not None]
         outliers_trimmed  = sum(n for _, n in temp_results)
+        outlier_station_ids = [oct_temp_ids[i][j] for i in range(8) for j in sorted(_trimmed_indices(oct_temp[i]))]
         octants_used      = len(temp_octant_means)
 
         if stations_used >= 3 and (octants_used >= MIN_OCTANTS_FOR_BALANCED or stations_used >= 3):
@@ -318,6 +326,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 OCTANT_LABELS[i]: oct_station_count[i] for i in range(8)
             }
             hyperlocal["outliers_trimmed"] = outliers_trimmed
+            hyperlocal["outlier_station_ids"] = outlier_station_ids
             if _offsets:
                 hyperlocal["station_offsets"] = _offsets
 

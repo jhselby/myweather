@@ -21,6 +21,23 @@ const FIELDS = [
 ];
 const pct = (us, them) => (them ? (them - us) / them * 100 : null);
 
+// Day-block bootstrap of a pooled lift: resample whole days (hours inside a day share the weather), 2000 draws,
+// seeded so the page does not jitter. days = [[srv, bar], ...]. Returns [lo, hi] of the 95% range, in lift %.
+function dayBlockRange(days) {
+  const n = days.length;
+  if (n < 5) return null;
+  let seed = 20261123;
+  const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const out = [];
+  for (let b = 0; b < 2000; b++) {
+    let S = 0, B = 0;
+    for (let i = 0; i < n; i++) { const d = days[Math.floor(rnd() * n)]; S += d[0]; B += d[1]; }
+    if (B) out.push((B - S) / B * 100);
+  }
+  out.sort((a, b) => a - b);
+  return [out[Math.floor(out.length * 0.025)], out[Math.floor(out.length * 0.975)]];
+}
+
 function computeScorecard(tc, pf) {
   pf = pf || {};
   const rows = [];
@@ -65,7 +82,24 @@ function computeScorecard(tc, pf) {
       else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) { nu = tc.nws_shrunk[k].served_mae; nt = tc.nws_shrunk[k].nws_mae; }
       if (nu != null && nt != null) { bUs = nu; bThem = nt; bSrc = "weather.gov"; }
     }
-    rows.push({ k, name, desc, unit, dec, us, them, src, truth, n, nws, bUs, bThem, bSrc, bar: pct(bUs, bThem), lift: pct(us, them) });
+    const row = { k, name, desc, unit, dec, us, them, src, truth, n, nws, bUs, bThem, bSrc, bar: pct(bUs, bThem), lift: pct(us, them), metric: "MAE", range: null, rangeDays: 0 };
+    // Rain chance is a probability, so its verdict is the Brier score (squared miss), not MAE. Same rows as the MAE
+    // (weather.gov rows, leads 2-47). Falls back to MAE until truth_compare publishes pp_brier.
+    let dayRows = null;
+    const pb = tc && tc.pp_brier && tc.pp_brier.days;
+    if (k === "pp" && bSrc === "weather.gov" && pb) {
+      const ds = Object.values(pb), N = ds.reduce((a, d) => a + d.n, 0);
+      if (N >= 500) {
+        const S = ds.reduce((a, d) => a + d.srv, 0), B = ds.reduce((a, d) => a + d.bar, 0);
+        row.metric = "Brier"; row.bUs = S / N; row.bThem = B / N; row.bar = pct(row.bUs, row.bThem); row.dec = 3; row.unit = "Brier";
+        row.mae = { us: bUs, them: bThem };
+        dayRows = ds.map(d => [d.srv, d.bar]);
+      }
+    } else if (tc && tc.daily && tc.daily.fields[k] && ({ "weather.gov": "weather.gov", NBM: "raw NBM" }[bSrc] === tc.daily.fields[k].bar)) {
+      dayRows = Object.entries(tc.daily.fields[k].days).filter(([d]) => d >= tc.first_day && d <= tc.last_day).map(([, v]) => [v.srv, v.bar]);
+    }
+    if (dayRows) { row.range = dayBlockRange(dayRows); row.rangeDays = dayRows.length; }
+    rows.push(row);
   }
   const main = rows.filter(r => !["cl", "cm", "ch"].includes(r.k));
   return {

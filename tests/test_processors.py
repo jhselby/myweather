@@ -149,3 +149,12 @@ class TestSeaBreeze:
         detect_sea_breeze(data)
         assert data["sea_breeze"]["active"] is False
         assert "Insufficient" in data["sea_breeze"]["reason"]
+
+
+def test_trimmed_indices_matches_trimmed_mean():
+    from weather_collector.processors.hyperlocal import _trimmed_indices, _trimmed_weighted_mean
+    items = [(0.1, 1), (0.2, 1), (0.0, 1), (5.0, 1)]
+    assert _trimmed_indices(items) == {3}
+    assert _trimmed_weighted_mean(items)[1] == 1
+    assert _trimmed_indices(items[:2]) == set()          # under 3 stations: never trimmed
+    assert _trimmed_indices([(1.0, 1)] * 3) == set()     # MAD 0: never trimmed

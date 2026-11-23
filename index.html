@@ -53,6 +53,7 @@
   .brand img { width: 30px; height: 30px; border-radius: 7px; }
     .wx { border: 1px solid var(--wx-line); background: var(--wx-bg); border-radius: 12px; padding: 18px 18px 16px; }
   .wx h1 { font-size: 22px; line-height: 1.25; margin: 0 0 6px; font-weight: 600; letter-spacing: -0.01em; }
+  .wx .kicker { margin: 0 0 4px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
   .wx .sub { margin: 0 0 14px; color: var(--soft); }
   .now { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .now .emoji { font-size: 40px; line-height: 1; }
@@ -103,6 +104,7 @@
   </div>
 
   <section class="wx" aria-label="Weather now">
+    <div class="kicker">Today and tonight</div>
     <h1 id="headline">Loading the weather…</h1>
     <p class="sub" id="subheadline"></p>
     <div class="now" id="now"></div>
@@ -131,6 +133,7 @@
       <div class="pills" id="model-pills"></div>
       <p id="model-sum">Loading…</p>
       <p class="muted" id="model-sample"></p>
+      <p class="muted">Each field is scored against its own forecast and observation, so the count is a tally of separate tests, not one accuracy score. <a href="/model#sec-front">What each is compared and verified against</a></p>
       <a class="btn" href="/model">Open the full model →</a>
     </section>
   </div>
@@ -138,7 +141,7 @@
   <footer>Data refreshes every 10 minutes. The Mesonet is our own station network; the model is scored against weather.gov.</footer>
 </main>
 
-<script src="js/scorecard.js?v=91ba73f7"></script>
+<script src="js/scorecard.js?v=da1bee7d"></script>
 <script>
 (function () {
   // The installed home-screen app used to open "/", which was the app. It still should.
@@ -192,7 +195,7 @@
     $("stats").innerHTML =
       stat("High", fx((day.temperature_max || [])[k], 0) + "°") +
       stat("Low", fx((day.temperature_min || [])[k], 0) + "°") +
-      stat("Rain today", pp == null ? "—" : pp + "%", ps != null ? fx(ps, 2) + " in" : "") +
+      stat("Rain, whole day", pp == null ? "—" : pp + "% chance", ps != null ? fx(ps, 2) + " in expected" : "") +
       stat("Wind", fx(c.wind_speed, 0) + " mph", (dir(c.wind_direction) + (c.wind_gusts != null ? ", gusts " + fx(c.wind_gusts, 0) : "")).replace(/^, /, "")) +
       stat("Humidity", fx(c.humidity, 0) + "%", "dew " + fx(c.dew_point, 0) + "°") +
       stat("Sunrise / sunset", hhmm((day.sunrise || [])[k]) + " / " + hhmm((day.sunset || [])[k]));
@@ -222,7 +225,7 @@
       (best.length ? `Biggest wins: ${best.join(", ")}. ` : "") + (worse.length ? `Behind: ${worse.join(", ")}.` : "");
     if (tc && tc.first_day) {
       const d0 = new Date(tc.first_day + "T12:00:00"), d1 = new Date(tc.last_day + "T12:00:00");
-      $("model-sample").textContent = `${Math.round((d1 - d0) / 86400000) + 1} days of independent scoring; percentages will move as days are added.`;
+      $("model-sample").textContent = `${Math.round((d1 - d0) / 86400000) + 1} days of scoring; percentages will move as days are added, and the model page shows each one's day-to-day range.`;
     }
   }
 

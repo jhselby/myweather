@@ -356,12 +356,13 @@
   }
 
   function stations(d) {
-    const h = d.hyperlocal || {}, O = offsetsNow(h), up = h.station_uptime || {};
+    const h = d.hyperlocal || {}, O = offsetsNow(h), up = h.station_uptime || {}, out = new Set((h.outlier_station_ids || []).map(String));
     const S = ((d.tempest || {}).stations || []).slice().sort((a, b) => (a.distance_mi || 99) - (b.distance_mi || 99));
     const rows = S.map(s => {
       const id = String(s.station_id), off = O.t[id], u = up[id] || {};
       const used = s.valid && s.distance_mi <= MAX_MI;
-      return `<tr${used ? "" : ' class="off"'}><td>${s.station_name || id}${s.waterfront ? ' <span class="tag">waterfront</span>' : ""}</td>` +
+      const aside = used && out.has(id);
+      return `<tr${used && !aside ? "" : ' class="off"'}><td>${s.station_name || id}${s.waterfront ? ' <span class="tag">waterfront</span>' : ""}</td>` +
         `<td class="num">${fx(s.distance_mi, 2)}</td><td>${octOf(s.latitude, s.longitude) || "—"}</td><td class="num">${fx(s.elevation_ft, 0)}</td>` +
         `<td class="num">${fx(s.temperature_f, 1)}</td><td class="num">${sg(off == null ? null : -off, 1)}</td>` +
         `<td class="num"><b>${s.temperature_f == null ? "—" : fx(s.temperature_f - (off || 0), 1)}</b></td>` +
@@ -369,12 +370,12 @@
         `<td class="num">${fx(s.relative_humidity, 0)}</td><td class="num">${s.sea_level_pressure_mb == null ? "—" : fx(s.sea_level_pressure_mb / 33.8639, 2)}</td>` +
         `<td class="num">${fx(s.wind_avg_mph, 1)} / ${fx(s.wind_gust_mph, 1)}</td><td class="num">${fx(s.age_minutes, 0)}</td>` +
         `<td class="num">${u.uptime_pct == null ? "—" : fx(u.uptime_pct, 0) + "%"}</td>` +
-        `<td class="small">${used ? "used" : !s.valid ? "not reporting" : "beyond 2.5 mi"}</td></tr>`;
+        `<td class="small">${aside ? "set aside (outlier)" : used ? "in the average" : !s.valid ? "not reporting" : "beyond 2.5 mi"}</td></tr>`;
     }).join("");
     $("stations").classList.remove("muted");
     $("stations").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>mi</th><th>Dir</th><th>Elev ft</th><th>Reads °F</th>` +
       `<th>Correction now</th><th>Corrected °F</th><th>Day / night correction</th><th>RH %</th><th>Pressure inHg</th><th>Wind / gust mph</th><th>Age min</th><th>Uptime 7 d</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
-      `<p class="small muted" style="margin:8px 0 0;">${h.outliers_trimmed || 0} set aside as outliers this run. Corrections are measured against the other stations, day (7 am to 7 pm) and night separately.</p>`;
+      `<p class="small muted" style="margin:8px 0 0;">${h.outliers_trimmed || 0} set aside as outliers this run${h.outlier_station_ids ? "" : " (which one is not recorded yet)"}. Corrections are measured against the other stations, day (7 am to 7 pm) and night separately.</p>`;
   }
 
   function wu(m) {
@@ -473,7 +474,8 @@
     const h = d.hyperlocal || {}, cov = h.octant_coverage || {};
     const all = (d.tempest || {}).stations || [];
     $("how").innerHTML =
-      `<b>Right now:</b> ${h.stations_used ?? "—"} of ${all.length} stations used, ${h.outliers_trimmed ?? 0} set aside as outliers, ` +
+      `<b>Right now:</b> ${h.stations_used ?? "—"} stations reporting (of ${all.length} on the roster), ` +
+      `${h.stations_used == null ? "—" : h.stations_used - (h.outliers_trimmed || 0)} in the average, ${h.outliers_trimmed ?? 0} set aside as outliers, ` +
       `${h.octants_used ?? "—"} of 8 directions covered.<br>` +
       `<span class="muted">Stations by direction: ${OCT.map(o => `${o} ${cov[o] || 0}`).join(" · ")}</span><br>` +
       `<span class="muted">The forecast model's own temperature for now is ${fx(h.model_temp, 1)}°F; the stations say ${fx(h.station_temp, 1)}°F.</span>`;
@@ -494,18 +496,19 @@
     $("val").classList.remove("muted");
     $("val").innerHTML =
       `<p class="small muted" style="margin-top:0;">${v.window}. ${v.n_hours} hours.</p>` +
-      `<p style="margin:0 0 8px;">Two tests, with limits set before scoring. <b>Agreement:</b> each station is predicted from all the others; the typical miss. ` +
+      `<p style="margin:0 0 8px;">Two tests, with limits set before scoring. <b>Agreement:</b> each station is predicted from the median of all the others; the typical miss. Each station's steady offset (its 48-hour average gap to the others) is removed first, and no outlier is dropped in this test, so it measures how well stations agree after that offset, not fully unseen readings. ` +
       `<b>Bias:</b> the Mesonet against URMA, NOAA's independent hourly analysis. To grade forecasts, a field must pass both. KBVY (Beverly airport, 6 mi inland) is shown for reference only.</p>` +
       `<table class="verdict"><thead><tr><th>Field</th><th>Agreement</th><th>Bias vs URMA</th><th>vs KBVY</th></tr></thead><tbody>` +
       row("t") + row("h") + row("dp") + `</tbody></table>` +
+      (V.h && V.h.qualifies ? `<p class="small" style="margin:10px 0 0;"><b>Humidity passes by a thin margin:</b> agreement ${fx(V.h.loo_mae, 1)}% against a ${V.h.loo_max}% limit, bias ${sg(V.h.urma_bias, 1)}% against ±${V.h.bias_max}%, on ${v.n_hours} hours of autumn data. Read it as a provisional pass until another weather regime is in the window.</p>` : "") +
       `<p class="small" style="margin:12px 0 4px;"><b>Other fields</b> (shown, not graded on the Mesonet). Pressure: stations agree to ${ag("pr", 3)} inHg. ` +
       `Wind and gusts: the Mesonet reads ${ub("ws")} and ${ub("wg")} mph against URMA, because backyard anemometers sit in sheltered yards; wind is graded on URMA.</p>` +
       `<p class="small" style="margin:12px 0 0;"><b>Why temperature does not pass yet.</b> At night the Mesonet runs about 1°F warmer than URMA; at midday they agree. ` +
       `The stations nearest the water run warmest at night, which fits the bay holding heat that URMA's 2.5 km grid smooths out. ` +
       `The Mesonet also averages all of Marblehead, so it blurs the Cove's own pattern: a waterfront station on the Cove side of the Cliffs runs warmer than the Mesonet at night and cooler at midday. ` +
-      (cv.mesonet_vs_proxy ? `A test correction for that pattern (learned from earlier days only) cuts the miss against that station from ${fx(cv.mesonet_vs_proxy.mae, 2)}°F to ${fx(cv.mesonet_plus_adj_vs_proxy.mae, 2)}°F ` +
+      (cv.mesonet_vs_proxy ? `A test correction for that pattern is learned from earlier days only: each day is corrected with what the days before it taught, the first 3 days only train, and the ${cv.scored_days} days after are scored, so no day sets its own correction. It cuts the miss against that station from ${fx(cv.mesonet_vs_proxy.mae, 2)}°F to ${fx(cv.mesonet_plus_adj_vs_proxy.mae, 2)}°F ` +
         `(night bias ${sg(night.mesonet && night.mesonet.bias, 1)} → ${sg(night.adjusted && night.adjusted.bias, 1)}°F, midday ${sg(mid.mesonet && mid.mesonet.bias, 1)} → ${sg(mid.adjusted && mid.adjusted.bias, 1)}°F). ` : "") +
-      `It is a test only, and needs more weeks before it is used.</p>`;
+      `Caution: a station's steady gap to its neighbours can be sensor error or its real microclimate. Pulling waterfront stations toward the town consensus would erase the second; this test keeps them apart by treating one waterfront station as the Cove proxy (it is also one of the Mesonet's stations, a small pull toward it). It is a test only, and needs more weeks before it is used.</p>`;
   }
 
 

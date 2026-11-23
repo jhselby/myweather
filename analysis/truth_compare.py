@@ -219,6 +219,7 @@ def build(path=None):
     cc_day = defaultdict(cc_new)
     nws_sh = {f: {"n": 0, "nws": 0.0, "srv": 0.0} for f in ("wd", "pp")}
     daily = {f: defaultdict(_daily_new) for f in DAILY_SPEC}
+    pp_brier = defaultdict(lambda: {"n": 0, "srv": 0.0, "bar": 0.0})   # 11-23: squared error per valid day
     with open(path) as fin:
         for line in fin:
             m = _FIELD_RX.search(line)
@@ -235,6 +236,9 @@ def build(path=None):
                         en, srv = ((en + 180) % 360) - 180, ((srv + 180) % 360) - 180
                     b = nws_sh[f]; b["n"] += 1; b["nws"] += abs(en); b["srv"] += abs(srv)
                     _daily_add(daily, f, r, abs(srv), abs(en))
+                    if f == "pp":   # Brier: mean of ((forecast - outcome) / 100)^2, same rows as the MAE above
+                        pb = pp_brier[(r.get("valid_time") or "")[:10]]
+                        pb["n"] += 1; pb["srv"] += (srv / 100) ** 2; pb["bar"] += (en / 100) ** 2
                 continue
             if urma_cc and fld == "cc":
                 try:
@@ -351,6 +355,13 @@ def build(path=None):
                            "days": {d: {"n": b["n"], "srv": round(b["srv"], 2), "bar": round(b["bar"], 2)}
                                     for d, b in sorted(daily[f].items()) if b["n"]}}
                        for f in DAILY_SPEC},
+        },
+        "pp_brier": {
+            "definition": ("Rain chance as a probability score: Brier = mean of ((forecast % - outcome) / 100)^2 per valid day (ET), "
+                           "leads 2-47h, rows where weather.gov's forecast is stored; srv = served, bar = weather.gov. "
+                           "Lift = (bar - srv) / bar on pooled sums. Same rows as the MAE in nws_shrunk.pp."),
+            "days": {d: {"n": b["n"], "srv": round(b["srv"], 4), "bar": round(b["bar"], 4)}
+                     for d, b in sorted(pp_brier.items()) if b["n"]},
         },
         "nws_shrunk": {f: ({"n": b["n"], "nws_mae": round(b["nws"] / b["n"], 3), "served_mae": round(b["srv"] / b["n"], 3),
                             "lift_vs_nws_pct": _lift(b["nws"], b["srv"])} if b["n"] else None)
