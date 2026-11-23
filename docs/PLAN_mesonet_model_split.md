@@ -208,7 +208,7 @@ Output: `analysis/mesonet_validation.py`, writing `analysis/mesonet_validation.j
 - Not scoped yet. It touches paths, the service-worker scope, `manifest.json`, `build.py` and the PWA install. Joe accepts re-adding the home-screen icon.
 - The landing page `/` gets three links: app, mesonet, model.
 - Scope it in its own session before touching any file.
-- [ ] done
+- [x] done 11-23 (v0.7.143-146): landing page `/` (weather report + app/Mesonet/model summaries, light/dark/auto), app at `/app` (app.html), installed icon forwards to /app, manifest start_url /app, shared js/scorecard.js. The service worker was never registered (path /myweather/sw.js 404), so scope was not an issue.
 
 ### Step 7. Event scoring (separate track, not started)
 - Fog, sea breeze, and rain vs snow, scored as hits, misses and false alarms against KBVY/METAR events.
