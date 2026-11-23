@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.150 • November 23, 2026 (Scorecard: "since change" read)</strong></summary>
+
+- The scorecard headline pools every day in the window, so a field that just changed mostly still grades the old system (gusts read -22% although raw NBM has been served since Nov 23). Temperature, dew point and gusts now show a "since change" line under the percentage. It uses only days no pre-change forecast can reach (valid day two or more days after the change, finished days only), and waits for 3 such days: temperature and dew point read from Nov 24, gusts from Nov 28.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.149 • November 23, 2026 (Outside review: honest counts, ranges and metrics)</strong></summary>
 
 - **Mesonet count.** The page said "18 of 18 stations used" while also saying one was set aside. It now reads "18 reporting, 17 in the average, 1 set aside", and the station table marks the excluded station (the collector now records which station the outlier trim dropped; the mark appears after the next collector run).

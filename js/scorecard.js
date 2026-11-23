@@ -38,6 +38,16 @@ function dayBlockRange(days) {
   return [out[Math.floor(out.length * 0.025)], out[Math.floor(out.length * 0.975)]];
 }
 
+// Served-behaviour changes that sit inside the scorecard window. The headline pools every day in the window, so a field that
+// just changed mostly still grades the old system. "Since change" reads only valid days that no pre-change forecast can reach
+// (forecasts reach 47 h ahead: valid day >= change day + 2) and that are finished (before the latest day), and waits for 3.
+const SHIPS = {
+  t:  { date: "2026-11-19", what: "temperature blend" },
+  dp: { date: "2026-11-19", what: "temperature blend" },
+  wg: { date: "2026-11-23", what: "raw NBM served" },
+};
+const addDays = (iso, n) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+
 function computeScorecard(tc, pf) {
   pf = pf || {};
   const rows = [];
@@ -99,6 +109,14 @@ function computeScorecard(tc, pf) {
       dayRows = Object.entries(tc.daily.fields[k].days).filter(([d]) => d >= tc.first_day && d <= tc.last_day).map(([, v]) => [v.srv, v.bar]);
     }
     if (dayRows) { row.range = dayBlockRange(dayRows); row.rangeDays = dayRows.length; }
+    const sh = SHIPS[k];
+    if (sh && tc && tc.daily && tc.daily.fields[k] && row.metric === "MAE" && dayRows) {
+      const from = addDays(sh.date, 2);
+      const post = Object.entries(tc.daily.fields[k].days).filter(([d]) => d >= from && d < tc.last_day).map(([, v]) => [v.srv, v.bar]);
+      const S = post.reduce((a, d) => a + d[0], 0), B = post.reduce((a, d) => a + d[1], 0);
+      row.since = { date: sh.date, what: sh.what, days: post.length, readOn: addDays(sh.date, 5) };
+      if (post.length >= 3 && B) { row.since.lift = (B - S) / B * 100; row.since.range = dayBlockRange(post); }
+    }
     rows.push(row);
   }
   const main = rows.filter(r => !["cl", "cm", "ch"].includes(r.k));
