@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.140 • November 22, 2026 (Dew point blend can be served, off)</strong></summary>
+
+- The URMA-trained dew point blend can now replace the served dew point at 6–23 hours, with its own kill switch (`serve_dp` in `urma_blend_serve.json`, off). Nothing served changes until it is switched on.
+- Humidity stays exactly as it is. A test on 20 holdout days showed that building humidity from the new temperature and dew point would be 10–17% worse than the humidity blend we serve, so for those hours the humidity rewrite is skipped and the humidity blend is kept. The displayed humidity and dew point will no longer satisfy the Magnus formula exactly, by about a degree of dew point.
+- The dew point blend passes the ship rule at 6–23 hours (+19.6% and +18.6% over served dew point on URMA, both halves positive) and not at 24–47 hours (+10.0%), so it applies at 6–23 hours only. The plan is to switch it on after at least 5 of 7 forward shadow days beat the served value, as with the temperature blend.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.139 • November 22, 2026 (Cleanup: retired Mesonet ideas, layer names)</strong></summary>
 
 - Two retired ideas moved from the Model page's Archive to a "Retired ideas" section on the Mesonet page, since they are about the stations and the Cove: the derived-humidity test and the Cove-warming (R5) hypothesis. R5 was retired in June as "L2 already captures it". That was wrong: L2's per-station offsets removed the Cove's own pattern, and the Cove adjustment now puts it back. The entry says so.

@@ -95,7 +95,11 @@ def stamp(entry, lead_h):
 
 
 def _valid_serve(doc):
-    return None if isinstance(doc, dict) and isinstance(doc.get("serve"), bool) else "serve must be a bool"
+    if not (isinstance(doc, dict) and isinstance(doc.get("serve"), bool)):
+        return "serve must be a bool"
+    if "serve_dp" in doc and not isinstance(doc["serve_dp"], bool):
+        return "serve_dp must be a bool"
+    return None
 
 
 def serving():
@@ -121,4 +125,39 @@ def apply(entry):
     entry["t"] = tu
     entry["t_applied"] = "urmab"
     entry["t_selector_source"] = "urmab"
+    return True
+
+
+# v0.7.140: dew point blend (dp_urmab) served for dew point ONLY, 6-23h. Served humidity stays the humidity
+# blend: building it from (t, dp) lost 10-17% to the served humidity in the walk-forward
+# (analysis/urma_dp_h_coupling.py), so the entry is flagged `dp_urmab_independent` and
+# decay_apply.recompute_derived_moisture_arrays leaves corrected_humidity alone for those hours.
+# Kill switch: {"serve_dp": false} in urma_blend_serve.json (default false; flip without a deploy).
+SERVE_DP_BANDS = ("6-11", "12-23")
+
+
+def serving_dp():
+    """True when dp_urmab replaces served dp. Fails closed (False)."""
+    if not ENABLED:
+        return False
+    try:
+        from .. import runtime_tables
+        doc = runtime_tables.get(SERVE_TABLE, SERVE_PATH, _valid_serve)
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"  ⚠  urma_blend_shadow: serve switch unreadable ({e}); not serving dp")
+        return False
+    return bool(doc and doc.get("serve_dp") is True)
+
+
+def apply_dp(entry, lead_h):
+    """Serve dp_urmab in place of dp at 6-23h. Keeps the replaced value as dp_pre_dpurmab. True when it fired."""
+    du, dold = entry.get("dp_urmab"), entry.get("dp")
+    if du is None or dold is None or _band(lead_h, BANDS) not in SERVE_DP_BANDS or not serving_dp():
+        return False
+    entry["dp_pre_dpurmab"] = dold
+    entry.setdefault("dp_pre_urmab", dold)
+    entry["dp"] = du
+    entry["dp_applied"] = "urmab"
+    entry["dp_selector_source"] = "urmab"
+    entry["dp_urmab_independent"] = True
     return True

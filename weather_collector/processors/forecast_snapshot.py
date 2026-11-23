@@ -1381,6 +1381,8 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         entry["dp_pre_urmab"] = entry.get("dp")
                         entry["dp_tblend_shadow"] = _dpv2
                         entry["dp"] = _dpv2
+            # v0.7.140 — dew point blend served for dew point only (6-23h, kill switch off by default).
+            urma_blend_shadow.apply_dp(entry, i)
         except Exception as _e:  # noqa: BLE001
             logging.warning(f"  ⚠  urma_blend_shadow stamp failed ({_e})")
         hours.append(entry)
@@ -1483,6 +1485,14 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             _v = _h.get(_f)
             if _v is not None:
                 _arr[_i] = _v
+
+    # v0.7.140 — hours whose dp is the independent URMA dew point blend: recompute_derived_moisture_arrays
+    # must not rebuild humidity from (t, dp) there (it would replace the humidity blend).
+    _ind = [bool(_h.get("dp_urmab_independent")) for _h in hours]
+    if any(_ind):
+        hourly["dp_independent"] = _ind + [False] * max(0, len(hourly.get("corrected_dew_point") or []) - len(_ind))
+    else:
+        hourly.pop("dp_independent", None)
 
     log = load_json(GCS_PATH, default={"snapshots": []})
     snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]

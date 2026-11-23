@@ -508,8 +508,11 @@ def recompute_derived_moisture_arrays(weather_data):
     dr  = hourly.get("direct_radiation", [])
 
     ch_arr = hourly.get("corrected_humidity")
+    ind = hourly.get("dp_independent")   # v0.7.140: dp served from the URMA blend; keep the humidity blend there
     if isinstance(ch_arr, list) and ct and cdp:
         for i in range(min(len(ch_arr), len(ct), len(cdp))):
+            if isinstance(ind, list) and i < len(ind) and ind[i]:
+                continue
             derived = _relative_humidity(ct[i], cdp[i])
             if derived is not None:
                 ch_arr[i] = round(derived, 1)

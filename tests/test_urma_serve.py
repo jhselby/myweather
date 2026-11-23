@@ -84,3 +84,50 @@ def test_wg_shadow_two_way_no_ecmwf(monkeypatch):
     u.stamp(e, 2)
     assert e["wg_urmab"] == round(0.5 * 12 + 0.5 * 11, 1)
     assert "t_urmab" not in e and e["wg"] == 9.0
+
+
+# ---- v0.7.140: dew point served independently (6-23h), humidity untouched ----
+def _dp_entry():
+    return {"dp": 50.0, "dp_urmab": 51.5, "dp_selector_source": "tblend", "dp_applied": "tblend"}
+
+
+def test_dp_off_by_default(monkeypatch):
+    import json
+    assert json.load(open(u.SERVE_PATH))["serve_dp"] is False
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_dp": False})
+    e = _dp_entry()
+    assert u.apply_dp(e, 10) is False and e["dp"] == 50.0 and "dp_urmab_independent" not in e
+
+
+def test_dp_serves_only_6_to_23h(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_dp": True})
+    for lead, ok in ((3, False), (6, True), (11, True), (12, True), (23, True), (24, False), (40, False)):
+        e = _dp_entry()
+        assert u.apply_dp(e, lead) is ok, lead
+        assert (e["dp"] == 51.5) is ok
+    e = _dp_entry(); u.apply_dp(e, 8)
+    assert e["dp_pre_dpurmab"] == 50.0 and e["dp_applied"] == "urmab" and e["dp_urmab_independent"] is True
+
+
+def test_dp_keeps_earlier_pre_urmab(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_dp": True})
+    e = _dp_entry(); e["dp_pre_urmab"] = 49.0
+    u.apply_dp(e, 8)
+    assert e["dp_pre_urmab"] == 49.0 and e["dp_pre_dpurmab"] == 50.0
+
+
+def test_dp_fails_closed(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("gcs down")
+    monkeypatch.setattr(runtime_tables, "get", boom)
+    assert u.apply_dp(_dp_entry(), 8) is False
+
+
+def test_recompute_skips_humidity_on_independent_hours():
+    from weather_collector.processors.decay_apply import recompute_derived_moisture_arrays
+    wd = {"hourly": {"corrected_temperature": [60.0, 60.0], "corrected_dew_point": [50.0, 50.0],
+                     "corrected_humidity": [11.1, 22.2], "wind_speed": [3, 3], "direct_radiation": [0, 0],
+                     "dp_independent": [True, False]}}
+    recompute_derived_moisture_arrays(wd)
+    assert wd["hourly"]["corrected_humidity"][0] == 11.1          # kept (independent dp)
+    assert wd["hourly"]["corrected_humidity"][1] != 22.2          # rebuilt from (t, dp) as before
