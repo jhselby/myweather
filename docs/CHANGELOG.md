@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.148 • November 23, 2026 (Gust wording on /model)</strong></summary>
+
+- The /model page now says the gust blend trails raw NBM so far (the old text implied it was on track to win), and that it serves only if it beats raw NBM over 7 days.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.147 • November 23, 2026 (Airplanes card fixed)</strong></summary>
 
 - The Airplanes card was empty because its data source (airplanes.live) now refuses all requests. It now reads from a small relay of our own (`myweather-overhead`, a Cloud Function) that fetches adsb.lol, which is free and needs no key. Same aircraft data, same 30-second refresh.
