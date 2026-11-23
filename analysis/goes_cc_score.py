@@ -6,6 +6,11 @@ served cc, raw NBM cc, METAR-shrunk 'observed' cc, URMA TCDC (as a 'forecast' of
 Error vs satellite = pair-log error + (observed - sat).
 
     PYTHONPATH=. .venv/bin/python analysis/goes_cc_score.py [cf3|cf5]
+
+CAUTION (11-23): this truth runs ~13 points cloudier than URMA TCDC (448 shared hours: GOES mean 55.7,
+URMA 42.6, MAE 21.8, corr 0.76). Raw HRRR cc, which is ~12-15 points too cloudy on URMA/METAR, "beats"
+served here by 11-20% only because of that offset; on URMA TCDC and METAR it loses by 14-55%. Never
+read a source's win here without checking the same comparison on URMA TCDC and METAR-observed.
 """
 import json
 import sys
