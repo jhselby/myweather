@@ -24,5 +24,5 @@ def test_same_nav_prefix():
         s = (ROOT / name).read_text()
         nav = re.search(r'<nav class="toc">(.*?)<span class="sep"></span>', s, re.S).group(1)
         links = re.findall(r'<a href="([^"]+)"([^>]*)>([^<]+)</a>', nav)
-        assert [(h, t) for h, _, t in links] == [("/", "← App"), ("mesonet.html", "Mesonet"), ("model.html", "Model")], name
+        assert [(h, t) for h, _, t in links] == [("/", "Home"), ("/app", "App"), ("mesonet.html", "Mesonet"), ("model.html", "Model")], name
         assert [t for h, a, t in links if "here" in a] == [here], name

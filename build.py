@@ -2,16 +2,16 @@
 """
 MyWeather Build Script - Cache Busting Automation
 
-Automatically adds content-based version hashes to all JS/CSS assets in index.html.
+Automatically adds content-based version hashes to all JS/CSS assets in app.html.
 Run before every commit to ensure browsers get fresh files.
 
 Usage:
     python3 build.py
 
 What it does:
-    1. Reads all JS/CSS files referenced in index.html
+    1. Reads all JS/CSS files referenced in app.html
     2. Calculates SHA-256 hash of each file's contents
-    3. Rewrites index.html with ?v=HASH appended to each asset
+    3. Rewrites app.html with ?v=HASH appended to each asset
     
 Example:
     <script src="js/app-main.js"></script>
@@ -162,18 +162,18 @@ def main():
     print("MyWeather Build - Cache Busting")
     print("=" * 60)
     
-    # Find repo root (where index.html lives)
+    # Find repo root (where app.html lives)
     base_dir = Path(__file__).parent
-    index_path = base_dir / 'index.html'
+    index_path = base_dir / 'app.html'
     
     if not index_path.exists():
-        print(f"❌ Error: index.html not found in {base_dir}")
+        print(f"❌ Error: app.html not found in {base_dir}")
         return 1
     
     print(f"\n📂 Working directory: {base_dir}")
     print(f"📄 Processing: {index_path}")
     
-    # Read current index.html
+    # Read current app.html
     with open(index_path, 'r', encoding='utf-8') as f:
         html_content = f.read()
     
@@ -218,7 +218,7 @@ def main():
             (base_dir / 'mesonet_validation.json').write_text(_mv.read_text())
 
         # Bump sw.js CACHE_VERSION to match — without this, the service worker
-        # keeps serving the previous version's app shell (index.html, app.css,
+        # keeps serving the previous version's app shell (app.html, app.css,
         # briefing.css, app-main.js, briefing.js) until the user reloads twice.
         # Root cause of the "no difference" frustration in v0.6.186-189 work.
         sw_path = base_dir / 'sw.js'
@@ -273,6 +273,7 @@ def main():
     # that opens a 14-day watch. Only in-window ships are touched; expired
     # watches (elapsed > watch_days) are left alone for a human to close.
     _refresh_debug_page(base_dir)
+    _bump_shared_js(base_dir)
 
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
@@ -282,12 +283,12 @@ def main():
     with open(index_path, 'w', encoding='utf-8') as f:
         f.write(modified_html)
     
-    print(f"\n✅ Updated index.html with cache-busting hashes:")
+    print(f"\n✅ Updated app.html with cache-busting hashes:")
     for change in changes:
         print(change)
     
     print("\n" + "=" * 60)
-    print("Build complete! Commit index.html to deploy changes.")
+    print("Build complete! Commit app.html to deploy changes.")
     print("=" * 60)
     
     return 0
@@ -307,6 +308,23 @@ SHIP_EVENTS = [
     {"version": "v0.6.368a", "date": "2026-07-20", "watch_days": 14},  # wd L2 blend
     {"version": "v0.6.370",  "date": "2026-07-20", "watch_days": 14},  # ws L3 asymmetric SKIP
 ]
+
+
+def _bump_shared_js(base_dir):
+    """Cache-bust js/scorecard.js in the pages that load it outside app.html (index.html landing, model.html)."""
+    import re as _re
+    h = calculate_file_hash(base_dir / 'js' / 'scorecard.js')
+    if h is None:
+        return
+    for name in ('index.html', 'model.html'):
+        p = base_dir / name
+        if not p.is_file():
+            continue
+        t = p.read_text(encoding='utf-8')
+        n = _re.sub(r'(src="js/scorecard\.js)(\?v=[a-f0-9]+)?(")', r'\1?v=' + h + r'\3', t)
+        if n != t:
+            p.write_text(n, encoding='utf-8')
+            print(f"  ✓ {name} → js/scorecard.js ?v={h}")
 
 
 def _refresh_debug_page(base_dir):

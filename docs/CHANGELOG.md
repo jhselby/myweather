@@ -1,4 +1,22 @@
 <details open>
+<summary><strong>v0.7.143 • November 23, 2026 (Landing page; app moves to /app)</strong></summary>
+
+- New landing page at `/`: a short weather report (headline, subheadline, conditions, high, low, rain, wind, humidity, sunrise and sunset), then three doors: the app, the Mesonet and the model. The Mesonet and model each get a short live summary and a link to the full page.
+- The app now lives at `/app`. The home-screen icon you already have keeps working: opened from the home screen, `/` forwards straight to `/app`. New installs start at `/app`. Mesonet and Model pages get Home and App links.
+- The model summary uses the same scorecard code as the Model page (`js/scorecard.js`), so the two cannot disagree.
+- Scorecard fix: weather.gov is the bar for a field only once it has at least 500 scored rows. Gusts had been scored "+35% better than weather.gov" on 15 rows (one day) and humidity on 153; both fall back to the NBM or HRRR bar until weather.gov fills in (about Dec 6). Gusts now read worse (−22%) because the scored days are mostly before the Nov 23 gust fix.
+
+</details>
+
+<details open>
+<summary><strong>v0.7.142 • November 23, 2026 (Model page: gust wording and dates)</strong></summary>
+
+- The Model page now says gusts are served from raw NBM (v0.7.141), with the reason and the test result, in the gust note and the gust row of the architecture table.
+- "Coming up": the gust lead 45–47 re-read is done and removed; the wind and gust serve decision moves from Nov 27 to Nov 30 (the wind and gust blends have only 3 scored days; 7 are needed).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.141 • November 23, 2026 (Gusts: serve raw NBM)</strong></summary>
 
 - Gusts are now served straight from NBM. The gust bias layer (L3_NBM) is removed for gusts.

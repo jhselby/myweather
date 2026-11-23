@@ -148,7 +148,7 @@ When a number disagrees with reality ("app says overcast, it's pouring"), the nu
 ## 7. Version and Changelog
 
 **The rules:**
-- Bump version in `index.html` before every commit. Claude should do this, not Joe.
+- Bump version in `app.html` (the app; `index.html` is now the landing page) before every commit. Claude should do this, not Joe.
 - Changelog entries go at the TOP of `docs/CHANGELOG.md`.
 - Use `-` bullets for single-version entries. Use `*` with `**bold headers**` for consolidated multi-version entries.
 - Date format: `Month Day, Year` (e.g., May 9, 2026). Not ISO format.
@@ -180,7 +180,7 @@ These are current as of October 2026 (v0.7.47). If any seem wrong, ASK before as
 - **Other Cloud Functions (us-east1):** `myweather-nbm-ingest` (hourly, writes `nbm_point_extract.json`), `myweather-refitter` (04:30 ET, refits 10 self-refit tables into `runtime_tables/`; repo `*_curated.json` copies are fallbacks only), `myweather-publisher` (hourly, backstamped pair log + `mae_over_time.json` rollups), `myweather-nbm-backfill` (one-shot). Each has a `make deploy-*` target.
 - **Two cascades + selector:** HRRR cascade (L1→L2→L3→L4→specialists) and NBM cascade (raw→L2_nbm→L3_nbm→L4_nbm→wdp_nbm) run side by side; `l1_selector.py` picks a side per field × regime × lead band and `forecast_snapshot.py` writes the choice back into the served arrays.
 - **Data:** Writes `weather_data.json` to GCS bucket `myweather-data`. PWA fetches from GCS.
-- **Frontend:** `index.html` + a modular set of `js/*.js` files (`app-main.js` is the entry point + data loader; each card/concern lives in its own file — `right_now.js`, `briefing.js`, `wind.js`, `alarms.js`, `alerts.js`, `theme.js`, `format.js`, `version_check.js`, `pull_refresh.js`, etc.). Vanilla JS, no framework, no build step beyond `build.py` for cache-busting.
+- **Frontend:** `app.html` (served at /app; `/` is the landing page `index.html`, with /mesonet and /model beside it) + a modular set of `js/*.js` files (`app-main.js` is the entry point + data loader; each card/concern lives in its own file — `right_now.js`, `briefing.js`, `wind.js`, `alarms.js`, `alerts.js`, `theme.js`, `format.js`, `version_check.js`, `pull_refresh.js`, etc.). Vanilla JS, no framework, no build step beyond `build.py` for cache-busting.
 - **API keys:** In Cloud Function env vars only. Never in committed files.
 - **Build:** `python3 build.py` for cache-busting before commit.
 - **GitHub Actions:** NOT INVOLVED. Does nothing. The old workflow is dead.
