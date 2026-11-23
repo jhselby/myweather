@@ -37,7 +37,15 @@ from .. import runtime_tables
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 TABLE_NAME = "l3_nbm_curated.json"   # runtime_tables name (daily GCS refit, bundled fallback)
 
-L3_NBM_FIELDS = ("wg", "ch", "sr")   # scalar-bias fields
+L3_NBM_FIELDS = ("ch", "sr")   # scalar-bias fields
+# 2026-11-23 v0.7.141: dropped wg. The wg bias table was fit on station gusts
+# (sheltered Tempests, median ~5.8 mph vs URMA 13.9) and subtracted ~2.5-3 mph
+# from NBM gusts. On URMA gust truth (open-water level; max-of-stations agrees,
+# bias -0.1) served wg lost to raw NBM 22%: l3_nbm MAE 3.9-4.0 vs l2_nbm/raw
+# 3.0-3.1, 20 holdout days, raw NBM vs served +18.1% [+10.8,+25.0], halves
+# positive in every band (analysis/runlog/ship_tests.jsonl,
+# wg_raw_nbm_vs_served_urma). wg now serves l2_nbm (== raw NBM at 6-47h).
+# Reversible: put "wg" back and refit.
 # 2026-09-10 v0.6.577: dropped cc. Sentry HOT — layer help +9.4% → -8.3%
 # (Δ +17.7pp, n_sust 7,503 / n_fresh 3,285). Walkforward independently
 # proposed DROP cc same day (two-tool agreement — same pattern as sr.l5_nbm

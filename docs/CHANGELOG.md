@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.141 • November 23, 2026 (Gusts: serve raw NBM)</strong></summary>
+
+- Gusts are now served straight from NBM. The gust bias layer (L3_NBM) is removed for gusts.
+- Why: that layer was fitted on our street-level station gusts, which read about 8 mph under the open-water level (median station 5.8 mph, URMA 13.9 mph; the highest station reading averages 13.8). It took 2.5–3 mph off NBM gusts, so served gusts ran about 3 mph low and lost to raw NBM by 22% on URMA.
+- Test: on 20 holdout days, raw NBM beats the old served gust by +18.1% [+10.8, +25.0], and both halves are positive in every lead band (2–5 h +24.1%, 6–11 h +19.5%, 12–23 h +16.2%, 24–47 h +17.5%). A bias correction on top of NBM does not beat raw NBM (−4.6%), so none is added.
+- This restores parity with the normal source; it does not beat it yet. Gusts will read about 2–3 mph higher. Reversible by putting `wg` back in `L3_NBM_FIELDS`.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.140 • November 22, 2026 (Dew point blend can be served, off)</strong></summary>
 
 - The URMA-trained dew point blend can now replace the served dew point at 6–23 hours, with its own kill switch (`serve_dp` in `urma_blend_serve.json`, off). Nothing served changes until it is switched on.
