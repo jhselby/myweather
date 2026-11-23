@@ -1,5 +1,5 @@
 {
- "version": "v0.7.140",
+ "version": "v0.7.147",
  "components": [
   {
    "name": "HRRR cascade",
@@ -230,6 +230,48 @@
  ],
  "releases": [
   {
+   "version": "v0.7.147",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Airplanes card fixed"
+  },
+  {
+   "version": "v0.7.146",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Landing page: light mode and a theme toggle"
+  },
+  {
+   "version": "v0.7.145",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Radar map fixed"
+  },
+  {
+   "version": "v0.7.144",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Sources page: retired PWS row removed"
+  },
+  {
+   "version": "v0.7.143",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Landing page; app moves to /app"
+  },
+  {
+   "version": "v0.7.142",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Model page: gust wording and dates"
+  },
+  {
+   "version": "v0.7.141",
+   "date": "November 23, 2026",
+   "iso": "2026-11-23",
+   "title": "Gusts: serve raw NBM"
+  },
+  {
    "version": "v0.7.140",
    "date": "November 22, 2026",
    "iso": "2026-11-22",
@@ -258,48 +300,6 @@
    "date": "November 22, 2026",
    "iso": "2026-11-22",
    "title": "Two pages: Mesonet and Model"
-  },
-  {
-   "version": "v0.7.135",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Dew point blend on URMA, shadow"
-  },
-  {
-   "version": "v0.7.134",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Model page"
-  },
-  {
-   "version": "v0.7.133",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Scorecard on one fixed truth per field"
-  },
-  {
-   "version": "v0.7.132",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Mesonet page: full station detail"
-  },
-  {
-   "version": "v0.7.131",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Wyman Cove Mesonet page; Driftwood Rd station added"
-  },
-  {
-   "version": "v0.7.130",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "weather.gov humidity, gust, cloud and rain amount recorded"
-  },
-  {
-   "version": "v0.7.129",
-   "date": "November 22, 2026",
-   "iso": "2026-11-22",
-   "title": "Debug page staleness sweep"
   }
  ],
  "layers": {
@@ -335,152 +335,152 @@
    "cells": {
     "cc": {
      "0-5": {
-      "shift": 6.517,
+      "shift": 6.786,
       "verdict": "SKIP",
-      "improve_pct": 0.65,
-      "n": 14397
+      "improve_pct": -1.48,
+      "n": 13422
      },
      "5-20": {
-      "shift": 8.23,
+      "shift": 8.781,
       "verdict": "SKIP",
-      "improve_pct": -19.34,
-      "n": 3879
+      "improve_pct": -18.99,
+      "n": 3726
      },
      "20-50": {
-      "shift": -4.586,
+      "shift": -4.464,
       "verdict": "SKIP",
-      "improve_pct": 4.76,
-      "n": 2089
+      "improve_pct": 4.58,
+      "n": 2076
      },
      "50-80": {
-      "shift": -30.715,
+      "shift": -30.556,
       "verdict": "SHIP",
-      "improve_pct": 32.18,
-      "n": 1835
+      "improve_pct": 32.11,
+      "n": 1833
      },
      "80-95": {
-      "shift": -50.395,
+      "shift": -50.262,
       "verdict": "SHIP",
-      "improve_pct": 45.88,
-      "n": 1386
+      "improve_pct": 45.64,
+      "n": 1388
      },
      "95-100": {
-      "shift": -34.786,
-      "verdict": "SHIP",
-      "improve_pct": 5.61,
-      "n": 10974
+      "shift": -33.414,
+      "verdict": "MARGINAL",
+      "improve_pct": 3.41,
+      "n": 12115
      }
     },
     "cl": {
      "0-5": {
-      "shift": 1.946,
+      "shift": 1.966,
       "verdict": "SKIP",
-      "improve_pct": -48.31,
-      "n": 22538
+      "improve_pct": -49.82,
+      "n": 21591
      },
      "5-20": {
-      "shift": 5.829,
+      "shift": 5.939,
       "verdict": "SKIP",
-      "improve_pct": -19.76,
-      "n": 3639
+      "improve_pct": -19.64,
+      "n": 3629
      },
      "20-50": {
-      "shift": -2.963,
+      "shift": -3.6,
       "verdict": "SKIP",
-      "improve_pct": 2.96,
-      "n": 1751
+      "improve_pct": 3.75,
+      "n": 1825
      },
      "50-80": {
-      "shift": -26.265,
+      "shift": -27.081,
       "verdict": "SHIP",
-      "improve_pct": 16.3,
-      "n": 1262
+      "improve_pct": 17.64,
+      "n": 1347
      },
      "80-95": {
-      "shift": -34.14,
+      "shift": -35.533,
       "verdict": "SHIP",
-      "improve_pct": 12.98,
-      "n": 702
+      "improve_pct": 14.78,
+      "n": 768
      },
      "95-100": {
-      "shift": -27.591,
+      "shift": -29.63,
       "verdict": "SKIP",
-      "improve_pct": -15.14,
-      "n": 4668
+      "improve_pct": -11.7,
+      "n": 5400
      }
     },
     "cm": {
      "0-5": {
-      "shift": 5.152,
+      "shift": 5.423,
       "verdict": "SKIP",
-      "improve_pct": -57.93,
-      "n": 23254
+      "improve_pct": -55.99,
+      "n": 22112
      },
      "5-20": {
-      "shift": 7.983,
+      "shift": 8.159,
       "verdict": "SKIP",
-      "improve_pct": -11.85,
-      "n": 2181
+      "improve_pct": -11.96,
+      "n": 2193
      },
      "20-50": {
-      "shift": -10.518,
+      "shift": -10.545,
       "verdict": "SHIP",
-      "improve_pct": 13.71,
-      "n": 1236
+      "improve_pct": 13.74,
+      "n": 1245
      },
      "50-80": {
-      "shift": -39.042,
+      "shift": -38.338,
       "verdict": "SHIP",
-      "improve_pct": 39.73,
-      "n": 1229
+      "improve_pct": 38.45,
+      "n": 1271
      },
      "80-95": {
-      "shift": -64.482,
+      "shift": -63.88,
       "verdict": "SHIP",
-      "improve_pct": 60.74,
-      "n": 848
+      "improve_pct": 59.87,
+      "n": 882
      },
      "95-100": {
-      "shift": -71.299,
+      "shift": -70.111,
       "verdict": "SHIP",
-      "improve_pct": 58.27,
-      "n": 5812
+      "improve_pct": 57.94,
+      "n": 6857
      }
     },
     "ch": {
      "0-5": {
-      "shift": 4.002,
+      "shift": 4.163,
       "verdict": "SKIP",
-      "improve_pct": -38.27,
-      "n": 23275
+      "improve_pct": -36.86,
+      "n": 22185
      },
      "5-20": {
-      "shift": -0.319,
+      "shift": -0.195,
       "verdict": "SKIP",
-      "improve_pct": 0.87,
-      "n": 2849
+      "improve_pct": 0.51,
+      "n": 2812
      },
      "20-50": {
-      "shift": -25.366,
+      "shift": -25.336,
       "verdict": "SHIP",
-      "improve_pct": 52.31,
-      "n": 1271
+      "improve_pct": 51.89,
+      "n": 1269
      },
      "50-80": {
-      "shift": -54.154,
+      "shift": -54.272,
       "verdict": "SHIP",
-      "improve_pct": 72.89,
-      "n": 6277
+      "improve_pct": 71.64,
+      "n": 7211
      },
      "80-95": {
-      "shift": -61.9,
+      "shift": -58.17,
       "verdict": "SHIP",
-      "improve_pct": 71.78,
-      "n": 888
+      "improve_pct": 68.21,
+      "n": 1083
      }
     }
    },
-   "fit_generated_at": "2026-11-22T11:56:36.908997+00:00"
+   "fit_generated_at": "2026-11-23T12:22:03.588343+00:00"
   }
  }
 }
