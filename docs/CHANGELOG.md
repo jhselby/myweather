@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.146 • November 23, 2026 (Landing page: light mode and a theme toggle)</strong></summary>
+
+- The landing page has a Light / Dark / Auto toggle at the top right, and a full light mode. Auto follows the device.
+- The choice is shared with the app (same saved setting), so picking Light on one is Light on the other. The Mesonet and Model pages are still dark only.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.145 • November 23, 2026 (Radar map fixed)</strong></summary>
 
 - The radar card's map showed "API KEY REQUIRED" across it. The basemap provider (CARTO) now charges for tiles. The radar card and its small preview map now use Esri's free gray map, with place names on the full radar. No key needed.

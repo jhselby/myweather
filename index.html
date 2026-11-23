@@ -16,10 +16,31 @@
 <meta name="apple-mobile-web-app-title" content="Wyman Cove">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>
+  // Same key the app uses ("theme": light | dark | system), so the two stay in step. Resolved before paint.
+  (function () {
+    var mode = "system";
+    try { mode = localStorage.getItem("theme") || "system"; } catch (e) {}
+    var light = mode === "light" || (mode === "system" && window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches);
+    document.documentElement.setAttribute("data-theme", light ? "light" : "dark");
+  })();
+</script>
 <style>
   :root {
     --bg: #0f1115; --panel: #171b22; --ink: #e7ecf3; --muted: #8a93a3; --accent: #4aa3ff;
     --good: #5cc88a; --bad: #e07070; --warn: #ff9f4a; --line: #262c36;
+    --wx-bg: #0d141e; --wx-line: #253247; --soft: #c3cbd8; --pill-bg: #11151b; --tie: #c9d1dc;
+    --btn-bg: rgba(74,163,255,0.14); --btn-bd: rgba(74,163,255,0.45); --btn-bg-hover: rgba(74,163,255,0.24);
+    --on-accent: #07121f; --app-card: linear-gradient(180deg, rgba(74,163,255,0.08), #171b22);
+    --good-bg: rgba(92,200,138,0.15); --warn-bg: rgba(255,159,74,0.15);
+  }
+  html[data-theme="light"] {
+    --bg: #f0f2f5; --panel: #ffffff; --ink: #14202e; --muted: #5d6b7d; --accent: #1c6fd1;
+    --good: #1f8f55; --bad: #c0392b; --warn: #b7650a; --line: #d9dee6;
+    --wx-bg: #ffffff; --wx-line: #cfd8e3; --soft: #3a4756; --pill-bg: #f4f6f9; --tie: #4a5565;
+    --btn-bg: rgba(28,111,209,0.09); --btn-bd: rgba(28,111,209,0.4); --btn-bg-hover: rgba(28,111,209,0.17);
+    --on-accent: #ffffff; --app-card: linear-gradient(180deg, rgba(28,111,209,0.07), #ffffff);
+    --good-bg: rgba(31,143,85,0.12); --warn-bg: rgba(183,101,10,0.12);
   }
   * { box-sizing: border-box; }
   body {
@@ -30,10 +51,9 @@
   main { max-width: 760px; margin: 0 auto; }
   .brand { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin-bottom: 14px; }
   .brand img { width: 30px; height: 30px; border-radius: 7px; }
-  .brand .asof { margin-left: auto; font-size: 12px; }
-  .wx { border: 1px solid #253247; background: #0d141e; border-radius: 12px; padding: 18px 18px 16px; }
+    .wx { border: 1px solid var(--wx-line); background: var(--wx-bg); border-radius: 12px; padding: 18px 18px 16px; }
   .wx h1 { font-size: 22px; line-height: 1.25; margin: 0 0 6px; font-weight: 600; letter-spacing: -0.01em; }
-  .wx .sub { margin: 0 0 14px; color: #c3cbd8; }
+  .wx .sub { margin: 0 0 14px; color: var(--soft); }
   .now { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .now .emoji { font-size: 40px; line-height: 1; }
   .now .temp { font-size: 38px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
@@ -46,36 +66,48 @@
   .cards { display: grid; gap: 14px; margin-top: 16px; }
   .card { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
   .card h2 { margin: 0; font-size: 17px; font-weight: 600; }
-  .card p { margin: 0; color: #c3cbd8; }
+  .card p { margin: 0; color: var(--soft); }
   .card .muted { color: var(--muted); font-size: 13px; }
   .pills { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pill { border-radius: 999px; padding: 4px 12px; font-size: 13px; border: 1px solid var(--line); background: #11151b; }
+  .pill { border-radius: 999px; padding: 4px 12px; font-size: 13px; border: 1px solid var(--line); background: var(--pill-bg); }
   .pill b { font-size: 15px; margin-right: 6px; }
-  .pill.win b { color: var(--good); } .pill.loss b { color: var(--bad); } .pill.tie b { color: #c9d1dc; }
+  .pill.win b { color: var(--good); } .pill.loss b { color: var(--bad); } .pill.tie b { color: var(--tie); }
   .tag { font-size: 12px; border-radius: 4px; padding: 1px 7px; margin-left: 4px; }
-  .tag.good { background: rgba(92,200,138,0.15); color: var(--good); }
-  .tag.warn { background: rgba(255,159,74,0.15); color: var(--warn); }
+  .tag.good { background: var(--good-bg); color: var(--good); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
   .btn {
     display: inline-block; align-self: flex-start; margin-top: 4px; padding: 9px 16px; border-radius: 8px;
-    background: rgba(74,163,255,0.14); border: 1px solid rgba(74,163,255,0.45); color: var(--accent);
+    background: var(--btn-bg); border: 1px solid var(--btn-bd); color: var(--accent);
     text-decoration: none; font-weight: 600; font-size: 14px;
   }
-  .btn:hover { background: rgba(74,163,255,0.24); }
-  .card.app { border-color: rgba(74,163,255,0.45); background: linear-gradient(180deg, rgba(74,163,255,0.08), var(--panel)); }
-  .card.app .btn { background: var(--accent); color: #07121f; border-color: var(--accent); }
+  .btn:hover { background: var(--btn-bg-hover); }
+  .card.app { border-color: var(--btn-bd); background: var(--app-card); }
+  .card.app .btn { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   @media (min-width: 640px) { .cards { grid-template-columns: 1fr 1fr; } .card.app { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; } .card.app .btn { margin-top: 0; } }
+  .theme { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .theme button { font: inherit; font-size: 12px; padding: 5px 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+  .theme button + button { border-left: 1px solid var(--line); }
+  .theme button[aria-pressed="true"] { background: var(--btn-bg); color: var(--accent); font-weight: 600; }
+  .asof { color: var(--muted); font-size: 12px; margin-top: 12px; }
   footer { margin-top: 26px; color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
 <main>
-  <div class="brand"><img src="icon-192.png" alt=""><span>Wyman Cove, Marblehead</span><span class="asof" id="asof"></span></div>
+  <div class="brand"><img src="icon-192.png" alt=""><span>Wyman Cove, Marblehead</span>
+    <div class="theme" role="group" aria-label="Appearance">
+      <button type="button" data-mode="light" aria-pressed="false">Light</button>
+      <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
+      <button type="button" data-mode="system" aria-pressed="false">Auto</button>
+    </div>
+  </div>
 
   <section class="wx" aria-label="Weather now">
     <h1 id="headline">Loading the weather…</h1>
     <p class="sub" id="subheadline"></p>
     <div class="now" id="now"></div>
     <dl class="stats" id="stats"></dl>
+    <div class="asof" id="asof"></div>
   </section>
 
   <div class="cards">
@@ -115,6 +147,23 @@
       location.replace("/app"); return;
     }
   } catch (e) {}
+
+  // Appearance: Light / Dark / Auto, shared with the app through localStorage "theme".
+  const mql = window.matchMedia ? matchMedia("(prefers-color-scheme: light)") : null;
+  const storedMode = () => { try { return localStorage.getItem("theme") || "system"; } catch (e) { return "system"; } };
+  function applyMode(mode) {
+    const light = mode === "light" || (mode === "system" && mql && mql.matches);
+    document.documentElement.setAttribute("data-theme", light ? "light" : "dark");
+    const tc = document.querySelector('meta[name="theme-color"]');
+    if (tc) tc.setAttribute("content", light ? "#f0f2f5" : "#0f1115");
+    document.querySelectorAll(".theme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+  }
+  document.querySelectorAll(".theme button").forEach(b => b.addEventListener("click", () => {
+    try { localStorage.setItem("theme", b.dataset.mode); } catch (e) {}
+    applyMode(b.dataset.mode);
+  }));
+  if (mql && mql.addEventListener) mql.addEventListener("change", () => { if (storedMode() === "system") applyMode("system"); });
+  applyMode(storedMode());
 
   const BASE = "https://data.wymancove.com/";
   const $ = id => document.getElementById(id);
