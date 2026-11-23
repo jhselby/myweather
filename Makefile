@@ -176,3 +176,18 @@ visualize:
 	@echo "Charts in analysis/output/:"
 	@ls -1 analysis/output/*.png 2>/dev/null
 	@open analysis/output/ 2>/dev/null || true
+
+# Overhead aircraft relay (v0.7.147): adsb.lol behind CORS for the app's Airplanes card. Public by design
+# (fixed point, no parameters, 15 s cache); max-instances 2 caps the bill. Source: overhead_relay/.
+deploy-overhead:
+	gcloud functions deploy myweather-overhead \
+	  --gen2 \
+	  --runtime=python311 \
+	  --region=us-east1 \
+	  --source=overhead_relay \
+	  --entry-point=overhead \
+	  --trigger-http \
+	  --allow-unauthenticated \
+	  --timeout=30s \
+	  --memory=256MB \
+	  --max-instances=2

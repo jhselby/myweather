@@ -4,7 +4,8 @@
   const HOME_LNG   = -70.8661;
   const RADIUS_NM  = 200;
   const REFRESH_MS = 30000;
-  const API_URL    = `https://api.airplanes.live/v2/point/${HOME_LAT}/${HOME_LNG}/${RADIUS_NM}`;
+  // Our relay (overhead_relay/): adsb.lol behind CORS. api.airplanes.live refuses all clients since Nov 2026.
+  const API_URL    = 'https://us-east1-weather-data-493811.cloudfunctions.net/myweather-overhead';
 
   let ohMap = null;
   let ohMarkers = [];

@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.147 • November 23, 2026 (Airplanes card fixed)</strong></summary>
+
+- The Airplanes card was empty because its data source (airplanes.live) now refuses all requests. It now reads from a small relay of our own (`myweather-overhead`, a Cloud Function) that fetches adsb.lol, which is free and needs no key. Same aircraft data, same 30-second refresh.
+- The relay is public, uses a fixed location and radius (no parameters), caches for 15 seconds, and is capped at 2 instances, so cost stays at about zero.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.146 • November 23, 2026 (Landing page: light mode and a theme toggle)</strong></summary>
 
 - The landing page has a Light / Dark / Auto toggle at the top right, and a full light mode. Auto follows the device.
