@@ -41,6 +41,7 @@ def score(snaps, field="t"):
     U = urma_idw() if field == "t" else urma_wind("GUST" if field == "wg" else "WIND")
     bands = ((("0-5", 0, 6),) + BANDS) if field in ("ws", "wg") else BANDS
     per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
+    raw = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
     ticks = scored = 0
     for s in snaps:
         hs = [h for h in s["hours"] if f"{field}_urmab" in h]
@@ -59,8 +60,14 @@ def score(snaps, field="t"):
             a[0] += abs(h.get(f"{field}_pre_urmab", h[field]) - tr)
             a[1] += abs(h[f"{field}_urmab"] - tr)
             a[2] += 1
+            nb = h.get(f"{field}_raw_nbm")
+            if nb is not None:
+                r = raw[band][h["v"][:10]]
+                r[0] += abs(nb - tr)
+                r[1] += abs(h[f"{field}_urmab"] - tr)
+                r[2] += 1
             scored += 1
-    return ticks, scored, per
+    return ticks, scored, per, raw
 
 
 def main():
@@ -69,7 +76,7 @@ def main():
         report(field, *score(snaps, field))
 
 
-def report(field, ticks, scored, per):
+def report(field, ticks, scored, per, raw):
     print(f"{field}_urmab shadow vs URMA truth: {ticks} stamped ticks, {scored} scored hour-rows")
     for band, days in per.items():
         d = {k: tuple(v) for k, v in days.items()}
@@ -84,6 +91,9 @@ def report(field, ticks, scored, per):
         tw = "too few days (<3)" if len(t3) < 3 else ("TRIPPED" if trip else "ok")
         print(f"  {band}h: gain {g['gain']:+.1f}% [{g['lo']:+.1f},{g['hi']:+.1f}] over {g['days']} d, "
               f"shadow wins {wins}/{len(last7)} (last7), n={g['n']}, tripwire {tw}")
+        if field in ("ws", "wg") and raw[band]:
+            r = day_block_gain({k: tuple(v) for k, v in raw[band].items()}, holdout_only=False)
+            print(f"        vs raw NBM (the current serve for wg): {r['gain']:+.1f}% [{r['lo']:+.1f},{r['hi']:+.1f}] over {r['days']} d")
 
 
 if __name__ == "__main__":
