@@ -3123,7 +3123,7 @@
           <li><strong>Cloud saturation (Lc)</strong>: per-(field, value_bin) percentage-point shift, clamped to [0, 100]. Final line for cm / ch (unchanged); <span style="color:#e07272;">cl and cc both fully off</span> as of 07-30 (v0.6.389f cl · v0.6.390 cc). cc now derived downstream via Ccd = max(cl_l6, cm_l6, ch_l6). FLIPPED 2026-07-17 v0.6.355; emergency intervention 07-30 — see <a href="#sec-lc">Lc layer section</a> for details.</li>
         </ul>
       </div>
-      <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
+      <div class="meta-line"><strong>Mesonet badge variants:</strong> <span class="field-badge active">Mesonet ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">Mesonet ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">Mesonet n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
       <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
     </details>
     <div id="status-accuracy" class="status" hidden></div>
@@ -3634,11 +3634,6 @@
   </details>
 </details>
 
-<details class="research-subsection" id="retired-derived-humidity">
-  <summary>[HYPOTHESIS] Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (RETIRED 2026-06-08)</summary>
-  <div class="meta-line"><strong>Verdict:</strong> equivalent. Tested whether deriving humidity from corrected temperature + corrected dew point via Magnus outperforms the L2 network-blended humidity. 27k triples, identical MAE within noise. We kept the derived path anyway because it keeps the (T, T_d, RH, AH) quadruple internally consistent — but the hypothesis "derivation is more accurate" is closed. Analysis: <code>analysis/derived_humidity.py</code>.</div>
-</details>
-
 <details class="research-subsection" id="retired-tau-tuning">
   <summary>[SETTLED TUNING] L3/L4 recency window τ — sweep over fit-window decay constant (RETIRED 2026-06-08)</summary>
   <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. Not a hypothesis — a parameter sweep over the Fitter's recency-weighting τ (how much old pairs count when fitting decay curves). <em>Not</em> the L2 lead-decay τ added in v0.6.44, which controls how a current bias is spread across forecast leads (see sec 2d). Tested τ ∈ {7, 14, 21} days across four reports. Held-out MAE differences under 2%, well below run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
@@ -3651,44 +3646,6 @@
     <strong style="color:#fb7c5c;">CLOSE verdict (2026-06-17, 112,877 joined pairs):</strong>
     <div style="margin-top:6px;">0 of 6 fields above the 0.25 ρ threshold. Maximum observed |ρ| = 0.012 (wind speed at 1-6h) — essentially zero correlation. HRRR vs GFS spread does NOT predict forecast error magnitude. Retired without auto-wiring. <strong>Manual script:</strong> <code>analysis/r4_spread_analysis.py</code> — re-run quarterly or after a model release.</div>
   </div>
-</details>
-
-<details class="research-subsection" id="r5-cove-gradient">
-  <summary>[HYPOTHESIS] R5 — Cove warming — sea breeze across the peninsula heats Wyman Cove vs inland (RETIRED 2026-06-17, verdict: HOLD — L2 already captures it)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Reframed hypothesis (2026-06-13):</strong> Wyman Cove sits in the <em>lee</em> of the Marblehead peninsula on a S/SE/SW sea breeze. Marine air crosses ~2 miles of sun-heated land before reaching the cove, picking up surface heat in transit. Expected pattern: <code>delta_wf_inland = waterfront_median − inland_median</code> goes <strong>positive</strong> (cove warmer) when wind is from the S half AND sea breeze is active, with magnitude scaling to solar input (peaking ~12-14 EDT). Should flatten to zero when wind is from N/NE (cove is windward of peninsula) or after sunset (no surface heating). Original hypothesis ("waterfront cools during sea breeze") was geographically backwards and is closed.</div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Day-12 refit (1,732 ticks through 2026-06-24):</strong> matches the reframed model; magnitudes tightened further as the sample grew. NW flipped from neutral to weakly negative; E cooled further.
-    <table style="margin-top:8px;border-collapse:collapse;font-size:0.92em;">
-      <tr><th style="text-align:left;padding:2px 12px 2px 0;">Wind</th><th style="text-align:left;padding:2px 12px 2px 0;">Sea breeze</th><th style="text-align:right;padding:2px 12px 2px 0;">n</th><th style="text-align:right;padding:2px 12px 2px 0;">mean Δ°F</th></tr>
-      <tr><td>S</td><td>active</td><td style="text-align:right;">186</td><td style="text-align:right;color:#fb7c5c;"><strong>+1.5</strong></td></tr>
-      <tr><td>SE</td><td>active</td><td style="text-align:right;">88</td><td style="text-align:right;color:#fb7c5c;"><strong>+2.0</strong></td></tr>
-      <tr><td>SW</td><td>active</td><td style="text-align:right;">79</td><td style="text-align:right;color:#fb7c5c;"><strong>+1.1</strong></td></tr>
-      <tr><td>N</td><td>inactive</td><td style="text-align:right;">378</td><td style="text-align:right;color:#7ec8ff;"><strong>−1.0</strong></td></tr>
-      <tr><td>NE</td><td>inactive</td><td style="text-align:right;">103</td><td style="text-align:right;color:#7ec8ff;"><strong>−1.0</strong></td></tr>
-      <tr><td>E</td><td>inactive</td><td style="text-align:right;">86</td><td style="text-align:right;color:#7ec8ff;"><strong>−1.3</strong></td></tr>
-      <tr><td>NW</td><td>inactive</td><td style="text-align:right;">459</td><td style="text-align:right;color:#7ec8ff;"><strong>−0.9</strong></td></tr>
-    </table>
-    Diurnal curve under offshore/calm conditions shows clean morning-marine-cooling: trough around −3.7°F at 12:00 EDT (refit 06-24, n=1,732 entries over 12 days; cool air pool over Salem Sound persists; inland warms fast with sun while cove stays anchored to marine boundary). Both signals are physically coherent with the lee-warming model.
-  </div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Data collection:</strong> <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow Rd, Neptune Rd — both at cliff-edge elevations on the harbor, confirmed by Joe), inland Tempest median (~18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, sb_active, sb_likelihood per tick (14-day retention).</div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Two-step plan:</strong>
-    <ul style="margin:4px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><strong>Step 1 — measurement is stable</strong> (<code>analysis/r5_cove_analysis.py</code>). Confirms the (wind × sb × hour) lookup table reflects a real, repeatable physical signal. Day-4 already passes both regime tests; 7-day re-run on 06-19 just confirms stability.</li>
-      <li><strong>Step 2 — held-out MAE audit</strong> (<code>analysis/r5_audit.py</code>). The actual ship question: does APPLYING the correction improve cove temperature forecast accuracy? Joins the pair log against the cove log, computes <code>error_l4 + R5_delta</code> and <code>error_l1 + R5_delta</code>, compares MAE against the existing L4-corrected baseline.</li>
-    </ul>
-  </div>
-  <div class="meta-line" style="margin-bottom:10px;background:#241818;border:1px solid #402828;border-radius:6px;padding:10px 12px;">
-    <strong style="color:#fb7c5c;">Step 2 verdict: HOLD (run 2026-06-16, n=29,444 matched pairs)</strong>
-    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;font-size:0.95em;">
-      <li>Baseline (existing L4-corrected, which for temperature = L2-corrected since L3/L4 are off): <strong>2.547°F MAE</strong></li>
-      <li>R5 added on top of L4: <strong>3.045°F MAE</strong> (<strong style="color:#fb7c5c;">−19.58%</strong> — significantly worse)</li>
-      <li>R5 replacing the entire stack: <strong>3.066°F MAE</strong> (<strong style="color:#fb7c5c;">−20.39%</strong> — also worse)</li>
-    </ul>
-    <div style="margin-top:6px;">The L2-overlap hypothesis was empirically confirmed. L2's <code>1/distance² × elevation</code> station weighting for the cove is dominated by the two waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi). L2's "cove bias" is effectively "waterfront bias" by construction. Layering R5's (waterfront − inland) delta on top double-counts the same signal — the cove obs is already waterfront-influenced via L2, so adding more waterfront delta pushes the forecast AWAY from the obs.</div>
-    <div style="margin-top:6px;"><strong>Decision (global R5, retired 2026-06-17):</strong> <code>r5_audit.py</code>'s held-out test of R5 applied across the full pipeline showed it makes cove temp 20–22% worse — L2's waterfront-weighted station blend already captures the signal, so layering R5 on top double-counts. That global formulation stays retired.</div>
-    <div style="margin-top:6px;"><strong>Current status (Lt — microclimate correction, RETIRED 2026-07-13 v0.6.329):</strong> Both branches return 0.0. Cooling branch killed 2026-06-30 v0.6.259 (paired-MAE showed it materially increased cove temp MAE); warming branch killed 2026-07-01 v0.6.276 after real per-row Production exposed the same double-counting for the sea-breeze direction; Fix B refit tried 2026-07-13 (<code>analysis/l6_fix_b_refit.py</code>) and failed at held-out +0.29% vs +1.0% ship gate. Lookup tables + <code>cove_gradient_log.json</code> continue to log per-tick against a possible future reactivation (seasonal shift, sensor swap, or materially different mechanism). Full rationale in <a href="#sec-rd-lt">R&amp;D → Lt</a>.</div>
-    <div style="margin-top:6px;">One niche subtlety in the breakdown: long-lead (24-47h) sea-breeze forecasts get +7.85% MAE improvement with R5. At long leads, L2's τ=4h decay has long since faded, so R5 has something L2 doesn't. Not worth shipping a conditional correction for, but documented.</div>
-  </div>
-  <div id="status-cove-gradient" class="status" hidden></div>
 </details>
 
 <!-- R3 retired-hypothesis sub-items moved up under the consolidated
@@ -5395,8 +5352,8 @@ async function renderPerFieldScoring() {
           <th class="pfs-col" title="Mean absolute error of the raw NBM forecast. Dash = NBM does not emit this field.">NBM MAE</th>
           <th class="pfs-col pfs-group-start" title="Mean absolute error of L1 — the selector's chosen raw source per cell.">L1 MAE</th>
           <th class="pfs-col" title="(best raw MAE − L1 MAE) / best raw MAE × 100. Positive = source selection produced an L1 better than the best public raw model. Zero = no better than just using min(HRRR, NBM). Negative = source selection cost us accuracy.">Chooser lift<span class="pfs-sub">L1 vs best raw</span></th>
-          <th class="pfs-col pfs-group-start" title="Mean absolute error of the final Wyman Cove Production forecast (after L2 / L3 / L4 / gates).">Prod MAE</th>
-          <th class="pfs-col" title="(L1 MAE − Prod MAE) / L1 MAE × 100. Positive = our local correction stack (L2/L3/L4/gates) adds value on top of the chooser's pick.">Local lift<span class="pfs-sub">Prod vs L1</span></th>
+          <th class="pfs-col pfs-group-start" title="Mean absolute error of the final Wyman Cove Production forecast (after the Mesonet start, L3, L4 and gates).">Prod MAE</th>
+          <th class="pfs-col" title="(L1 MAE − Prod MAE) / L1 MAE × 100. Positive = our local correction stack (Mesonet start, L3, L4, gates) adds value on top of the chooser's pick.">Local lift<span class="pfs-sub">Prod vs L1</span></th>
           <th class="pfs-col pfs-group-start" title="(best raw MAE − Prod MAE) / best raw MAE × 100. Positive = Wyman Cove Production beats the best free public raw for this field. This is the number that answers 'is this project worth it'.">Total lift<span class="pfs-sub">Prod vs best raw</span></th>
           <th class="pfs-col pfs-group-start" style="color:#a0a0d0;" title="(alt cascade Prod MAE − chosen cascade Prod MAE) / alt cascade Prod MAE × 100, paired per row. Positive = router picked the branch that turned out to be better after local processing. DIAGNOSTIC of the router — separate from Chooser lift, which measures whether source selection beat the best public raw. A working router shows ≥0 here.">Selector skill<span class="pfs-sub">chosen vs alt Prod</span></th>
         </tr>
@@ -6313,7 +6270,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const ppBrierAvailable = Array.isArray((brierByLead.pp || {}).l1);
   const LAYER_LINES = [
     { key: "l1", label: "Raw model (Open-Meteo)",          shortLabel: "Raw",            color: "rgba(138,147,163,0.75)", dash: [4,4] },
-    { key: "l2", label: "Aggregate-bias (L2)",             shortLabel: "Aggregate bias", color: "rgba(200,160,110,1)",    dash: [] },
+    { key: "l2", label: "Mesonet start",             shortLabel: "Mesonet start", color: "rgba(200,160,110,1)",    dash: [] },
     { key: "l3", label: "Lead-decay (L3)",                 shortLabel: "Lead decay",     color: "rgba(110,180,235,1)",    dash: [] },
     { key: "l4", label: "Diurnal (L4)",                    shortLabel: "Diurnal",        color: "rgba(74,163,255,1)",     dash: [] },
     // Lsr (synoptic-regime, solar radiation only) — _layersFor() filters this
@@ -6363,11 +6320,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
     const badges = [];
     // L2 badge
     if (L2_ADDITIVE.has(fieldKey)) {
-      badges.push(`<span class="field-badge active">L2 ✓ additive</span>`);
+      badges.push(`<span class="field-badge active">Mesonet ✓ additive</span>`);
     } else if (L2_DIRECT.has(fieldKey)) {
-      badges.push(`<span class="field-badge active">L2 ✓ direct</span>`);
+      badges.push(`<span class="field-badge active">Mesonet ✓ direct</span>`);
     } else {
-      badges.push(`<span class="field-badge na">L2 n/a</span>`);
+      badges.push(`<span class="field-badge na">Mesonet n/a</span>`);
     }
     // L3 badge
     if (l3Fields.has(fieldKey)) {
@@ -8962,34 +8919,34 @@ load();
     // v0.6.371: prod_real is the real per-row Prod aggregate (applied_layer-keyed,
     // sample-comparable to raw/l2/l3). Specialists (Lsr, Lc, chp, clp) remain
     // visible as intermediate lines showing gate-fired-only MAE.
-    sr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l5", label:"Lsr"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l5_nbm", label:"Lsr (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    sr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l5", label:"Lsr"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l5_nbm", label:"Lsr (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // cc/cl/cm/ch: Lc rides l6. cm/cc have no post-Lc specialist. cl has
     // cl_persistence_gate (clp; wired v0.6.379, ENABLED=False — successor to
     // retired cl_persistence_short_lead). ch has ch_persistence_gate
     // (chp; LIVE since v0.6.358). Specialists demote to intermediate; prod_real
     // is isProd (v0.6.371).
-    cc: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    cl: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
-    cm: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ch: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"chp_nbm", label:"ch-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cc: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cl: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cm: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ch: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l4_nbm", label:"L4 (NBM)"}, {key:"chp_nbm", label:"ch-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // t / ws / wd carry an extra "l1r" line (v0.6.432 L1 router — NWS/NBM
     // at leads ≥6h). Distinct from prod_real: prod_real follows applied_layer
     // and IS the router where the router fired, so at long lead prod_real and
     // l1r coincide; short lead prod_real shows cascade output. The l1r line
     // visualizes router-only MAE for direct comparison with the cascade path.
-    t:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l6_nbm", label:"Lc/cove (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    t:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"l6_nbm", label:"Lc/cove (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
     // Phase 1/2 (option-1 parallel cascade): NBM lines (raw_nbm, l2_nbm)
     // added for the 5 fields NBM emits + L2 corrects (t/ws/wg/wd/h).
     // Dashed rendering (see LAYER_STYLE). Fields NBM emits but L2 doesn't
     // (sr, ch, cc, dp) get raw_nbm only. Fields NBM doesn't emit (cl/cm/
     // pr/pp/pa) get nothing new here — selector picks HRRR always.
-    h:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    dp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    wg: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    pp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    pr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    h:  [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    dp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pp: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pr: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start"}, {key:"prod_real", label:"Prod", isProd:true}],
     pa: [{key:"raw", label:"Raw (HRRR)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // wd: L1 + L2 blend (v0.6.368a — wind_blend circular unit-vector blend of
     // current obs into first 24 leads, calm floor ≥3 mph) + wdp
@@ -8997,7 +8954,7 @@ load();
     // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
     // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"wdp_nbm", label:"wd-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wd: [{key:"raw", label:"Raw (HRRR)"}, {key:"l2", label:"Mesonet start (blend)"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Public · NBM raw"}, {key:"l2_nbm", label:"Mesonet start (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"wdp_nbm", label:"wd-persist (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc

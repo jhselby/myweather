@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.139 • November 22, 2026 (Cleanup: retired Mesonet ideas, layer names)</strong></summary>
+
+- Two retired ideas moved from the Model page's Archive to a "Retired ideas" section on the Mesonet page, since they are about the stations and the Cove: the derived-humidity test and the Cove-warming (R5) hypothesis. R5 was retired in June as "L2 already captures it". That was wrong: L2's per-station offsets removed the Cove's own pattern, and the Cove adjustment now puts it back. The entry says so.
+- The per-layer tables and charts on the Model page now call the old L2 step "Mesonet start" (display names only; the data keys are unchanged). Historical notes in the Research and Archive text keep their original wording.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.138 • November 22, 2026 (Cove value, shadow)</strong></summary>
 
 - The Mesonet averages the stations around the Cove, so it cannot show the Cove's own daily swing: warmer nights and cooler days than the stations around it. A correction learned from Neptune Rd (the waterfront station on the Cove side) fixes that. In a walk-forward test (each day scored with a correction learned only from earlier days), the miss against Neptune Rd fell from 1.59 to 0.99 °F, and against your yard sensor, which was never used to learn it, the day and night level moved from +1.6 / −1.3 °F to +0.3 / −0.4 °F.
