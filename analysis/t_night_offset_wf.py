@@ -8,7 +8,8 @@ Baseline = t_urmab (the served t since v0.7.114); candidate = t_urmab + offset(h
 only, from the pair log's lead-0 rows), leads 6-47h, IDENTICAL rows, day-block bootstrap through analysis/ship_rule.py.
 Also prints the same candidate scored on URMA (it should lose there by construction: this is the truth-choice trade).
 
-    PYTHONPATH=. .venv/bin/python -m analysis.t_night_offset_wf [forecast_log.json]
+    PYTHONPATH=. .venv/bin/python -m analysis.t_night_offset_wf [forecast_log.json] [--record]
+The digest runs every analysis/*.py daily, so rows go to the ship ledger only with --record.
 """
 import collections
 import json
@@ -61,7 +62,7 @@ def main():
 
     stn = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in BANDS}
     urm = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in BANDS}
-    for s in snapshots(sys.argv[1] if len(sys.argv) > 1 else None):
+    for s in snapshots(next((a for a in sys.argv[1:] if not a.startswith('--')), None)):
         run = datetime.strptime(s["run"], "%Y-%m-%dT%H:%M").replace(tzinfo=ET)
         for h in s["hours"]:
             if "t_urmab" not in h:
@@ -93,7 +94,7 @@ def main():
                 continue
             g = day_block_gain(d)
             print(f"  {band}: {verdict(g)}")
-            if tab is stn:
+            if tab is stn and "--record" in sys.argv:
                 record("t_night_offset_wf", f"t {band}", g, note="t_urmab + trailing 14d (stations-URMA) by hour; truth observed_stations")
 
 
