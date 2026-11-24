@@ -155,3 +155,26 @@ def test_stnoff_absent_without_offset_for_hour(monkeypatch):
 def test_validate_rejects_absurd_offset():
     assert u.validate_table(_off_doc({"22": 9.0})) is not None
     assert u.validate_table(_off_doc({"22": 1.0})) is None
+
+
+def _ch_entry():
+    return {"ch": 61.0, "ch_l1": 12.0, "ch_applied": "l3", "ch_selector_source": "nbm"}
+
+
+def test_ch_serves_hrrr_at_6_to_23h_only(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_ch": True})
+    for lead, ok in ((3, False), (6, True), (23, True), (24, False), (40, False)):
+        e = _ch_entry()
+        assert u.apply_ch(e, lead) is ok, lead
+        assert (e["ch"] == 12.0) is ok
+    e = _ch_entry(); u.apply_ch(e, 8)
+    assert e["ch_pre_hrrr"] == 61.0 and e["ch_applied"] == "hrrr_sat"
+
+
+def test_ch_off_without_key_or_on_error(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True})
+    assert u.apply_ch(_ch_entry(), 8) is False
+    def boom(*a, **k):
+        raise RuntimeError("gcs down")
+    monkeypatch.setattr(runtime_tables, "get", boom)
+    assert u.apply_ch(_ch_entry(), 8) is False

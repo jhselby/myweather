@@ -117,6 +117,8 @@ def _valid_serve(doc):
         return "serve must be a bool"
     if "serve_dp" in doc and not isinstance(doc["serve_dp"], bool):
         return "serve_dp must be a bool"
+    if "serve_ch" in doc and not isinstance(doc["serve_ch"], bool):
+        return "serve_ch must be a bool"
     return None
 
 
@@ -178,4 +180,37 @@ def apply_dp(entry, lead_h):
     entry["dp_applied"] = "urmab"
     entry["dp_selector_source"] = "urmab"
     entry["dp_urmab_independent"] = True
+    return True
+
+
+# v0.7.154: high cloud served as raw HRRR (ch_l1) at 6-23h. On satellite truth (GOES-19 ACHAC cloud-top height at the Cove,
+# analysis/goes_cloud_layers.py; the airport ceilometer cannot see above 12,000 ft) raw HRRR beat served ch by +37.7% [+15.4, +57.1]
+# over 22 holdout days, both halves positive (7 km cutoff +34.8, 8 km +28.3). Nothing is fitted: ch_l1 was already logged.
+# Served cc does not read ch (cc = NBM selector pick), so cc is unchanged. Kill switch: {"serve_ch": false} in urma_blend_serve.json
+# (default false when the key is absent). The replaced value is kept as ch_pre_hrrr.
+SERVE_CH_BANDS = ("6-11", "12-23")
+
+
+def serving_ch():
+    """True when raw HRRR ch replaces served ch at 6-23h. Fails closed (False)."""
+    if not ENABLED:
+        return False
+    try:
+        from .. import runtime_tables
+        doc = runtime_tables.get(SERVE_TABLE, SERVE_PATH, _valid_serve)
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"  ⚠  urma_blend_shadow: serve switch unreadable ({e}); not serving ch")
+        return False
+    return bool(doc and doc.get("serve_ch") is True)
+
+
+def apply_ch(entry, lead_h):
+    """Serve ch_l1 (raw HRRR high cloud) in place of ch at 6-23h. Keeps the replaced value as ch_pre_hrrr. True when it fired."""
+    hr, old = entry.get("ch_l1"), entry.get("ch")
+    if hr is None or old is None or _band(lead_h, BANDS) not in SERVE_CH_BANDS or not serving_ch():
+        return False
+    entry["ch_pre_hrrr"] = old
+    entry["ch"] = hr
+    entry["ch_applied"] = "hrrr_sat"
+    entry["ch_selector_source"] = "hrrr"
     return True

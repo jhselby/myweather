@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.154 • November 24, 2026 (High cloud from HRRR at 6-23 h)</strong></summary>
+
+- High cloud 6-23 hours ahead is now raw HRRR. The airport sensor cannot see above 12,000 ft, so we graded it against GOES-19 satellite cloud-top height instead. On 22 days HRRR beat the old high-cloud forecast by 28-38%, with every range above zero. Overall cloud cover does not use high cloud and is unchanged. Beyond 23 hours nothing changes (the satellite gain there is only about 8%). Low and mid cloud cannot be graded this way, because a satellite sees only the topmost layer.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.153 • November 24, 2026 (Night temperature offset, shadow)</strong></summary>
 
 - Served temperature runs about 1 F cold at night against the Mesonet stations, which read warmer than URMA from 7 pm to 8 am. The collector now also records `t_stnoff`: the served temperature plus the trailing 14-day average (stations minus URMA) for that hour of day. Nothing served changes. In a walk-forward on 12 days it beat the served temperature on the stations by 12-20% (95% ranges above 0 in every band). It serves only after 5 of 7 forward days win.

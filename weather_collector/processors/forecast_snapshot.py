@@ -1383,6 +1383,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         entry["dp"] = _dpv2
             # v0.7.140 — dew point blend served for dew point only (6-23h, kill switch off by default).
             urma_blend_shadow.apply_dp(entry, i)
+            urma_blend_shadow.apply_ch(entry, i)
         except Exception as _e:  # noqa: BLE001
             logging.warning(f"  ⚠  urma_blend_shadow stamp failed ({_e})")
         hours.append(entry)
