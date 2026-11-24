@@ -1,4 +1,4 @@
-"""URMA-truth bias-then-blend for t (v0.8.0 rebuild branch). Stamps `t_urmab`; SERVED since v0.7.114.
+"""URMA-truth bias-then-blend for t (v0.8.0 rebuild branch). Stamps `t_urmab`; SERVED since v0.7.114. Also stamps the SHADOW `t_stnoff` (v0.7.153).
 
 For t at leads 6-47h: per source (HRRR L1, NBM raw, ECMWF raw) subtract its trailing bias against
 URMA (independent truth, not built from our forecast), then blend with weights fit on those
@@ -40,6 +40,10 @@ def validate_table(doc):
         return "missing fields.t.bands"
     if not cells:
         return "no bands"
+    off = (fields.get("t_off") or {}).get("by_hour")
+    if off is not None:
+        if not isinstance(off, dict) or any(not (isinstance(v, (int, float)) and abs(v) <= 6) for v in off.values()):
+            return "t_off.by_hour must map hour -> |offset| <= 6"
     for f in ("t", "ws", "wg", "dp"):
         if f not in fields:
             continue
@@ -92,6 +96,20 @@ def stamp(entry, lead_h):
             continue
         v = sum(wi * (float(x) - bi) for wi, x, bi in zip(w, xs, bias) if wi > 0)
         entry[f"{f}_urmab"] = round(v if floor is None else max(floor, v), 1)
+        if f == "t":
+            _stamp_stnoff(entry, doc, entry["t_urmab"])
+
+
+def _stamp_stnoff(entry, doc, t_urmab):
+    """v0.7.153 SHADOW t_stnoff = t_urmab + trailing (Mesonet stations - URMA) mean for the valid hour of day
+    (analysis/t_night_offset_wf.py: +12..20% vs t_urmab on stations, 12 holdout days). Never served. Hours with
+    no offset (fewer than 7 fit days) get nothing."""
+    try:
+        off = ((doc["fields"].get("t_off") or {}).get("by_hour") or {}).get(str(int(entry["v"][11:13])))
+    except (KeyError, TypeError, ValueError):
+        return
+    if off is not None:
+        entry["t_stnoff"] = round(t_urmab + float(off), 1)
 
 
 def _valid_serve(doc):

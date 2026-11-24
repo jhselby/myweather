@@ -131,3 +131,27 @@ def test_recompute_skips_humidity_on_independent_hours():
     recompute_derived_moisture_arrays(wd)
     assert wd["hourly"]["corrected_humidity"][0] == 11.1          # kept (independent dp)
     assert wd["hourly"]["corrected_humidity"][1] != 22.2          # rebuilt from (t, dp) as before
+
+
+def _off_doc(off):
+    return {"fitted_at": "2999-01-01T00:00", "fields": {"t": {"bands": {"6-11": {"w": [1, 0, 0], "bias": [0, 0, 0]}}},
+                                                        "t_off": {"by_hour": off}}}
+
+
+def test_stnoff_stamped_from_hour_offset(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: _off_doc({"22": 1.5}))
+    e = {"v": "2026-11-24T22:00", "t": 40.0, "t_l1": 40.0, "t_raw_nbm": 40.0, "t_ecmwf": 40.0}
+    u.stamp(e, 8)
+    assert e["t_urmab"] == 40.0 and e["t_stnoff"] == 41.5
+
+
+def test_stnoff_absent_without_offset_for_hour(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: _off_doc({"22": 1.5}))
+    e = {"v": "2026-11-24T13:00", "t": 40.0, "t_l1": 40.0, "t_raw_nbm": 40.0, "t_ecmwf": 40.0}
+    u.stamp(e, 8)
+    assert "t_urmab" in e and "t_stnoff" not in e
+
+
+def test_validate_rejects_absurd_offset():
+    assert u.validate_table(_off_doc({"22": 9.0})) is not None
+    assert u.validate_table(_off_doc({"22": 1.0})) is None

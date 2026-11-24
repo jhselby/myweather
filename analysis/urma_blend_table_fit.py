@@ -293,6 +293,27 @@ def _fit_bands(field, rows, eh, use_bias, bands_def=BANDS):
     return bands, used
 
 
+def _stn_offsets(truth, dset):
+    """v0.7.153: {local hour 'H': mean(Mesonet stations - URMA)} over the fit days, from the pair log's lead-0 t rows
+    (observed_stations = stations only). An hour needs >= 7 days. Feeds the SHADOW t_stnoff (t_urmab + offset)."""
+    per = {}
+    with open(cached_path(PAIR_LOG_URL)) as fin:
+        for line in fin:
+            if '"lead_h": 0,' not in line[:200] or ('"field": "t"' not in line[:300] and '"field":"t"' not in line[:300]):
+                continue
+            r = json.loads(line)
+            vt = r.get("valid_time") or ""
+            if r.get("field") != "t" or vt[:10] not in dset or r.get("observed_stations") is None:
+                continue
+            u = datetime.strptime(vt[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=ET).astimezone(timezone.utc)
+            tr = truth.get(u.strftime("%Y-%m-%dT%H"))
+            if tr is not None:
+                per.setdefault(int(vt[11:13]), {})[vt[:10]] = float(r["observed_stations"]) - tr
+    by_hour = {str(h): round(sum(d.values()) / len(d), 3) for h, d in sorted(per.items()) if len(d) >= 7}
+    print(f"  t_off: {len(by_hour)}/24 hours with >= 7 days; mean {np.mean(list(by_hour.values())) if by_hour else float('nan'):+.2f} F")
+    return by_hour
+
+
 def fit():
     truth = load_truth()
     update_truth(truth)
@@ -311,6 +332,13 @@ def fit():
     fields = {}
     bands, used = _fit_bands("t", _rows("t", truth, dset), eh, use_bias=True)
     fields["t"] = {"bands": bands}
+    try:
+        t_off = _stn_offsets(truth, dset)
+    except Exception as e:  # noqa: BLE001
+        print(f"  t_off failed ({type(e).__name__}: {e}); no offsets this fit")
+        t_off = {}
+    if t_off:
+        fields["t_off"] = {"by_hour": t_off}
     # v0.7.126: ws shadow also covers 0-5h (holdout vs served +10.6%, vs raw NBM +9.7%, both pass).
     # v0.7.123 ws shadow (ws_urmab): weights only on URMA 10 m wind. Walk-forward 76 days
     # (analysis/urma_blend_wf_ws.py): +10..+15% vs served every band; bias step lost on holdout.
@@ -334,7 +362,7 @@ def fit():
     out = {"fitted_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"), "window_days": WIN,
            "truth": "urma_idw_4cell", "days": [days[0], days[-1]] if days else None,
            "n_rows_kept": used + wused, "fields": fields,
-           "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h); dp: SHADOW dp_urmab (weights only, bias 0, 6-47h). "
+           "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h); dp: SHADOW dp_urmab (weights only, bias 0, 6-47h); t_off: SHADOW t_stnoff = t_urmab + trailing (stations - URMA) by local hour. "
                     "Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."}
     with open(OUT_PATH, "w") as f:
         json.dump(out, f, indent=2)

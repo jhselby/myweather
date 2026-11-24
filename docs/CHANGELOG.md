@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.153 • November 24, 2026 (Night temperature offset, shadow)</strong></summary>
+
+- Served temperature runs about 1 F cold at night against the Mesonet stations, which read warmer than URMA from 7 pm to 8 am. The collector now also records `t_stnoff`: the served temperature plus the trailing 14-day average (stations minus URMA) for that hour of day. Nothing served changes. In a walk-forward on 12 days it beat the served temperature on the stations by 12-20% (95% ranges above 0 in every band). It serves only after 5 of 7 forward days win.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.152 • November 24, 2026 (Scorecard: "since change" crash, humidity bar)</strong></summary>
 
 - The model page showed "scorecard unavailable" because the "since change" line read a range that does not exist until 5 finished days. It starts reading its lift at 3 days. Between 3 and 4 days it now shows the lift with "range after 5 d" instead of failing.

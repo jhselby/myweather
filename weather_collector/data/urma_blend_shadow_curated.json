@@ -1,57 +1,85 @@
 {
-  "fitted_at": "2026-11-23T12:41",
+  "fitted_at": "2026-11-24T15:47",
   "window_days": 14,
   "truth": "urma_idw_4cell",
   "days": [
-    "2026-11-09",
-    "2026-11-22"
+    "2026-11-10",
+    "2026-11-23"
   ],
-  "n_rows_kept": 57979,
+  "n_rows_kept": 58268,
   "fields": {
     "t": {
       "bands": {
         "6-11": {
           "bias": [
-            -1.569,
-            -3.645,
-            -1.658
-          ],
-          "w": [
-            0.65,
-            0.15,
-            0.2
-          ],
-          "n": 2010,
-          "mae_corrected_blend": 1.003
-        },
-        "12-23": {
-          "bias": [
-            -1.761,
-            -3.847,
-            -1.798
+            -1.566,
+            -3.577,
+            -1.744
           ],
           "w": [
             0.6,
+            0.15,
+            0.25
+          ],
+          "n": 2010,
+          "mae_corrected_blend": 1.034
+        },
+        "12-23": {
+          "bias": [
+            -1.777,
+            -3.764,
+            -1.864
+          ],
+          "w": [
+            0.55,
             0.2,
-            0.2
+            0.25
           ],
           "n": 4020,
-          "mae_corrected_blend": 1.17
+          "mae_corrected_blend": 1.199
         },
         "24-47": {
           "bias": [
-            -2.005,
-            -3.879,
-            -2.081
+            -1.992,
+            -3.743,
+            -2.113
           ],
           "w": [
-            0.5,
-            0.3,
-            0.2
+            0.35,
+            0.35,
+            0.3
           ],
-          "n": 7449,
-          "mae_corrected_blend": 1.325
+          "n": 7521,
+          "mae_corrected_blend": 1.406
         }
+      }
+    },
+    "t_off": {
+      "by_hour": {
+        "0": 1.019,
+        "1": 1.08,
+        "2": 1.033,
+        "3": 0.797,
+        "4": 0.841,
+        "5": 0.988,
+        "6": 1.101,
+        "7": 1.015,
+        "8": 0.981,
+        "9": 0.468,
+        "10": 0.337,
+        "11": 0.283,
+        "12": -0.041,
+        "13": -0.455,
+        "14": -0.144,
+        "15": -0.459,
+        "16": -0.381,
+        "17": 0.029,
+        "18": 0.339,
+        "19": 0.935,
+        "20": 1.017,
+        "21": 1.01,
+        "22": 0.934,
+        "23": 0.968
       }
     },
     "ws": {
@@ -68,7 +96,7 @@
             0.05
           ],
           "n": 2010,
-          "mae_corrected_blend": 1.174
+          "mae_corrected_blend": 1.189
         },
         "6-11": {
           "bias": [
@@ -82,7 +110,7 @@
             0.15
           ],
           "n": 2010,
-          "mae_corrected_blend": 1.236
+          "mae_corrected_blend": 1.255
         },
         "12-23": {
           "bias": [
@@ -91,12 +119,12 @@
             0.0
           ],
           "w": [
-            0.2,
-            0.6,
+            0.25,
+            0.55,
             0.2
           ],
           "n": 4020,
-          "mae_corrected_blend": 1.302
+          "mae_corrected_blend": 1.318
         },
         "24-47": {
           "bias": [
@@ -109,8 +137,8 @@
             0.6,
             0.3
           ],
-          "n": 7448,
-          "mae_corrected_blend": 1.414
+          "n": 7520,
+          "mae_corrected_blend": 1.435
         }
       }
     },
@@ -128,7 +156,7 @@
             0.15
           ],
           "n": 2010,
-          "mae_corrected_blend": 1.432
+          "mae_corrected_blend": 1.45
         },
         "12-23": {
           "bias": [
@@ -141,7 +169,7 @@
             0.5,
             0.2
           ],
-          "n": 4019,
+          "n": 4020,
           "mae_corrected_blend": 1.436
         },
         "24-47": {
@@ -152,11 +180,11 @@
           ],
           "w": [
             0.25,
-            0.4,
-            0.35
+            0.35,
+            0.4
           ],
-          "n": 7449,
-          "mae_corrected_blend": 1.619
+          "n": 7521,
+          "mae_corrected_blend": 1.607
         }
       }
     },
@@ -164,62 +192,62 @@
       "bands": {
         "0-5": {
           "bias": [
-            2.624,
-            -1.266,
+            2.556,
+            -1.282,
             0.0
           ],
           "w": [
-            0.45,
-            0.55,
+            0.5,
+            0.5,
             0.0
           ],
           "n": 2016,
-          "mae_corrected_blend": 2.378
+          "mae_corrected_blend": 2.427
         },
         "6-11": {
           "bias": [
-            2.628,
-            -1.227,
+            2.467,
+            -1.262,
             0.0
           ],
           "w": [
-            0.45,
-            0.55,
+            0.5,
+            0.5,
             0.0
           ],
           "n": 2016,
-          "mae_corrected_blend": 2.536
+          "mae_corrected_blend": 2.571
         },
         "12-23": {
           "bias": [
-            3.261,
-            -1.053,
+            3.011,
+            -1.08,
             0.0
           ],
           "w": [
-            0.45,
-            0.55,
+            0.6,
+            0.4,
             0.0
           ],
           "n": 4032,
-          "mae_corrected_blend": 2.649
+          "mae_corrected_blend": 2.613
         },
         "24-47": {
           "bias": [
-            4.005,
-            -0.619,
+            4.034,
+            -0.47,
             0.0
           ],
           "w": [
-            0.2,
-            0.8,
+            0.25,
+            0.75,
             0.0
           ],
-          "n": 7470,
-          "mae_corrected_blend": 2.944
+          "n": 7542,
+          "mae_corrected_blend": 3.002
         }
       }
     }
   },
-  "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h); dp: SHADOW dp_urmab (weights only, bias 0, 6-47h). Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."
+  "notes": "t: SERVED as t_urmab (v0.7.114); ws: SHADOW ws_urmab (weights only, bias 0); wg: SHADOW wg_urmab (debiased HRRR/NBM, 0-47h); dp: SHADOW dp_urmab (weights only, bias 0, 6-47h); t_off: SHADOW t_stnoff = t_urmab + trailing (stations - URMA) by local hour. Sources: HRRR L1, NBM raw, ECMWF raw; out = sum_i w_i (source_i - bias_i); bias vs URMA over the window."
 }
