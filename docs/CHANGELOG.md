@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.152 • November 24, 2026 (Scorecard: "since change" crash, humidity bar)</strong></summary>
+
+- The model page showed "scorecard unavailable" because the "since change" line read a range that does not exist until 5 finished days. It starts reading its lift at 3 days. Between 3 and 4 days it now shows the lift with "range after 5 d" instead of failing.
+
+- Humidity read "-47% worse vs weather.gov" from under one day of weather.gov data (703 rows). The weather.gov bar now needs at least 5 days' worth of scored rows for that field; until then humidity compares against NBM, as it did before (+35% on 21 holdout days). Temperature, dew point and wind have about 24 days and are unchanged.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.151 • November 23, 2026 (Landing page: station count)</strong></summary>
 
 - The landing page said "18 of 18 stations reporting", which hid that more stations exist. It now reads "Live estimate: 18 of 18 stations reporting" and adds the Weather Underground stations as a separate held-out validation set. The two roles are not summed. WU stays out of the live average (adding the 7 neighbours moved it under 0.05°F, Nov 18-22).

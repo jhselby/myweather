@@ -82,7 +82,10 @@ function computeScorecard(tc, pf) {
     if (two && truth === "urma" && two.lift_vs_nws_urma_pct != null) { nws = two.lift_vs_nws_urma_pct; nNws = two.n_nws_urma || 0; }
     else if (two && truth === "stn" && two.lift_vs_nws_stations_pct != null) { nws = two.lift_vs_nws_stations_pct; nNws = two.n_nws || 0; }
     else if (tc && tc.nws_shrunk && tc.nws_shrunk[k]) { nws = tc.nws_shrunk[k].lift_vs_nws_pct; nNws = tc.nws_shrunk[k].n || 0; }
-    if (nNws < MIN_NWS_ROWS) nws = null;
+    // Rows alone say little: 700 humidity rows were under one day of weather.gov data and read -47%. Also require 5 days' worth.
+    const winDays = tc && tc.first_day && tc.last_day ? Math.round((Date.parse(tc.last_day) - Date.parse(tc.first_day)) / 864e5) + 1 : 0;
+    const perDay = two && winDays > 0 ? (two.n_urma || two.n || 0) / winDays : 0;
+    if (nNws < Math.max(MIN_NWS_ROWS, 5 * perDay)) nws = null;
     // The bar: NWS forecast (weather.gov) where it carries the field, else NBM/HRRR.
     let bUs = us, bThem = them, bSrc = src;
     if (nws != null) {

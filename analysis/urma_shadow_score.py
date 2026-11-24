@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 
 from analysis.ship_rule import day_block_gain
 from analysis.urma_blend_wf import urma_idw
+from analysis.urma_blend_wf_dp import urma_dpt
 from analysis.urma_blend_wf_ws import urma_wind
 
 ET = ZoneInfo("America/New_York")
@@ -38,7 +39,8 @@ def snapshots(path):
 
 
 def score(snaps, field="t"):
-    U = urma_idw() if field == "t" else urma_wind("GUST" if field == "wg" else "WIND")
+    U = (urma_idw() if field == "t" else urma_dpt() if field == "dp"
+         else urma_wind("GUST" if field == "wg" else "WIND"))
     bands = ((("0-5", 0, 6),) + BANDS) if field in ("ws", "wg") else BANDS
     per = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
     raw = {b[0]: collections.defaultdict(lambda: [0.0, 0.0, 0]) for b in bands}
@@ -57,7 +59,9 @@ def score(snaps, field="t"):
             if tr is None or band is None or h.get(field) is None:
                 continue
             a = per[band][h["v"][:10]]
-            a[0] += abs(h.get(f"{field}_pre_urmab", h[field]) - tr)
+            # dp: baseline is the dp actually served on that row (derived from t, h; not the pre-t_urmab value)
+            served = h[field] if field == "dp" else h.get(f"{field}_pre_urmab", h[field])
+            a[0] += abs(served - tr)
             a[1] += abs(h[f"{field}_urmab"] - tr)
             a[2] += 1
             nb = h.get(f"{field}_raw_nbm")
@@ -72,7 +76,7 @@ def score(snaps, field="t"):
 
 def main():
     snaps = snapshots(sys.argv[1] if len(sys.argv) > 1 else None)
-    for field in ("t", "ws", "wg"):
+    for field in ("t", "dp", "ws", "wg"):
         report(field, *score(snaps, field))
 
 
