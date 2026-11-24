@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.151 • November 23, 2026 (Landing page: station count)</strong></summary>
+
+- The landing page said "18 of 18 stations reporting", which hid that more stations exist. It now reads "Live estimate: 18 of 18 stations reporting" and adds the Weather Underground stations as a separate held-out validation set. The two roles are not summed. WU stays out of the live average (adding the 7 neighbours moved it under 0.05°F, Nov 18-22).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.150 • November 23, 2026 (Scorecard: "since change" read)</strong></summary>
 
 - The scorecard headline pools every day in the window, so a field that just changed mostly still grades the old system (gusts read -22% although raw NBM has been served since Nov 23). Temperature, dew point and gusts now show a "since change" line under the percentage. It uses only days no pre-change forecast can reach (valid day two or more days after the change, finished days only), and waits for 3 such days: temperature and dew point read from Nov 24, gusts from Nov 28.

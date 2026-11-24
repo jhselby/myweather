@@ -202,10 +202,11 @@
     if (d.generated_at) $("asof").textContent = "Updated " + new Date(d.generated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   }
 
-  function mesonet(d, v) {
-    const h = d.hyperlocal || {}, all = (d.tempest || {}).stations || [];
+  function mesonet(d, v, m) {
+    const h = d.hyperlocal || {}, all = (d.tempest || {}).stations || [], wuN = ((m || {}).counts || {}).wu_ok;
     $("mesonet-sum").textContent =
-      `${h.stations_used ?? "—"} of ${h.stations_total ?? all.length} stations reporting, covering ${h.octants_used ?? "—"} of 8 compass directions. ` +
+      `Live estimate: ${h.stations_used ?? "—"} of ${h.stations_total ?? all.length} stations reporting, covering ${h.octants_used ?? "—"} of 8 directions.` +
+      (wuN ? ` Held out for validation: ${wuN} more, sampled a few times a day. ` : " ") +
       `The stations say ${fx(h.station_temp, 1)}°F right now; the forecast model said ${fx(h.model_temp, 1)}°F.`;
     const V = (v && v.verdict) || {}, name = { t: "temperature", h: "humidity", dp: "dew point" };
     const tag = f => V[f] ? `${name[f]}<span class="tag ${V[f].qualifies ? "good" : "warn"}">${V[f].qualifies ? "qualifies" : "not yet"}</span>` : "";
@@ -231,7 +232,7 @@
 
   get("weather_data.json").then(d => {
     weather(d);
-    getLocal("mesonet_validation.json").catch(() => null).then(v => mesonet(d, v));
+    Promise.all([getLocal("mesonet_validation.json").catch(() => null), getLocal("mesonet.json").catch(() => null)]).then(([v, m]) => mesonet(d, v, m));
   }).catch(() => {
     $("headline").textContent = "Weather data is unavailable right now";
     $("mesonet-sum").textContent = "Unavailable.";
