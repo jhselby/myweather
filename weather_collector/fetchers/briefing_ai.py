@@ -75,7 +75,7 @@ Rules:
 - Never cite specific precipitation amounts in inches (e.g., "0.1 inches", "a tenth of an inch") for light, brief, or moderate rain. Use qualitative descriptors: "a quick shower," "light rain," "brief drizzle," "scattered showers," "moderate rain." Only cite a specific amount when the data line shows ≥0.5 inches total — and even then, prefer rounded language ("about an inch," "over half an inch") to decimals.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
-- If the data includes an "Alerts:" line (one or more active NWS alerts), the HEADLINE must state the alert and nothing else. Format: "NWS <Alert Name> in effect" (e.g., "NWS Severe Thunderstorm Watch in effect", "NWS Coastal Flood Advisory in effect"). If multiple alerts are listed, name the most severe one only. Do NOT add weather commentary to the headline when an alert is present. The SUBHEADLINE then carries your normal forecast — temps, timing, wind — and may add brief alert context if useful. Do not repeat the alert name verbatim in the sub.
+- If the data includes an "Alerts:" line (one or more active NWS alerts), the HEADLINE must state the alert and nothing else. Each alert is marked IN EFFECT NOW or NOT YET IN EFFECT. For an alert in effect now use "NWS <Alert Name> in effect"; for one not yet in effect use "NWS <Alert Name> expected <day>" (the day it starts) and never say "in effect". Name the most severe alert that is in effect now; if none is, the one that starts soonest. Format (e.g., "NWS Severe Thunderstorm Watch in effect", "NWS Coastal Flood Advisory in effect"). If multiple alerts are listed, name the most severe one only. Do NOT add weather commentary to the headline when an alert is present. The SUBHEADLINE then carries your normal forecast — temps, timing, wind — and may add brief alert context if useful. Do not repeat the alert name verbatim in the sub.
 - If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). If nothing significant changed, say nothing about the prior forecast — do not write phrases like "no change since last update" or "consistent with the prior forecast."
 - The headline and subheadline must not repeat the same information. If the headline says "cooler Thursday," the subheadline must add something new — don't restate it.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
@@ -142,6 +142,39 @@ def _observed_precip_desc(weather_data):
         return ("Drizzle" if med < 0.01 else "Light Rain" if med < 0.10
                 else "Moderate Rain" if med < 0.30 else "Heavy Rain")
     return ov if _WET_RE.search(ov) else None
+
+
+def _alert_line(alerts, now=None):
+    """Prompt line for active NWS alerts, with timing so the model cannot call a
+    pending alert "in effect" (11-25: a Coastal Flood Advisory starting Friday read
+    "in effect" on Wednesday). NWS `expires` is the message lapse, not the event end;
+    use `ends`, else the headline's own "until ..." text."""
+    tz = pytz.timezone("America/New_York")
+    now = now or datetime.now(tz)
+    parts = []
+    for a in alerts[:3]:
+        ev = (a.get("event") or "").strip()
+        if not ev:
+            continue
+
+        def fmt(iso):
+            try:
+                return datetime.fromisoformat(iso).astimezone(tz).strftime("%a %-I:%M %p")
+            except (TypeError, ValueError):
+                return ""
+
+        m = re.search(r"\buntil (.+?) by ", a.get("headline") or "")
+        end = fmt(a.get("ends")) or (m.group(1) if m else "")
+        try:
+            pending = bool(a.get("onset")) and datetime.fromisoformat(a["onset"]) > now
+        except (TypeError, ValueError):
+            pending = False
+        if pending:
+            when = f"NOT YET IN EFFECT, starts {fmt(a['onset'])}" + (f", ends {end}" if end else "")
+        else:
+            when = "IN EFFECT NOW" + (f", ends {end}" if end else "")
+        parts.append(f"{ev} ({when})")
+    return f"Alerts: {'; '.join(parts)}" if parts else ""
 
 
 def _build_weather_summary(weather_data):
@@ -318,9 +351,7 @@ def _build_weather_summary(weather_data):
 
     # Alerts — filter TEST + empty events
     alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper()]
-    alert_events = [a.get('event', '').strip() for a in alerts[:3]]
-    alert_events = [e for e in alert_events if e]
-    alert_line = f"Alerts: {', '.join(alert_events)}" if alert_events else ""
+    alert_line = _alert_line(alerts)
 
     yesterday_high = der.get("yesterday_high")
     yesterday_precip = der.get("yesterday_precip_in")
