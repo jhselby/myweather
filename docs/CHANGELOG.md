@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.156 • November 25, 2026 (Alert times fixed)</strong></summary>
+
+- The landing-page alert banner showed NWS's message expiry, not the event time: a Wind Advisory that starts Thursday noon and ends Friday 7 AM read "until Wednesday 4 PM". It now shows when the alert starts (if not yet in effect) and when it ends. The collector stores NWS's `ends` field for this
+
+</details>
+
+<details open>
 <summary><strong>v0.7.155 • November 25, 2026 (Alerts on the landing page, settings gear)</strong></summary>
 
 - Active NWS warnings and advisories now show as a banner above the headline on the landing page, with the event, when it ends, and a link to the NWS detail. Severe and extreme alerts are red. No alerts, no banner

@@ -255,12 +255,14 @@
       if (a.severity === "Severe" || a.severity === "Extreme") el.className = "severe";
       const b = document.createElement("b"); b.textContent = "\u26A0\uFE0F " + (a.event || "Weather alert");
       el.append(b);
-      const until = a.expires ? new Date(a.expires) : null;
-      if (until && !Number.isNaN(until)) {
-        const sp = document.createElement("span");
-        sp.textContent = "until " + until.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
-        el.append(sp);
-      }
+      const fmt = iso => { const t = iso ? new Date(iso) : null;
+        return t && !Number.isNaN(t) ? t.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }) : ""; };
+      // NWS "expires" is when the message lapses, not when the event ends; use "ends", else the headline's own "until ..." text.
+      const m = /\buntil (.+?) by /.exec(a.headline || "");
+      const end = fmt(a.ends) || (m ? m[1] : "");
+      const start = a.onset && new Date(a.onset) > new Date() ? fmt(a.onset) : "";
+      const when = [start && "starts " + start, end && "until " + end].filter(Boolean).join(" \u00B7 ");
+      if (when) { const sp = document.createElement("span"); sp.textContent = when; el.append(sp); }
       box.append(el);
     });
   }

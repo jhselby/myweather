@@ -45,6 +45,7 @@ def fetch_nws_alerts():
                 "severity": props.get('severity', 'Unknown'),
                 "onset": props.get('onset', ''),
                 "expires": props.get('expires', ''),
+                "ends": props.get('ends') or '',
                 "url": web_url
             })
 
