@@ -116,3 +116,21 @@ def fetch_salem_water_temp():
         return temp
     logging.info("  ↩ Falling back to buoy 44013...")
     return _fetch_buoy_temp()
+
+
+def fetch_buoy_44029_water_f():
+    """Latest water temp (°F) from buoy 44029 (Mass Bay A01), or None."""
+    try:
+        r = requests.get("https://www.ndbc.noaa.gov/data/realtime2/44029.txt",
+                         headers=HEADERS_DEFAULT, timeout=15)
+        r.raise_for_status()
+        lines = r.text.splitlines()
+        cols = lines[0].lstrip("#").split()
+        i = cols.index("WTMP")
+        for line in lines[2:30]:
+            parts = line.split()
+            if len(parts) > i and parts[i] != "MM":
+                return round(float(parts[i]) * 9 / 5 + 32, 1)
+    except Exception as e:
+        logging.warning(f"  ⚠ Buoy 44029 water temp: {redact_secrets(e)}")
+    return None

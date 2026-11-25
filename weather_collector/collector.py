@@ -371,6 +371,13 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Cove gradient snapshot failed: {redact_secrets(e)}")
 
+    # Water temperature: GoMOFS vs buoys 44013/44029, hourly, never pruned.
+    try:
+        from .processors.water_temp_log import append_water_temp
+        append_water_temp(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Water temp log failed: {redact_secrets(e)}")
+
     # Frontal-passage detection: log per-tick cove obs (T/Td/P/wind),
     # then run the detector to classify quiet/active/recent. Surfaces a
     # frontal block in weather_data for the frontend card + Gemini.
