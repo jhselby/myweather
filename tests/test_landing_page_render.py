@@ -30,7 +30,7 @@ def iso(delta_hours):
     return (NOW + timedelta(hours=delta_hours)).isoformat()
 
 
-def weather(alerts):
+def weather(alerts, station_temp=True):
     return {
         "generated_at": NOW.isoformat(),
         "current": {"temperature": 35, "weather_description": "Clear", "wind_speed": 6,
@@ -39,7 +39,7 @@ def weather(alerts):
                   "temperature_min": [28], "precipitation_probability_max": [0],
                   "precipitation_sum": [0.0], "sunrise": [iso(-3)], "sunset": [iso(5)]},
         "briefing": {"headline": "Test headline", "subheadline": ""},
-        "hyperlocal": {},
+        "hyperlocal": {"station_temp": 38.7} if station_temp else {},
         "tempest": {"stations": []},
         "alerts": alerts,
     }
@@ -175,4 +175,19 @@ def test_theme_is_behind_the_gear(browser, scheme):
     assert page.locator("#drawer").is_hidden()
     assert page.evaluate("document.activeElement.id") == "settingsBtn"
     assert page.errors == []
+    ctx.close()
+
+
+def test_headline_temperature_is_the_mesonet_value(browser):
+    # current.temperature is 35 (served, model-blended); the Mesonet says 38.7 -> one number, 39.
+    ctx, page = open_page(browser, weather([]))
+    assert page.locator("#now .temp").inner_text() == "39\u00b0F"
+    assert "Mesonet stations" in page.locator("#now .cond").inner_text()
+    ctx.close()
+
+
+def test_headline_falls_back_to_served_temperature_without_stations(browser):
+    ctx, page = open_page(browser, weather([], station_temp=False))
+    assert page.locator("#now .temp").inner_text() == "35\u00b0F"
+    assert "Mesonet" not in page.locator("#now .cond").inner_text()
     ctx.close()

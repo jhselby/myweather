@@ -222,9 +222,12 @@
     $("now").innerHTML = "";
     const em = document.createElement("div"); em.className = "emoji"; em.textContent = c.weather_emoji || "";
     const box = document.createElement("div");
-    const t = document.createElement("div"); t.className = "temp"; t.textContent = fx(c.temperature, 0) + "°F";
+    // One number per field: the Mesonet (station-only) value, the same one the Mesonet card shows below.
+    // Falls back to the served current temperature only when the stations are not reporting.
+    const mesoT = (d.hyperlocal || {}).station_temp;
+    const t = document.createElement("div"); t.className = "temp"; t.textContent = fx(mesoT != null ? mesoT : c.temperature, 0) + "°F";
     const cd = document.createElement("div"); cd.className = "cond";
-    cd.textContent = (c.weather_description || "") + (c.apparent_temperature != null ? " · feels like " + fx(c.apparent_temperature, 0) + "°" : "");
+    cd.textContent = (c.weather_description || "") + (c.apparent_temperature != null ? " · feels like " + fx(c.apparent_temperature, 0) + "°" : "") + (mesoT != null ? " · Mesonet stations" : "");
     box.append(t, cd); $("now").append(em, box);
 
     const i = (day.time || []).indexOf(new Date().toLocaleDateString("en-CA"));

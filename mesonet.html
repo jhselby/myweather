@@ -228,7 +228,7 @@
     <ul>
       <li>Tempest is the only live station feed. It keeps its last good payload on a failed fetch, marks a run "degraded" under 75% valid stations, and the daily digest carries a Tempest line.</li>
       <li>On a failed tick the forecast's start gets no last-good station input.</li>
-      <li>Tempest is a single point of failure: it depends on the WeatherFlow sign-in (anonymous access closed 10-15, v0.7.67). No backup source: CWOP was checked on 11-04 and has about one station near the Cove.</li>
+      <li>Tempest is a single point of failure: it depends on the WeatherFlow sign-in (anonymous access closed 10-15, v0.7.67). No backup source: the CWOP/MADIS network (checked again 11-25 through the NWS API) has 9 stations reporting 4-10 km out and none nearer than 4.5 km, so it is not a backup for the Cove.</li>
       <li>Per-station uptime is the last column of the Tempest table.</li>
     </ul>
   </div>

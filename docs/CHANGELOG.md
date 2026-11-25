@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.158 • November 25, 2026 (One temperature on the landing page)</strong></summary>
+
+- The landing page headline temperature is now the Mesonet station value (the same number the Mesonet card shows below it), labelled "Mesonet stations". It was the served value pulled partway toward the forecast model, so the page showed 38.9 above and "the stations say 38.7" below. It falls back to the served value only when no stations report. The app's own Right Now card is unchanged
+- Mesonet page: the CWOP/MADIS note now reflects the 11-25 check (9 stations 4-10 km out, none nearer than 4.5 km)
+
+</details>
+
+<details open>
 <summary><strong>v0.7.157 • November 25, 2026 (Mesonet page: water temperature, duplicate stations)</strong></summary>
 
 - Two of the Weather Underground stations (KMAMARBL90, KMASWAMP37) turned out to be the same devices as two Tempest stations already in the Mesonet, so scoring them as independent flattered the check. They are no longer counted: 34 independent WU stations, not 36. The station note on the Mesonet page now says so, and the counts add up (41 configured = 34 + 5 silent + 2 duplicates)
