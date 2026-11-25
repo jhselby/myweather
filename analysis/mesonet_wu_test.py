@@ -29,7 +29,7 @@ from analysis.mesonet_vs_urma import snap, urma_series
 from weather_collector.config import LAT, LON, ELEVATION_FT
 from weather_collector.processors.hyperlocal import (MAX_STATION_DIST_MI, MIN_OCTANTS_FOR_BALANCED,
                                                      _octant_index, _trimmed_weighted_mean)
-from weather_collector.processors.wu_archive import LIVE_STATIONS, OWN_STATION
+from weather_collector.processors.wu_archive import LIVE_STATIONS, OWN_STATION, TEMPEST_TWINS
 
 FIRST_DAY = "2026-11-18"
 MATCH_S = 300
@@ -53,6 +53,8 @@ def wu_archive():
         d = json.loads(gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw)
         meta.update(d.get("stations") or {})
         for sid, rs in (d.get("obs") or {}).items():
+            if sid in TEMPEST_TWINS:
+                continue
             rows[sid].extend(r for r in rs if r.get("t") is not None)
     for sid in rows:
         rows[sid].sort(key=lambda r: r["ep"])

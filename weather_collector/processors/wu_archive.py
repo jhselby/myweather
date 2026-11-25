@@ -35,6 +35,12 @@ OWN_STATION = "KMAMARBL124"
 # so polling every tick (~1,150 calls/day until 11-22) re-downloaded the same rows 144x a day. The
 # live set is now polled at LIVE_SLOTS_LOCAL (4 calls per station per day, ~32 in all), incl. the
 # 23:5x tick so the end of the local day is never missed.
+# WU stations that are the SAME physical device as a Tempest station in the live Mesonet (the Tempest
+# uploads to WU). Confirmed 11-25 on the day's readings: ColleeninMHD vs KMAMARBL90 dT mean -0.01 F,
+# sd 0.04; Manton Rd vs KMASWAMP37 +0.01 F, sd 0.07 (the other near pairs differ by 1-6 F, so are
+# separate instruments). Still archived, but never counted or scored as an independent WU station:
+# validating the Mesonet against its own instrument flatters it.
+TEMPEST_TWINS = {"KMAMARBL90": "ColleeninMHD", "KMASWAMP37": "Manton Rd"}
 LIVE_STATIONS = (OWN_STATION, "KMAMARBL63", "KMAMARBL92", "KMAMARBL76", "KMAMARBL42",
                  "KMAMARBL8", "KMAMARBL57", "KMASALEM91")
 SLOT_HOURS_UTC = (0, 12)  # the remaining neighbours: twice a day (each call returns 24 h)

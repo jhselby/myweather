@@ -18,6 +18,8 @@ Hourly WU rows come from wu_readings_hourly/ (scripts/wu_backfill.py); Tempest f
 Usage: python3 analysis/mesonet_vs_urma.py [--from 2026-11-10 --to 2026-11-18]
 """
 import argparse
+import sys
+from pathlib import Path
 import gzip
 import json
 import math
@@ -25,6 +27,9 @@ import statistics as st
 import subprocess
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from weather_collector.processors.wu_archive import TEMPEST_TWINS  # noqa: E402
+
 
 BUCKET = "gs://myweather-data/"
 ET = ZoneInfo("America/New_York")
@@ -79,6 +84,8 @@ def wu_series(days):
     ser = {}
     for day in days:
         for sid, rows in ((_cat(f"wu_readings_hourly/{day}.json") or {}).get("obs") or {}).items():
+            if sid in TEMPEST_TWINS:
+                continue
             for r in rows:
                 h = snap(r["ep"])
                 if h is not None and r.get("t") is not None:

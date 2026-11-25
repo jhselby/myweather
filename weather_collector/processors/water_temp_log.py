@@ -37,8 +37,11 @@ def append_water_temp(weather_data):
     now = datetime.now(TZ)
     ts = now.strftime("%Y-%m-%dT%H:00")
     log = load_json(GCS_PATH, default=None)
-    entries = log.get("entries") if log else _seed()
+    seeded = not log
+    entries = _seed() if seeded else log.get("entries", [])
     if entries and entries[-1]["ts"] >= ts:
+        if seeded:  # the seed already holds this hour; still write it so the file exists
+            upload_json({"entries": entries}, GCS_PATH, "water_temp_log.json")
         return
     entries.append({
         "ts": ts,

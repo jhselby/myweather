@@ -53,3 +53,12 @@ def test_seeds_from_cove_gradient_log(monkeypatch):
     run(monkeypatch, store, minute=14)
     ts = [e["ts"] for e in store["water_temp_log.json"]["entries"]]
     assert ts == ["2026-11-24T09:00", "2026-11-25T10:00"], ts
+
+
+def test_first_run_writes_file_even_when_seed_already_has_this_hour(monkeypatch):
+    # 11-25: the seed's last row was the current hour, so the "already logged" early-return
+    # fired before the seeded file was ever uploaded and the log never existed.
+    old = {"entries": [{"ts": "2026-11-25T10:07", "salem_water_t": 52.0, "buoy_water_t": 52.2}]}
+    store = {"cove_gradient_log.json": old}
+    run(monkeypatch, store, minute=14)
+    assert [e["ts"] for e in store["water_temp_log.json"]["entries"]] == ["2026-11-25T10:00"]

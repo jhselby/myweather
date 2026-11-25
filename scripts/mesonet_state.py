@@ -82,7 +82,7 @@ def measurements():
 def main():
     from analysis import mesonet_vs_urma as M
     from weather_collector.fetchers.wu_scraper_realtime import STATIONS, CULLED_STATIONS
-    from weather_collector.processors.wu_archive import LIVE_STATIONS, OWN_STATION
+    from weather_collector.processors.wu_archive import LIVE_STATIONS, OWN_STATION, TEMPEST_TWINS
     now = datetime.now(timezone.utc)
     days = [(now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0, 9)]
     d0 = (now - timedelta(days=8)).strftime("%Y-%m-%d")
@@ -146,7 +146,7 @@ def main():
 
     wu, live = [], []
     for sid in pos:
-        if sid == OWN_STATION:
+        if sid == OWN_STATION or sid in TEMPEST_TWINS:
             continue
         rec = wu_rec(sid)
         if sid in LIVE_STATIONS:

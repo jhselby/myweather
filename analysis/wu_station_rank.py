@@ -22,8 +22,13 @@ import json
 import math
 import statistics as st
 import subprocess
+import sys
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from weather_collector.processors.wu_archive import TEMPEST_TWINS  # noqa: E402
+
 
 BUCKET = "gs://myweather-data/"
 OWN = "KMAMARBL124"
@@ -46,6 +51,8 @@ def load_wu(days, prefix="wu_readings"):
     for d in days:
         doc = _cat(f"{prefix}/{d}.json")
         for sid, rows in ((doc or {}).get("obs") or {}).items():
+            if sid in TEMPEST_TWINS:
+                continue
             have = {r["ep"] for r in obs.get(sid, [])}
             obs.setdefault(sid, []).extend(r for r in rows if r["ep"] not in have)
     for rows in obs.values():
