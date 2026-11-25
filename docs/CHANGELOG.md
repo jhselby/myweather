@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.157 • November 25, 2026 (Mesonet page: water temperature, duplicate stations)</strong></summary>
+
+- Two of the Weather Underground stations (KMAMARBL90, KMASWAMP37) turned out to be the same devices as two Tempest stations already in the Mesonet, so scoring them as independent flattered the check. They are no longer counted: 34 independent WU stations, not 36. The station note on the Mesonet page now says so, and the counts add up (41 configured = 34 + 5 silent + 2 duplicates)
+- New Water temperature section on the Mesonet page: the GoMOFS ocean model for the Cove against buoys 44013 and 44029, logged hourly since Nov 11 (GoMOFS runs about 0.45°F warm against 44013, typical miss 0.62°F)
+- The "Being tested next" list now states the pre-registered Dec 2 / Dec 6 Cove-side tests and the 10-night minimum
+- The Mesonet recomputation used for those tests reproduces all 2,462 recorded values to within rounding (collector change: shared weight function, same behavior)
+
+</details>
+
+<details open>
 <summary><strong>v0.7.156 • November 25, 2026 (Alert times fixed)</strong></summary>
 
 - The landing-page alert banner showed NWS's message expiry, not the event time: a Wind Advisory that starts Thursday noon and ends Friday 7 AM read "until Wednesday 4 PM". It now shows when the alert starts (if not yet in effect) and when it ends. The collector stores NWS's `ends` field for this

@@ -259,11 +259,15 @@
     <div id="val" class="muted">loading…</div>
   </div>
 
+  <h2 class="section" id="sec-water">Water temperature</h2>
+  <div class="fp-panel scroll"><div id="water" class="muted">loading…</div></div>
+
   <h2 class="section" id="sec-testing">Being tested next</h2>
   <div class="fp-panel">
     <ul>
       <li><b>Nov 29: Cove adjustment.</b> A correction by hour of day for the Cove's own pattern (warmer at night, cooler at midday than the Marblehead average), measured against Neptune Rd and now Driftwood Rd, both on the Cove side of the Cliffs. Shadow only. If it holds with more weeks of data, temperature can be graded on the Mesonet instead of URMA.</li>
-      <li><b>Dec 2: own yard station.</b> KMAMARBL124 (5-minute readings since Nov 18), compared with the Mesonet, plus a test of whether the Weather Underground stations improve wind.</li>
+      <li><b>Dec 2: own yard station.</b> KMAMARBL124 (5-minute readings since Nov 18) against the Mesonet, plus a test of whether the Weather Underground stations improve wind. The temperature and dew point test was written down on Nov 22, before any score, and needs at least 10 nights per reference; a scorer that refuses to give a verdict before then is being built. For the Cove-side stations the Mesonet has to be recomputed without the reference station first; that recomputation now uses the collector's own code and reproduces 2,462 of 2,462 recorded values (worst difference 0.05°F).</li>
+      <li><b>Dec 6: Driftwood Rd and Neptune Rd.</b> The same test against the two Cove-side waterfront stations, each left out of the Mesonet before it is compared.</li>
       <li><b>Always:</b> the held-out agreement, bias against URMA and coverage numbers above are re-measured as weeks are added. Autumn only so far.</li>
     </ul>
   </div>
@@ -378,6 +382,23 @@
       `<p class="small muted" style="margin:8px 0 0;">${h.outliers_trimmed || 0} set aside as outliers this run${h.outlier_station_ids ? "" : " (which one is not recorded yet)"}. Corrections are measured against the other stations, day (7 am to 7 pm) and night separately.</p>`;
   }
 
+  function water(m) {
+    const w = m && m.water;
+    if (!w) { $("water").textContent = "Not available."; return; }
+    const l = w.last || {}, a = w.vs_44013, b = w.vs_44029;
+    const f1 = v => v == null ? "—" : Number(v).toFixed(1) + "°F";
+    const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+    $("water").classList.remove("muted");
+    $("water").innerHTML =
+      `<p style="margin:0 0 8px;">Latest hour (${l.ts || "—"} ET): the model for the Cove cell (GoMOFS, NOAA's Gulf of Maine ocean model) says <b>${f1(l.gomofs_f)}</b>; ` +
+      `buoy 44013 measures <b>${f1(l.b44013_f)}</b>, buoy 44029 <b>${f1(l.b44029_f)}</b>. These are open-bay buoys, about 25 km from the Cove: ` +
+      `they check the model, they do not measure the Cove itself, and the water is not part of the Mesonet value.</p>` +
+      `<table class="dense"><thead><tr><th>GoMOFS minus</th><th>Hours</th><th>From</th><th>Avg gap</th><th>Typical miss</th><th>Last 72 h</th></tr></thead><tbody>` +
+      [["buoy 44013", a], ["buoy 44029", b]].map(([n, x]) => x ? `<tr><td>${n}</td><td class="num">${x.n}</td><td style="white-space:nowrap">${x.first.slice(5, 10)}</td><td class="num">${sgn(x.bias)}°F</td><td class="num">${x.mae.toFixed(2)}°F</td><td class="num">${sgn(x.recent_bias)}°F</td></tr>` : "").join("") +
+      `</tbody></table><p class="small muted" style="margin:8px 0 0;">One hourly reading per hour since ${String(w.first).slice(0, 10)}. The gap drifts with conditions (+1.7°F on Nov 11-13, near 0 on Nov 16-22), so a single day says little. ` +
+      `Why it matters: water minus air temperature drives sea breeze and marine-layer fog at the Cove. No measured water point nearer the Cove has been found yet.</p>`;
+  }
+
   function wu(m) {
     if (!m) { $("wu").textContent = "Not available."; return; }
     if (window.__wuMarkers) window.__wuMarkers(m); else window.__wuPending = m;
@@ -388,7 +409,7 @@
     $("wu").classList.remove("muted");
     $("wu").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>Dir</th><th>°F</th><th>RH %</th><th>inHg</th><th>Last reading</th><th>Day / night vs URMA</th><th>Error vs URMA</th></tr></thead><tbody>` +
       (m.own ? row(m.own, "Our station (KMAMARBL124, not on the map)") : "") + (m.live || []).map(s => row(s, s.id)).join("") + `</tbody></table>` +
-      `<p class="small muted" style="margin:8px 0 0;">These 8 are fetched 4 times a day; ${c.wu_configured ?? "—"} configured in all (${c.wu_ok ?? "—"} working, ${c.wu_silent ?? "—"} silent), the rest twice a day. ` +
+      `<p class="small muted" style="margin:8px 0 0;">These 8 are fetched 4 times a day; ${c.wu_configured ?? "—"} configured in all (${c.wu_ok ?? "—"} working and counted, ${c.wu_silent ?? "—"} silent${c.wu_twins ? `, ${c.wu_twins} not counted: they are the same device as a Tempest station already in the Mesonet, so scoring them would grade it against itself` : ""}), the rest twice a day. ` +
       `Adding the 7 neighbours to the Mesonet changed it by under 0.05°F (Nov 18-22), so they stay archive-only. As of ${m.generated_at || "—"}.</p>`;
   }
 
@@ -572,7 +593,7 @@
     })
     .catch(e => { $("now").innerHTML = `<tr><td colspan="3" class="muted">Could not load live data (${e.message}).</td></tr>`; });
   fetch("https://data.wymancove.com/mesonet.json?_=" + Date.now(), { cache: "no-store" })
-    .then(r => r.ok ? r.json() : fetch("mesonet.json").then(x => x.ok ? x.json() : null)).then(wu).catch(() => wu(null));
+    .then(r => r.ok ? r.json() : fetch("mesonet.json").then(x => x.ok ? x.json() : null)).then(m => { wu(m); water(m); }).catch(() => { wu(null); water(null); });
   fetch("mesonet_validation.json?_=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null).then(validation).catch(() => validation(null));
 })();

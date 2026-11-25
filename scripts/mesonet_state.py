@@ -79,6 +79,28 @@ def measurements():
     return meas
 
 
+def water():
+    """GoMOFS (model, Cove cell) against the two Mass Bay buoys' measured water temperature, from the
+    hourly water_temp_log.json (cove_gradient_log's 14 days seed it back to 11-11)."""
+    doc = _cat("water_temp_log.json")
+    rows = (doc or {}).get("entries") or []
+    if not rows:
+        return None
+
+    def cmp(key):
+        d = [(r["ts"], r["gomofs_f"] - r[key]) for r in rows if r.get("gomofs_f") is not None and r.get(key) is not None]
+        if not d:
+            return None
+        e = [x for _, x in d]
+        recent = [x for _, x in d[-72:]]
+        return {"n": len(e), "bias": round(st.mean(e), 2), "mae": round(st.mean(abs(x) for x in e), 2),
+                "recent_bias": round(st.mean(recent), 2), "recent_n": len(recent), "first": d[0][0]}
+
+    last = rows[-1]
+    return {"rows": len(rows), "first": rows[0]["ts"], "last": last,
+            "vs_44013": cmp("b44013_f"), "vs_44029": cmp("b44029_f")}
+
+
 def main():
     from analysis import mesonet_vs_urma as M
     from weather_collector.fetchers.wu_scraper_realtime import STATIONS, CULLED_STATIONS
@@ -173,7 +195,9 @@ def main():
             "wu_ok": len(wu), "wu_live": len(live), "wu_configured": len(STATIONS),
             "wu_silent": len(STATIONS) - len([s for s in pos if s in STATIONS]),
             "wu_retired": len(CULLED_STATIONS), "homebuilt": 1,
+            "wu_twins": len([x for x in TEMPEST_TWINS if x in pos]),
         },
+        "water": water(),
         "urma_hours": len([h for h in urma if M.day_of(h) in days]),
         "measurements": measurements(),
     }

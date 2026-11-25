@@ -30,3 +30,8 @@ def test_wu_series_drops_twins(monkeypatch):
 def test_page_count_excludes_twins():
     d = json.load(open(os.path.join(os.path.dirname(__file__), "..", "mesonet.json")))
     assert d["counts"]["wu_ok"] == sum(1 for s in d["stations"] if s["k"] in ("wu", "wu_live"))
+
+
+def test_station_counts_add_up_in_the_real_data():
+    c = json.load(open(os.path.join(os.path.dirname(__file__), "..", "mesonet.json")))["counts"]
+    assert c["wu_configured"] == c["wu_ok"] + c["wu_silent"] + c["wu_twins"], c
