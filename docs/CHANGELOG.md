@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.155 • November 25, 2026 (Alerts on the landing page, settings gear)</strong></summary>
+
+- Active NWS warnings and advisories now show as a banner above the headline on the landing page, with the event, when it ends, and a link to the NWS detail. Severe and extreme alerts are red. No alerts, no banner
+- Light / Dark / Auto moved behind a settings gear that opens a drawer
+- The collector now keeps an hourly water-temperature log (GoMOFS and buoys 44013, 44029) with no retention limit, to check GoMOFS against the buoys over time
+
+</details>
+
+<details open>
 <summary><strong>v0.7.154 • November 24, 2026 (High cloud from HRRR at 6-23 h)</strong></summary>
 
 - High cloud 6-23 hours ahead is now raw HRRR. The airport sensor cannot see above 12,000 ft, so we graded it against GOES-19 satellite cloud-top height instead. On 22 days HRRR beat the old high-cloud forecast by 28-38%, with every range above zero. Overall cloud cover does not use high cloud and is unchanged. Beyond 23 hours nothing changes (the satellite gain there is only about 8%). Low and mid cloud cannot be graded this way, because a satellite sees only the topmost layer.

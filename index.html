@@ -76,6 +76,12 @@
   .tag { font-size: 12px; border-radius: 4px; padding: 1px 7px; margin-left: 4px; }
   .tag.good { background: var(--good-bg); color: var(--good); }
   .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .alerts { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+  .alerts a { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 14px; border-radius: 10px;
+    border: 1px solid var(--warn); background: var(--warn-bg); color: var(--ink); text-decoration: none; }
+  .alerts a.severe { border-color: var(--bad); background: rgba(224,112,112,0.15); }
+  .alerts b { color: var(--warn); } .alerts a.severe b { color: var(--bad); }
+  .alerts span { color: var(--muted); font-size: 13px; }
   .btn {
     display: inline-block; align-self: flex-start; margin-top: 4px; padding: 9px 16px; border-radius: 8px;
     background: var(--btn-bg); border: 1px solid var(--btn-bd); color: var(--accent);
@@ -85,7 +91,18 @@
   .card.app { border-color: var(--btn-bd); background: var(--app-card); }
   .card.app .btn { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   @media (min-width: 640px) { .cards { grid-template-columns: 1fr 1fr; } .card.app { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; } .card.app .btn { margin-top: 0; } }
-  .theme { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .gear { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+    border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+  .gear:hover, .gear:focus-visible { color: var(--accent); border-color: var(--accent); }
+  .drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(320px, 88vw); background: var(--panel); color: var(--ink);
+    border-left: 1px solid var(--line); padding: 16px; z-index: 51; box-shadow: -8px 0 24px rgba(0,0,0,0.3); overflow-y: auto; }
+  .drawer[hidden], .drawer-bg[hidden] { display: none; }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .drawer-head h2 { margin: 0; font-size: 17px; }
+  .drawer-head .gear { margin-left: 0; }
+  .drawer-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .theme { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .theme button { font: inherit; font-size: 12px; padding: 5px 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
   .theme button + button { border-left: 1px solid var(--line); }
   .theme button[aria-pressed="true"] { background: var(--btn-bg); color: var(--accent); font-weight: 600; }
@@ -96,12 +113,10 @@
 <body>
 <main>
   <div class="brand"><img src="icon-192.png" alt=""><span>Wyman Cove, Marblehead</span>
-    <div class="theme" role="group" aria-label="Appearance">
-      <button type="button" data-mode="light" aria-pressed="false">Light</button>
-      <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
-      <button type="button" data-mode="system" aria-pressed="false">Auto</button>
-    </div>
+    <button type="button" id="settingsBtn" class="gear" aria-label="Settings" aria-haspopup="dialog" aria-controls="drawer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:block;" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
+
+  <div class="alerts" id="alerts" role="region" aria-label="Active weather alerts" hidden></div>
 
   <section class="wx" aria-label="Weather now">
     <div class="kicker">Today and tonight</div>
@@ -141,6 +156,20 @@
   <footer>Data refreshes every 10 minutes. The Mesonet is our own station network; the model is scored against weather.gov.</footer>
 </main>
 
+<div class="drawer-bg" id="drawerBg" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <div class="drawer-head"><h2 id="drawerTitle">Settings</h2><button type="button" id="drawerClose" class="gear" aria-label="Close settings">&times;</button></div>
+  <div class="drawer-row">
+    <div class="drawer-label">Appearance</div>
+    <div class="theme" role="group" aria-label="Appearance">
+      <button type="button" data-mode="light" aria-pressed="false">Light</button>
+      <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
+      <button type="button" data-mode="system" aria-pressed="false">Auto</button>
+    </div>
+  </div>
+</aside>
+
+
 <script src="js/scorecard.js?v=dc187917"></script>
 <script>
 (function () {
@@ -172,6 +201,16 @@
   const $ = id => document.getElementById(id);
   const get = n => fetch(BASE + n + "?_=" + Date.now(), { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(n + " " + r.status); return r.json(); });
   const getLocal = n => fetch(n + "?_=" + Date.now(), { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(n + " " + r.status); return r.json(); });
+  const drawer = $("drawer"), drawerBg = $("drawerBg"), gearBtn = $("settingsBtn");
+  function setDrawer(open) {
+    drawer.hidden = drawerBg.hidden = !open;
+    if (open) { $("drawerClose").focus(); } else { gearBtn.focus(); }
+  }
+  gearBtn.addEventListener("click", () => setDrawer(true));
+  $("drawerClose").addEventListener("click", () => setDrawer(false));
+  drawerBg.addEventListener("click", () => setDrawer(false));
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !drawer.hidden) setDrawer(false); });
+
   const fx = (v, d) => (v == null || Number.isNaN(Number(v))) ? "—" : Number(v).toFixed(d);
   const hhmm = iso => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "—";
   const dir = deg => deg == null ? "" : ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
@@ -200,6 +239,30 @@
       stat("Humidity", fx(c.humidity, 0) + "%", "dew " + fx(c.dew_point, 0) + "°") +
       stat("Sunrise / sunset", hhmm((day.sunrise || [])[k]) + " / " + hhmm((day.sunset || [])[k]));
     if (d.generated_at) $("asof").textContent = "Updated " + new Date(d.generated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+
+  function alerts(d) {
+    const box = $("alerts"), list = (d.alerts || []).filter(a => {
+      const t = ((a.description || "") + " " + (a.headline || "")).toUpperCase();
+      return !t.includes("THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY") && !t.includes("THIS IS A TEST");
+    });
+    box.textContent = "";
+    box.hidden = !list.length;
+    list.forEach(a => {
+      const el = document.createElement("a");
+      el.href = /^https:\/\//.test(a.url || "") ? a.url : "/app";
+      el.target = "_blank"; el.rel = "noopener";
+      if (a.severity === "Severe" || a.severity === "Extreme") el.className = "severe";
+      const b = document.createElement("b"); b.textContent = "\u26A0\uFE0F " + (a.event || "Weather alert");
+      el.append(b);
+      const until = a.expires ? new Date(a.expires) : null;
+      if (until && !Number.isNaN(until)) {
+        const sp = document.createElement("span");
+        sp.textContent = "until " + until.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+        el.append(sp);
+      }
+      box.append(el);
+    });
   }
 
   function mesonet(d, v, m) {
@@ -232,6 +295,7 @@
 
   get("weather_data.json").then(d => {
     weather(d);
+    alerts(d);
     Promise.all([getLocal("mesonet_validation.json").catch(() => null), getLocal("mesonet.json").catch(() => null)]).then(([v, m]) => mesonet(d, v, m));
   }).catch(() => {
     $("headline").textContent = "Weather data is unavailable right now";
