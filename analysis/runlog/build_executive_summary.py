@@ -1405,7 +1405,17 @@ def selector_status():
         wind = []
         for f in ("ws", "wg"):
             v = ((tcd.get("fields") or {}).get(f) or {}).get("lead_2h_plus") or {}
-            if v.get("total_lift_urma_pct") is not None:
+            if f == "wg":
+                # 11-25: wg has served raw NBM since v0.7.141 (11-23 evening); the pooled number still grades the old
+                # wg_l3_nbm serve (-22%). Same rule as js/scorecard.js SHIPS: valid day >= ship day + 2, finished, wait for 3.
+                wd = ((tcd.get("daily") or {}).get("fields") or {}).get("wg", {}).get("days") or {}
+                ds = sorted(d for d in wd if d >= "2026-11-25")[:-1]   # drop the latest (unfinished) day
+                if len(ds) >= 3:
+                    sv, br = sum(wd[d]["srv"] for d in ds), sum(wd[d]["bar"] for d in ds)
+                    wind.append(f"wg since 11-23 serve {100 * (br - sv) / br:+.1f}% ({len(ds)} d; pooled since 11-02 {v.get('total_lift_urma_pct', 0):+.1f}% = old serve)")
+                else:
+                    wind.append(f"wg since 11-23 serve: waiting ({len(ds)}/3 clean days; pooled since 11-02 {v.get('total_lift_urma_pct', 0):+.1f}% = old serve)")
+            elif v.get("total_lift_urma_pct") is not None:
                 wind.append(f"{f} {v['total_lift_urma_pct']:+.1f}%")
         if wind:
             out.append(f"  wind on URMA (served vs raw NBM, 2-47h; - = served worse): {' · '.join(wind)}")
