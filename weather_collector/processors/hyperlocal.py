@@ -37,6 +37,27 @@ def _octant_index(station_lat, station_lon):
     return int(((bearing + 22.5) % 360) / 45)
 
 
+def station_weight(distance_mi, elevation_ft):
+    """Aggregation weight of one station: 1/distance^2 (inverse square) times an elevation
+    penalty exp(-|elev - home| / 30 ft). Shared with the analysis recompute
+    (analysis/mesonet_recompute.py) so the two cannot drift. A missing elevation gets no
+    penalty (treated as the home elevation)."""
+    if elevation_ft is None:
+        elevation_ft = ELEVATION_FT
+    return (1.0 / (distance_mi ** 2)) * math.exp(-abs(elevation_ft - ELEVATION_FT) / 30.0)
+
+
+def octant_balanced_value(oct_lists):
+    """Mesonet value from 8 per-octant lists of (value, weight): MAD-trim each octant, take its
+    weighted mean, then the plain mean of the octant means. Returns (value_or_None, octants_used);
+    None below MIN_OCTANTS_FOR_BALANCED. The collector computes weighted_bias from the same
+    helpers; this is the pure form the analysis calls."""
+    means = [m for m, _ in (_trimmed_weighted_mean(items) for items in oct_lists) if m is not None]
+    if len(means) < MIN_OCTANTS_FOR_BALANCED:
+        return None, len(means)
+    return sum(means) / len(means), len(means)
+
+
 def _trimmed_indices(items):
     """Indices of the (value, weight) items the per-octant MAD trim drops."""
     if len(items) < MIN_FOR_TRIMMING:
@@ -236,11 +257,8 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
 
             sid = str(station.get('station_id') or station.get('station_name') or '')
 
-            # Distance weight: 1/distance² (inverse square law)
-            dist_weight = 1.0 / (station_dist ** 2)
-            elev_diff = abs(station_elev - ELEVATION_FT)
-            elev_weight = math.exp(-elev_diff / 30.0)
-            weight = dist_weight * elev_weight
+            # Distance weight: 1/distance² (inverse square law) x elevation penalty
+            weight = station_weight(station_dist, station_elev)
 
             # Temperature bias
             corrected_temp_s = station_temp - temp_offsets.get(sid, 0.0)
