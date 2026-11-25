@@ -31,10 +31,10 @@ def _seed():
 
 
 def append_water_temp(weather_data):
-    """Append one hourly row (called every tick; acts only on the first tick of the hour)."""
+    """Append one hourly row. Called every tick; writes once per hour, on the first run
+    of the hour. (No minute-of-hour gate: a run starts at :07 but reaches this step
+    several minutes later, so a wall-clock minute test never passed.)"""
     now = datetime.now(TZ)
-    if now.minute >= 10:
-        return
     ts = now.strftime("%Y-%m-%dT%H:00")
     log = load_json(GCS_PATH, default=None)
     entries = log.get("entries") if log else _seed()
