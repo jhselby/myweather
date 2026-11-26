@@ -2,6 +2,7 @@
 <summary><strong>v0.7.160 • November 25, 2026 (Headline and sky card agree)</strong></summary>
 
 - The app showed "Overcast and 38°F" in the headline beside a sky stat of "Clear". Two causes, both fixed in the collector: the AI headline was written before the correction layers ran, and the sky card was synced from the hourly forecast before later steps rewrote it. The sky card is now re-synced as the last step, the headline is written after it from the final data, and a cached headline is re-checked against the current state every tick (a contradicting one is regenerated, at most once per 5 minutes)
+- The headline's sky word must now fit the sky card's label (Clear <12%, Mostly Clear <37%, Partly Cloudy <62%, Mostly Cloudy <87%, Overcast 87%+). "Overcast" had been accepted beside a Partly Cloudy card because the rule only fired at 30% cloud or below
 - Open (selector work): whether the airport-observed sky or the served hour-0 cloud value is closer to GOES truth is still unmeasured; for now the card follows the served value
 
 </details>

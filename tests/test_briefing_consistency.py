@@ -58,3 +58,20 @@ def test_collector_runs_final_sync_then_briefing_just_before_upload():
     upload = src.index("upload_json(weather_data, WEATHER_DATA_GCS_PATH")
     assert sync < brief < upload
     assert src.count("apply_briefing_to_weather_data(weather_data)") == 1   # not also run early
+
+
+def test_overcast_headline_is_rejected_beside_a_partly_cloudy_card():
+    # 11-25 19:37 ET: card "Partly Cloudy" (41%), headline "Overcast" -- was accepted (rule only fired at <=30%).
+    assert _cached_contradicts_now(cached("Overcast and 38\u00b0F with a calm NE breeze", 20), payload("Partly Cloudy", 41))
+
+
+def test_overcast_headline_is_accepted_beside_an_overcast_card():
+    assert not _cached_contradicts_now(cached("Overcast and 38\u00b0F with a calm NE breeze", 20), payload("Overcast", 95))
+
+
+def test_clear_headline_is_rejected_beside_a_cloudy_card():
+    assert _cached_contradicts_now(cached("Clear and 38\u00b0F with a calm NE breeze", 20), payload("Mostly Cloudy", 70))
+
+
+def test_clearing_is_not_mistaken_for_clear():
+    assert not _cached_contradicts_now(cached("Clouds clearing by evening, 38\u00b0F", 20), payload("Partly Cloudy", 41))

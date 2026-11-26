@@ -65,7 +65,7 @@ Rules:
 - A pleasant day IS the story. If today is comfortable — sunny, mild, light wind, low humidity, clear — lead with that. Do not reach into tomorrow or later this week for something more dramatic. The headline answers "what is today like?" — if today is great, say so specifically (temp, sky, breeze). Future drama (tomorrow's rain, a weekend storm, a cold front three days out) belongs in the subheadline. Examples of good quiet-day headlines: "Sunny and 74° with a light NW breeze," "Clear, dry, and mild through the afternoon," "Beach day: sun, 78°, and southwest 10." Only lead with a future event when today is genuinely uneventful AND something materially worse is on the way (severe storms, washout, big swing).
 - When the day is genuinely exceptional — in either direction — name the feeling. "Beautiful morning at the cove," "Picture-perfect afternoon," "Miserable cold rain all day," "Brutal heat and humidity," "Stunning summer Sunday" are all valid headlines when the data clearly earns the label. Tests for "beautiful/picture-perfect/stunning": clear or mostly clear sky (<30% cloud), comfortable temp (60s–80s in summer, 30s–50s in winter), light wind (Impact = Calm or Light), low humidity (<60% if available), no precip. Tests for "miserable/brutal": sustained heavy precip OR temp+wind+humidity that makes outdoor life unpleasant. Mediocre or mixed days stay descriptive — don't force a verdict the data doesn't earn.
 - SUBHEADLINE: 1-2 sentences. Specific times, temps, wind if relevant. Skip anything unremarkable. The subheadline is where forward-looking trend language belongs — what's coming next, when, and how much it shifts from now.
-- Sky words match current cloud cover. The "Sky:" line gives you cloud cover right now and the 24h range. In the HEADLINE, do not write "clear" or "sunny" if Sky-now is ≥ 50%, and do not write "cloudy" or "overcast" if Sky-now is ≤ 30%. The SUBHEADLINE may describe future sky changes ("clearing this afternoon," "clouds moving in by evening") as long as the 24h range supports it.
+- Sky words match current cloud cover. The "Sky:" line gives you cloud cover right now and the 24h range. In the HEADLINE, do not write "clear" or "sunny" if Sky-now is ≥ 37%, do not write "cloudy" if Sky-now is < 37%, and write "overcast" only if Sky-now is ≥ 87% (these match the app's sky label: Clear <12, Mostly Clear <37, Partly Cloudy <62, Mostly Cloudy <87, Overcast ≥87). The SUBHEADLINE may describe future sky changes ("clearing this afternoon," "clouds moving in by evening") as long as the 24h range supports it.
 - Don't mention everything. Only what's worth knowing right now.
 - Never start with greetings or "Today will be."
 - Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
@@ -591,10 +591,16 @@ def _validate_headline(briefing, summary, weather_data):
     # the headline must not claim a sky state that contradicts it. This makes
     # the sky card and the headline read off the same authoritative label.
     if cur_desc:
-        if "overcast" in cur_desc and (in_headline("clear") or in_headline("sunny")):
+        # The headline's sky word must fit the sky card's label (bands in
+        # current_from_hourly._derive_weather_code: Clear <12, Mostly Clear <37, Partly Cloudy <62,
+        # Mostly Cloudy <87, Overcast >=87). 11-25: "Overcast" headline beside a "Partly Cloudy" card.
+        if ("overcast" in cur_desc or "cloudy" in cur_desc) and (in_headline("clear") or in_headline("sunny")):
             return False, f"headline says clear/sunny but weather_description={cur_desc!r}"
         if ("clear" in cur_desc or "sunny" in cur_desc) and (in_headline("overcast") or in_headline("cloudy")):
             return False, f"headline says overcast/cloudy but weather_description={cur_desc!r}"
+        if in_headline("overcast") and "overcast" not in cur_desc and not any(
+                w in cur_desc for w in ("rain", "shower", "drizzle", "snow", "storm", "fog")):
+            return False, f"headline says overcast but weather_description={cur_desc!r}"
 
     # 1d. Alert hallucination check — headline claims "NWS ... in effect" or
     # similar alert framing, but the data has no active alerts. Caught
