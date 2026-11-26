@@ -14,7 +14,7 @@ import pytest
 
 os.environ.setdefault("GEMINI_API_KEY", "test")
 
-from analysis.mesonet_recompute import recompute_t, station_inputs  # noqa: E402
+from analysis.mesonet_recompute import recompute_h, recompute_t, station_inputs  # noqa: E402
 from weather_collector.processors.hyperlocal import station_weight  # noqa: E402
 
 # lat/lon chosen so stations fall in distinct octants of the home point
@@ -86,3 +86,22 @@ def test_reproduces_recorded_station_temp_on_every_archived_tick():
                 bad += 1
     assert n > 500, f"too few ticks compared: {n}"
     assert bad == 0, f"{bad} of {n + bad} ticks differ from the recorded station_temp (worst {worst:.2f} F)"
+
+
+@pytest.mark.skipif(not ARCH or not glob.glob(os.path.join(ARCH or "", "*.json")),
+                    reason="set MESONET_ARCHIVE_DIR to a folder of station_readings/*.json")
+def test_reproduces_recorded_station_humidity_on_every_archived_tick():
+    n = bad = 0
+    for f in sorted(glob.glob(os.path.join(ARCH, "*.json"))):
+        doc = json.load(open(f))
+        inp = station_inputs(doc["stations"])
+        for t in doc["ticks"]:
+            l2 = t.get("l2") or {}
+            if l2.get("aggregation") != "octant_balanced" or l2.get("station_humidity") is None:
+                continue
+            v, _ = recompute_h(t, inp)
+            if v is None:
+                continue
+            n += 1
+            bad += abs(v - l2["station_humidity"]) > 0.051
+    assert n > 500 and bad == 0, (n, bad)

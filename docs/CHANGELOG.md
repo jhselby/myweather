@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.162 • November 26, 2026 (Cove-side test: scorer built, guarded)</strong></summary>
+
+- The pre-registered Cove-side temperature and dew point test (yard station, Driftwood Rd, Neptune Rd) now has its scorer. It shows no scores for any reference until all of them have 10 nights, so nobody reads a partial result early; today the counts are yard 3, Driftwood Rd 3, Neptune Rd 17, so the earliest read is Dec 6. The "Mesonet without a station" recomputation also covers humidity and matches the collector on all 2,462 recorded ticks
+
+</details>
+
+<details open>
 <summary><strong>v0.7.161 • November 26, 2026 (Mesonet page: snapshot age, bucket copy)</strong></summary>
 
 - The Mesonet page's snapshot-fed tables (Weather Underground stations, water temperature, validation) now say when the snapshot was built and how long ago. They are rebuilt at each build or digest, not live; the Tempest tables and the "Now" values are live

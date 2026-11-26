@@ -1,0 +1,31 @@
+{
+ "min_nights": 10,
+ "calibration_days": 5,
+ "references": {
+  "yard": {
+   "nights": 3,
+   "eligible": false,
+   "earliest_read": "2026-12-02"
+  },
+  "driftwood": {
+   "nights": 3,
+   "eligible": false,
+   "earliest_read": "2026-12-06"
+  },
+  "neptune": {
+   "nights": 17,
+   "eligible": true,
+   "earliest_read": "with the other references"
+  }
+ },
+ "verdict": {
+  "t": {
+   "qualifies": null,
+   "why": "not eligible yet: a reference has fewer than 10 nights"
+  },
+  "dp": {
+   "qualifies": null,
+   "why": "not eligible yet: a reference has fewer than 10 nights"
+  }
+ }
+}
