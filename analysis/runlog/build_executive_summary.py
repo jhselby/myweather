@@ -1325,6 +1325,30 @@ def persistence_skill_watch():
 SELECTOR_WORK = Path(__file__).resolve().parent / "selector_open_work.txt"
 
 
+def mesonet_cove_test_status(path=None):
+    """One line for the pre-registered Cove-side temperature / dew point test (plan 1.8). Reads
+    analysis/mesonet_cove_qualify.json, which the digest regenerates. The scorer withholds scores until every
+    reference has 10 nights; this line only reports progress, then the verdict once it exists."""
+    p = Path(path) if path else Path(__file__).resolve().parent.parent / "mesonet_cove_qualify.json"
+    if not p.exists():
+        return ["  Mesonet Cove-side test (plan 1.8): no result file yet (analysis.mesonet_cove_qualify did not run)"]
+    try:
+        d = json.load(open(p))
+        import time as _time
+        age_d = (_time.time() - p.stat().st_mtime) / 86400
+        refs = d["references"]
+        need = d.get("min_nights", 10)
+        stale = " — STALE (digest did not refresh it)" if age_d > 2 else ""
+        if all(r.get("eligible") for r in refs.values()):
+            v = d["verdict"]
+            return [f"  Mesonet Cove-side test (plan 1.8): READY, read it. t qualifies: {v['t'].get('qualifies')} · dp qualifies: {v['dp'].get('qualifies')} "
+                    f"(analysis/mesonet_cove_qualify.json){stale}"]
+        parts = " · ".join(f"{k} {r['nights']}/{need}" for k, r in refs.items())
+        return [f"  Mesonet Cove-side test (plan 1.8): waiting, nights {parts}; no scores shown until all reach {need} (earliest read ~12-06){stale}"]
+    except Exception as e:  # noqa: BLE001
+        return [f"  Mesonet Cove-side test (plan 1.8): result file unreadable ({e})"]
+
+
 def selector_status():
     """Selector block for the head of the digest (CLAUDE.md §0a). The selector
     is the work; the sentries below it are health checks. Grade = Selector
@@ -1496,6 +1520,7 @@ def main():
                 kills_new.append((name, verdict))
 
     out = selector_status()
+    out.extend(mesonet_cove_test_status())
 
     # v0.6.390k action list: mirror the highest-severity sentry alerts at
     # the very top so the digest's actionable content is above the
