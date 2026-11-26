@@ -810,6 +810,33 @@ def _call_groq_waterfall(summary, time_context, prev_context, weather_data, east
     return None
 
 
+_CONTRADICTION_REGEN_MIN = 5  # at most one forced regeneration per this many minutes
+
+
+def _cached_contradicts_now(cached, weather_data):
+    """True when the cached headline fails the validator against the CURRENT payload and the last
+    attempt was at least _CONTRADICTION_REGEN_MIN minutes ago (so a persistently rejected headline
+    cannot trigger an LLM call every tick). The throttle used to serve the cached text without
+    re-checking it, so it could contradict the sky card for up to the throttle interval."""
+    from datetime import datetime
+    import pytz
+    try:
+        valid, _ = _validate_headline(cached, _build_weather_summary(weather_data), weather_data)
+    except Exception:
+        return False
+    if valid:
+        return False
+    last = cached.get("last_attempt_at") or cached.get("cached_at")
+    if last:
+        try:
+            age = (datetime.now(pytz.timezone("America/New_York")) - datetime.fromisoformat(last)).total_seconds() / 60
+            if age < _CONTRADICTION_REGEN_MIN:
+                return False
+        except Exception:
+            pass
+    return True
+
+
 def generate_briefing(weather_data):
     """
     Call Gemini to generate a briefing headline and subheadline.
@@ -828,7 +855,9 @@ def generate_briefing(weather_data):
         if cached is None:
             cached = _load_cached_briefing()
         if cached and cached.get("headline"):
-            return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
+            if not _cached_contradicts_now(cached, weather_data):
+                return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
+            logging.info("  ↻ Briefing: cached headline contradicts the current state, regenerating")
 
     summary = _build_weather_summary(weather_data)
     prev_briefing = _load_cached_briefing()

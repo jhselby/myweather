@@ -588,8 +588,9 @@ def main():
     logging.info(f"  ⏱  Build weather data: {time.time() - t0:.1f}s")
     _release_freed_heap()
 
-    # AI briefing — generates headline, wires to payload, records source status
-    apply_briefing_to_weather_data(weather_data)
+    # (AI briefing moved to the end of the pipeline, 11-25: it must see the final served state.
+    # At this point the hourly arrays are still pre-correction, so a headline written here could
+    # contradict the sky card, which reads the final hourly[0].)
 
     # Trim hourly arrays so they start at the current local hour
     trim_hourly_to_current_hour(weather_data)
@@ -913,6 +914,18 @@ def main():
     # from the stale cache, this run's call is what keeps (T, T_d, RH, AH)
     # internally consistent. Idempotent — safe to always call.
     recompute_derived_moisture_arrays(weather_data)
+
+    # Final sync of current.* from the FINAL hourly[0]. The earlier sync (above) runs before later
+    # steps rewrite hourly arrays (11-25: current.cloud_cover 10 "Clear" while the served
+    # hourly.cloud_cover[0] was 41). Idempotent; the contract is current == final corrected hourly[0].
+    try:
+        from .processors.current_from_hourly import sync_current_from_hourly_corrected
+        sync_current_from_hourly_corrected(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  final current sync skipped: {redact_secrets(e)}")
+
+    # AI briefing: last, so its headline is written from, and validated against, the final payload.
+    apply_briefing_to_weather_data(weather_data)
 
     # Upload weather data to GCS
     _release_freed_heap()

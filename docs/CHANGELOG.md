@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.160 • November 25, 2026 (Headline and sky card agree)</strong></summary>
+
+- The app showed "Overcast and 38°F" in the headline beside a sky stat of "Clear". Two causes, both fixed in the collector: the AI headline was written before the correction layers ran, and the sky card was synced from the hourly forecast before later steps rewrote it. The sky card is now re-synced as the last step, the headline is written after it from the final data, and a cached headline is re-checked against the current state every tick (a contradicting one is regenerated, at most once per 5 minutes)
+- Open (selector work): whether the airport-observed sky or the served hour-0 cloud value is closer to GOES truth is still unmeasured; for now the card follows the served value
+
+</details>
+
+<details open>
 <summary><strong>v0.7.159 • November 25, 2026 (Moon at night)</strong></summary>
 
 - The landing page showed a sun on a clear night. It now shows a moon between sunset and sunrise (the collector's weather icon has no night; the app does not use it)
