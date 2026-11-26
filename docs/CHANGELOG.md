@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.165 • November 26, 2026 (visit counters back on the landing page)</strong></summary>
+
+- Counter.dev and GoatCounter were only on the app page; since the landing page became the front door (v0.7.143), visits to it were not counted. Both are now on the landing page too
+
+</details>
+
+<details open>
 <summary><strong>v0.7.164 • November 26, 2026 (Model page: the overdue-watch banner is visible again)</strong></summary>
 
 - The Model page's "watches past their close date" banner was sitting inside a collapsed section, so it could never be seen; it now sits at the top of the page and appears only when a watch is overdue. Added the open dated items to it: wg since-change (Nov 28), the dp/ws/wg URMA serve read (Nov 30), the night-offset serve call (Dec 1), and the Cove-side verdict with the weather.gov bar switch (Dec 6)
