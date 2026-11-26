@@ -211,7 +211,7 @@ def main():
         import subprocess, sys as _sys
         subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'architecture_state.py')], check=False)
         # mesonet.json for the debug page station map (public-safe station dots + dated measurements); needs gsutil, so best-effort.
-        subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'mesonet_state.py')], check=False)
+        subprocess.run([_sys.executable, str(base_dir / 'scripts' / 'mesonet_state.py'), '--upload'], check=False)  # --upload: also publish to the data bucket so the page reads it without a git push
         # /mesonet "How good is it": Step 1 validation results, served next to mesonet.html.
         _mv = base_dir / 'analysis' / 'mesonet_validation.json'
         if _mv.exists():

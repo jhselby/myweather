@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.161 • November 26, 2026 (Mesonet page: snapshot age, bucket copy)</strong></summary>
+
+- The Mesonet page's snapshot-fed tables (Weather Underground stations, water temperature, validation) now say when the snapshot was built and how long ago. They are rebuilt at each build or digest, not live; the Tempest tables and the "Now" values are live
+- `build.py` now also publishes `mesonet.json` to the data bucket, so the page's first (previously always-404) fetch works and the snapshot can refresh without a git push
+
+</details>
+
+<details open>
 <summary><strong>v0.7.160 • November 25, 2026 (Headline and sky card agree)</strong></summary>
 
 - The app showed "Overcast and 38°F" in the headline beside a sky stat of "Clear". Two causes, both fixed in the collector: the AI headline was written before the correction layers ran, and the sky card was synced from the hourly forecast before later steps rewrote it. The sky card is now re-synced as the last step, the headline is written after it from the final data, and a cached headline is re-checked against the current state every tick (a contradicting one is regenerated, at most once per 5 minutes)

@@ -64,3 +64,9 @@ def test_wu_counts_add_up_and_twins_are_explained(page):
     c = MES["counts"]
     assert c["wu_configured"] == c["wu_ok"] + c["wu_silent"] + c["wu_twins"]
     assert "34 working and counted" in t and "5 silent" in t and "2 not counted" in t, t
+
+
+def test_snapshot_panels_say_how_old_they_are(page):
+    # the WU and water panels are fed by mesonet.json (rebuilt at each build/digest, not live)
+    assert "snapshot of 2026-11-25 22:00 UTC" in page.locator("#water").inner_text()
+    assert "snapshot of 2026-11-25 22:00 UTC" in page.locator("#wu").inner_text()

@@ -382,6 +382,14 @@
       `<p class="small muted" style="margin:8px 0 0;">${h.outliers_trimmed || 0} set aside as outliers this run${h.outlier_station_ids ? "" : " (which one is not recorded yet)"}. Corrections are measured against the other stations, day (7 am to 7 pm) and night separately.</p>`;
   }
 
+  // "as of" text for a snapshot-fed panel: the snapshot is rebuilt at each build/digest, not live.
+  function asOf(ts) {
+    const t = ts ? Date.parse(ts) : NaN;
+    if (Number.isNaN(t)) return "snapshot time unknown";
+    const h = Math.round((Date.now() - t) / 3600000);
+    return "snapshot of " + String(ts).replace("T", " ").replace("Z", " UTC") + (h >= 1 ? ` (${h} h ago)` : " (under 1 h ago)");
+  }
+
   function water(m) {
     const w = m && m.water;
     if (!w) { $("water").textContent = "Not available."; return; }
@@ -396,7 +404,7 @@
       `<table class="dense"><thead><tr><th>GoMOFS minus</th><th>Hours</th><th>From</th><th>Avg gap</th><th>Typical miss</th><th>Last 72 h</th></tr></thead><tbody>` +
       [["buoy 44013", a], ["buoy 44029", b]].map(([n, x]) => x ? `<tr><td>${n}</td><td class="num">${x.n}</td><td style="white-space:nowrap">${x.first.slice(5, 10)}</td><td class="num">${sgn(x.bias)}°F</td><td class="num">${x.mae.toFixed(2)}°F</td><td class="num">${sgn(x.recent_bias)}°F</td></tr>` : "").join("") +
       `</tbody></table><p class="small muted" style="margin:8px 0 0;">One hourly reading per hour since ${String(w.first).slice(0, 10)}. The gap drifts with conditions (+1.7°F on Nov 11-13, near 0 on Nov 16-22), so a single day says little. ` +
-      `Why it matters: water minus air temperature drives sea breeze and marine-layer fog at the Cove. No measured water point nearer the Cove has been found yet.</p>`;
+      `Why it matters: water minus air temperature drives sea breeze and marine-layer fog at the Cove. No measured water point nearer the Cove has been found yet. This panel is a ${asOf(m.generated_at)}.</p>`;
   }
 
   function wu(m) {
@@ -410,7 +418,7 @@
     $("wu").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>Dir</th><th>°F</th><th>RH %</th><th>inHg</th><th>Last reading</th><th>Day / night vs URMA</th><th>Error vs URMA</th></tr></thead><tbody>` +
       (m.own ? row(m.own, "Our station (KMAMARBL124, not on the map)") : "") + (m.live || []).map(s => row(s, s.id)).join("") + `</tbody></table>` +
       `<p class="small muted" style="margin:8px 0 0;">These 8 are fetched 4 times a day; ${c.wu_configured ?? "—"} configured in all (${c.wu_ok ?? "—"} working and counted, ${c.wu_silent ?? "—"} silent${c.wu_twins ? `, ${c.wu_twins} not counted: they are the same device as a Tempest station already in the Mesonet, so scoring them would grade it against itself` : ""}), the rest twice a day. ` +
-      `Adding the 7 neighbours to the Mesonet changed it by under 0.05°F (Nov 18-22), so they stay archive-only. As of ${m.generated_at || "—"}.</p>`;
+      `Adding the 7 neighbours to the Mesonet changed it by under 0.05°F (Nov 18-22), so they stay archive-only. This table is a ${asOf(m.generated_at)}.</p>`;
   }
 
   function nowTable(d) {
@@ -516,7 +524,7 @@
     const night = (cv.by_period || {}).night || {}, mid = (cv.by_period || {}).midday || {};
     $("val").classList.remove("muted");
     $("val").innerHTML =
-      `<p class="small muted" style="margin-top:0;">${v.window}. ${v.n_hours} hours.</p>` +
+      `<p class="small muted" style="margin-top:0;">${v.window}. ${v.n_hours} hours. This table is a ${asOf(v.generated_at)}.</p>` +
       `<p style="margin:0 0 8px;">Two tests, with limits set before scoring. <b>Agreement:</b> each station is predicted from the median of all the others; the typical miss. Each station's steady offset (its 48-hour average gap to the others) is removed first, and no outlier is dropped in this test, so it measures how well stations agree after that offset, not fully unseen readings. ` +
       `<b>Bias:</b> the Mesonet against URMA, NOAA's independent hourly analysis. To grade forecasts, a field must pass both. KBVY (Beverly airport, 6 mi inland) is shown for reference only.</p>` +
       `<table class="verdict"><thead><tr><th>Field</th><th>Agreement</th><th>Bias vs URMA</th><th>vs KBVY</th></tr></thead><tbody>` +
