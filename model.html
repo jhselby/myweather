@@ -1117,6 +1117,9 @@
   .fp-engine { margin-top: 18px; color: #9aa6b6; font-size: 0.88em; }
 </style>
 
+<!-- Staleness audit: watches past their close date. Sits at the top level so no collapsed section can hide it (it was inside the closed sec-engine-scoreboard). Data: OPEN_WATCHES in the script near the end of the page. -->
+<div id="staleness-audit" hidden style="border:1px solid #3a1f1f;background:#1c1313;margin-bottom:14px;padding:10px 14px;font-size:0.95em;border-radius:6px;color:#ef6450;"></div>
+
 <section class="fp" id="sec-front">
   <h2 class="section fixed" id="sec-front-q">Scorecard</h2>
 
@@ -2075,13 +2078,6 @@
 
 </section>
 
-<!-- ───────────────────── Staleness audit ─────────────────────
-     Anti-fossilization check: watches whose close dates have passed
-     without being marked CLOSED CLEAN / UNCLEAN. Hidden when nothing
-     is overdue. Same idea as DIGEST 🚨 TOP ALERTS but for temporal
-     drift instead of new alerts. Data: OPEN_WATCHES array below,
-     hand-curated + Rule 5 sweep when a watch flips. -->
-<div id="staleness-audit" hidden style="border:1px solid #3a1f1f;background:#1c1313;margin-bottom:14px;padding:10px 14px;font-size:0.95em;border-radius:6px;color:#ef6450;"></div>
 
 <script>
   // Open watches with an expected close date. When today's date >= closeDate
@@ -2094,6 +2090,10 @@
     // Backup first weekly bucket copy removed 2026-11-08 - CLOSED CLEAN: backup_last_ok touched 11-08 05:30.
     // Truth audit rescore removed 2026-11-18 - CLOSED UNCLEAN: t station truth closed 11-16 (fails both truths); 2h-onward grading is live in truth_compare; ws diurnal bias on station wind folded into the 11-22 wind-truth item, h L2 recheck into the 11-21 dew point tie-breaker.
     { name: "Archive — monthly pair-log snapshot (backup_bucket.sh)", closeDate: "2026-12-06", note: "verify archive/ object exists" },
+    { name: "wg since-change number (post v0.7.141 rows)", closeDate: "2026-11-28", note: "scoreboard wg line reads since-change; wg_urmab vs raw NBM CIs span 0 on 11-26, no serve unless lo > 0" },
+    { name: "dp_urmab / ws_urmab / wg_urmab serve read", closeDate: "2026-11-30", note: "python analysis/urma_shadow_score.py (PYTHONPATH=.); dp needs >= 7 d; serve only if ship_rule lo > 0 vs the served value" },
+    { name: "t_stnoff night-offset serve call", closeDate: "2026-12-01", note: "5 of 7 forward days + ship_rule; also shadow-station trim preview" },
+    { name: "Cove-side t/dp verdict (plan 1.8) + weather.gov bar switch", closeDate: "2026-12-06", note: "mesonet_cove_qualify; no scores until yard, Driftwood Rd, Neptune Rd all have 10 nights (11-26: 4/4/18)" },
     // ECMWF ws gate removed 2026-11-07 - CLOSED UNCLEAN: pair-log gate never run as scoped; folded into Holdout verdicts (11-11) + truth audit rescore (11-17).
     // Both entries removed 2026-08-25 — CLOSED CLEAN HOLD.
     // Lsr recent-bias gate: 7-day window closed 08-23; 8 distinct days, 0 promote / 8 hold, promoted set STABLE (empty). Never fired.

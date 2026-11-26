@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.164 • November 26, 2026 (Model page: the overdue-watch banner is visible again)</strong></summary>
+
+- The Model page's "watches past their close date" banner was sitting inside a collapsed section, so it could never be seen; it now sits at the top of the page and appears only when a watch is overdue. Added the open dated items to it: wg since-change (Nov 28), the dp/ws/wg URMA serve read (Nov 30), the night-offset serve call (Dec 1), and the Cove-side verdict with the weather.gov bar switch (Dec 6)
+
+</details>
+
+<details open>
 <summary><strong>v0.7.163 • November 26, 2026 (briefing: no "rising" headline at night)</strong></summary>
 
 - At 7:47 PM on Nov 25 the headline said "temps rising to mid-40s", which was tomorrow's high stated as if it were tonight. The briefing prompt now carries the time of day and says that after 5 PM today's high has passed, and the headline check rejects rising, climbing, warming, high or peak wording at night unless it names tomorrow or another future time
