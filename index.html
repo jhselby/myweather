@@ -220,7 +220,12 @@
     $("headline").textContent = b.headline || (c.weather_description ? c.weather_description + ", " + fx(c.temperature, 0) + "°F" : "Wyman Cove weather");
     $("subheadline").textContent = b.subheadline || "";
     $("now").innerHTML = "";
-    const em = document.createElement("div"); em.className = "emoji"; em.textContent = c.weather_emoji || "";
+    // The collector's code->emoji lookup has no night: a clear night shows a sun. Swap to a moon between sunset and sunrise.
+    const sr0 = ((d.daily || {}).sunrise || [])[0], ss0 = ((d.daily || {}).sunset || [])[0], nowMs = Date.now();
+    const isNight = sr0 && ss0 && (nowMs < new Date(sr0) || nowMs > new Date(ss0));
+    const nightEmoji = { 0: "\u{1F319}", 1: "\u{1F319}", 2: "\u2601\uFE0F" };
+    const em = document.createElement("div"); em.className = "emoji";
+    em.textContent = (isNight && nightEmoji[c.weather_code]) || c.weather_emoji || "";
     const box = document.createElement("div");
     // One number per field: the Mesonet (station-only) value, the same one the Mesonet card shows below.
     // Falls back to the served current temperature only when the stations are not reporting.

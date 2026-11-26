@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.159 • November 25, 2026 (Moon at night)</strong></summary>
+
+- The landing page showed a sun on a clear night. It now shows a moon between sunset and sunrise (the collector's weather icon has no night; the app does not use it)
+
+</details>
+
+<details open>
 <summary><strong>v0.7.158 • November 25, 2026 (One temperature on the landing page)</strong></summary>
 
 - The landing page headline temperature is now the Mesonet station value (the same number the Mesonet card shows below it), labelled "Mesonet stations". It was the served value pulled partway toward the forecast model, so the page showed 38.9 above and "the stations say 38.7" below. It falls back to the served value only when no stations report. The app's own Right Now card is unchanged

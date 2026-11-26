@@ -30,14 +30,14 @@ def iso(delta_hours):
     return (NOW + timedelta(hours=delta_hours)).isoformat()
 
 
-def weather(alerts, station_temp=True):
+def weather(alerts, station_temp=True, night=False):
     return {
         "generated_at": NOW.isoformat(),
-        "current": {"temperature": 35, "weather_description": "Clear", "wind_speed": 6,
+        "current": {"temperature": 35, "weather_description": "Clear", "weather_code": 0, "weather_emoji": "\u2600\ufe0f", "wind_speed": 6,
                     "wind_direction": 0, "humidity": 63, "dew_point": 24},
         "daily": {"time": [datetime.now().strftime("%Y-%m-%d")], "temperature_max": [43],
                   "temperature_min": [28], "precipitation_probability_max": [0],
-                  "precipitation_sum": [0.0], "sunrise": [iso(-3)], "sunset": [iso(5)]},
+                  "precipitation_sum": [0.0], "sunrise": [iso(-15 if night else -3)], "sunset": [iso(-1 if night else 5)]},
         "briefing": {"headline": "Test headline", "subheadline": ""},
         "hyperlocal": {"station_temp": 38.7} if station_temp else {},
         "tempest": {"stations": []},
@@ -190,4 +190,17 @@ def test_headline_falls_back_to_served_temperature_without_stations(browser):
     ctx, page = open_page(browser, weather([], station_temp=False))
     assert page.locator("#now .temp").inner_text() == "35\u00b0F"
     assert "Mesonet" not in page.locator("#now .cond").inner_text()
+    ctx.close()
+
+
+def test_clear_night_shows_a_moon_not_a_sun(browser):
+    # 11-25: 5:47 PM, after sunset, the landing page showed a sun on a clear night.
+    ctx, page = open_page(browser, weather([], night=True))
+    assert page.locator("#now .emoji").inner_text() == "\U0001F319"
+    ctx.close()
+
+
+def test_clear_day_keeps_the_sun(browser):
+    ctx, page = open_page(browser, weather([], night=False))
+    assert page.locator("#now .emoji").inner_text() == "\u2600\ufe0f"
     ctx.close()
