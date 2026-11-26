@@ -367,6 +367,7 @@ def _build_weather_summary(weather_data):
 
     lines = [
         f"Current: {temp}°F, {sky}",
+        _time_of_day_line(),
         f"Yesterday: {', '.join(yesterday_parts)}" if yesterday_parts else None,
         f"Today high: {_temp_range(high)}, low: {_temp_range(low)}",
         f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
@@ -512,7 +513,18 @@ def _update_briefing_cache(briefing=None, was_429=False):
         logging.error(f"  ⚠ Briefing cache update failed: {redact_secrets(e)}")
 
 
-def _validate_headline(briefing, summary, weather_data):
+def _time_of_day_line(now=None):
+    """Tells the model what part of the day it is so it does not quote tomorrow's high as tonight's."""
+    from datetime import datetime
+    import pytz
+    now = now or datetime.now(pytz.timezone("America/New_York"))
+    if now.hour >= 17 or now.hour < 5:
+        return (f"Time: {now.strftime('%-I:%M %p')} ET, night. Today's high has already passed; "
+                f"the headline must not say temps are rising or give a high. Tomorrow's high goes in the sub, labeled tomorrow.")
+    return f"Time: {now.strftime('%-I:%M %p')} ET"
+
+
+def _validate_headline(briefing, summary, weather_data, now=None):
     """Sanity-check an LLM-generated headline against the structured weather
     data we fed into the prompt. Catches obvious contradictions (rain when no
     rain, clear when overcast, 'torrential' when actually light, etc.) before
@@ -601,6 +613,20 @@ def _validate_headline(briefing, summary, weather_data):
         if in_headline("overcast") and "overcast" not in cur_desc and not any(
                 w in cur_desc for w in ("rain", "shower", "drizzle", "snow", "storm", "fog")):
             return False, f"headline says overcast but weather_description={cur_desc!r}"
+
+    # 1c2. Time of day — after 5 PM (before 5 AM) today's high is behind us. A
+    # headline that talks about temps rising / a high / a peak with no future
+    # marker is quoting TOMORROW's high as if it were tonight (11-25 7:47 PM:
+    # "temps rising to mid-40s"). Tomorrow's high belongs in the sub, labeled.
+    from datetime import datetime as _dt
+    import pytz as _pytz
+    _now = now or _dt.now(_pytz.timezone("America/New_York"))
+    if _now.hour >= 17 or _now.hour < 5:
+        _fut = ("tomorrow", "tonight", "overnight", "later", "morning", "sunrise", "expected",
+                "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+        for w in ("rising", "climbing", "warming", "high", "highs", "peak", "peaking", "topping", "reaching"):
+            if in_headline(w) and not any(f in headline for f in _fut):
+                return False, f"headline says {w!r} at night with no future marker (today's high has passed)"
 
     # 1d. Alert hallucination check — headline claims "NWS ... in effect" or
     # similar alert framing, but the data has no active alerts. Caught

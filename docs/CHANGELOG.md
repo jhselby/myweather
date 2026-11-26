@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.163 • November 26, 2026 (briefing: no "rising" headline at night)</strong></summary>
+
+- At 7:47 PM on Nov 25 the headline said "temps rising to mid-40s", which was tomorrow's high stated as if it were tonight. The briefing prompt now carries the time of day and says that after 5 PM today's high has passed, and the headline check rejects rising, climbing, warming, high or peak wording at night unless it names tomorrow or another future time
+
+</details>
+
+<details open>
 <summary><strong>v0.7.162 • November 26, 2026 (Cove-side test: scorer built, guarded)</strong></summary>
 
 - The pre-registered Cove-side temperature and dew point test (yard station, Driftwood Rd, Neptune Rd) now has its scorer. It shows no scores for any reference until all of them have 10 nights, so nobody reads a partial result early; today the counts are yard 3, Driftwood Rd 3, Neptune Rd 17, so the earliest read is Dec 6. The "Mesonet without a station" recomputation also covers humidity and matches the collector on all 2,462 recorded ticks
