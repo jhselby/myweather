@@ -67,4 +67,17 @@ def apply_stale_fallbacks(weather_data, prev, failed_fetches):
             stale.append(data_key)
             logging.error(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
 
+    # derived.*: computed earlier in the tick from current/hourly, so when those failed
+    # it lost ~25 keys (fog risk, dew point spread, cloud base, tomorrow high/low, precip
+    # type; 11-27 12:47Z Open-Meteo 503: fog card blank). Fill only the keys this run did
+    # not produce; never overwrite a value computed this run.
+    if ("current" in stale or "hourly" in stale) and isinstance(prev.get("derived"), dict):
+        derived = weather_data.setdefault("derived", {})
+        filled = [k for k in prev["derived"] if k not in derived]
+        for k in filled:
+            derived[k] = prev["derived"][k]
+        if filled:
+            stale.append("derived")
+            logging.error(f"  ⚠  derived: {len(filled)} keys from previous run (current/hourly failed)")
+
     return stale

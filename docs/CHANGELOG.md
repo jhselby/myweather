@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.168 • November 27, 2026 (fog card no longer goes blank when the forecast feed is down)</strong></summary>
+
+- When Open-Meteo failed on a tick (11-27 7:47 AM ET, HTTP 503), the collector filled in the previous run's current and hourly data at the end of the tick, but the values derived from them earlier were simply missing: the fog card went blank, along with about 25 others (dew point spread, cloud base, tomorrow's high and low, precipitation type, pressure trend). Those values are now carried over from the previous run when that happens, and only where this run produced none
+
+</details>
+
+<details open>
 <summary><strong>v0.7.167 • November 27, 2026 (selector scoring on the scorecard's truth)</strong></summary>
 
 - The selector table at the top of the morning digest and the Model page's scoreboard tiles still graded on the old logged "observed" (station readings pulled toward the model), five days after the scorecard moved off it. They now use the scorecard's truths: temperature, dew point, wind, gusts and cloud cover on URMA, humidity on the Mesonet at 6-47 h. Other fields are unchanged and labelled
