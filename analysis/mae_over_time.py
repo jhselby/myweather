@@ -38,6 +38,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
 from _output import out as _out  # noqa: E402
+from _prod import applied_error  # noqa: E402
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 HISTORY_URL = "https://data.wymancove.com/mae_over_time.json"
@@ -191,7 +192,7 @@ def compute_fresh_rollup():
             band = _band_for(r.get("lead_h")) if in_last_24h else None
 
             applied = r.get("applied_layer")
-            e_served = r.get(f"error_{applied}") if applied else None
+            e_served = applied_error(r)
             if e_served is None:
                 e_served = r.get("error")
             e_public = r.get("error_raw_nbm") if fld in NBM_SCOPE else r.get("error_l1")
@@ -203,7 +204,7 @@ def compute_fresh_rollup():
             # otherwise double-count now that v0.6.400 makes wd emit
             # applied_layer for the first time.
             if applied and fld not in L1_ONLY_FIELDS:
-                e_applied = r.get(f"error_{applied}")
+                e_applied = applied_error(r)
                 if e_applied is not None:
                     prod_real_buckets[(day, fld)].append(float(e_applied))
                     if in_last_24h:

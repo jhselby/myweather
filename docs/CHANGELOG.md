@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.170 • November 27, 2026 (high cloud scored on what the app showed)</strong></summary>
+
+- Since Nov 24 (v0.7.154) high cloud 6-23 h ahead has been the raw HRRR. The forecast log never recorded that served value under its own name, so the scorers fell back to other layers: some graded it as HRRR's corrected value (which flattered it), others as the uncorrected one. Every scorer now reads the value actually served, and new log rows carry it directly
+- The forward check of that change (ch_goes_score) compared raw HRRR with itself on most hours, because the "replaced" value it saved was an early layer rather than the one the app showed. It now saves the shown value. Re-scored from the forecast log against the GOES satellite, on the 23 days before the change: raw HRRR beat what the app showed by +50.4% [+19.3, +69.7], both halves positive, so the change stands. Nothing served changes
+
+</details>
+
+<details open>
 <summary><strong>v0.7.169 • November 27, 2026 (wind speed 6-23 h now comes straight from NBM; high cloud shown as scored)</strong></summary>
 
 - Wind speed 6 to 23 hours ahead is now the National Blend (NBM) as published. The old value was a blend of three models whose weights were fit against our backyard anemometers. Those sit in sheltered spots and read low, so the blend leaned on ECMWF, which ran about 6 mph low in the Nov 26 Wind Advisory. Against NOAA's hourly analysis (URMA), the plain NBM beat it on 24 held-out days: +4.2% at 6-11 h and +5.2% at 12-23 h. 24-47 h (+4.1%, not yet certain) and the first 5 hours (current station readings) are unchanged. It can be switched off without a redeploy

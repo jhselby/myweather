@@ -359,6 +359,15 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             if _pre is not None:
                 pair["forecast_pre_urmab"] = round(float(_pre), 3)
                 pair["error_pre_urmab"] = round(float(_pre) - obs_f, 3)
+            # v0.7.170 — ch served as raw HRRR (applied "hrrr_sat", v0.7.154) had no error_hrrr_sat, so scorers fell back
+            # to error_l4 or the L2 top-level error. Stamp the served value and the value it replaced.
+            if short == "ch" and target_hour.get("ch_applied") == "hrrr_sat" and target_hour.get("ch") is not None:
+                pair["forecast_hrrr_sat"] = round(float(target_hour["ch"]), 3)
+                pair["error_hrrr_sat"] = round(float(target_hour["ch"]) - obs_f, 3)
+                _pre = target_hour.get("ch_pre_hrrr")
+                if _pre is not None:
+                    pair["forecast_pre_hrrr"] = round(float(_pre), 3)
+                    pair["error_pre_hrrr"] = round(float(_pre) - obs_f, 3)
             # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
             # we can compare against Tempest's total-shortwave obs on the same
             # units. `forecast` (direct-beam only) stays the primary forecast —

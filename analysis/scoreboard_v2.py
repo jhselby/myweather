@@ -64,6 +64,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
+from analysis._prod import applied_error
 from analysis._output import out as _out
 from analysis.per_field_scoring import _hrrr_prod_error, _nbm_prod_error, _fixed_truth
 
@@ -239,7 +240,7 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
             # Fall back to top-level `error` when `applied_layer` is missing
             # (older pair-log rows pre-v0.6.269).
             applied = row.get("applied_layer")
-            e_prod = row.get(f"error_{applied}") if applied else None
+            e_prod = applied_error(row)
             if e_prod is None:
                 e_prod = row.get("error")
             e_nbm = row.get("error_raw_nbm")

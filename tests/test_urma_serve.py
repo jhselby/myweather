@@ -171,6 +171,24 @@ def test_ch_serves_hrrr_at_6_to_23h_only(monkeypatch):
     assert e["ch_pre_hrrr"] == 61.0 and e["ch_applied"] == "hrrr_sat"
 
 
+def test_ch_pre_hrrr_is_the_shown_layer_on_hrrr_routed_hours(monkeypatch):
+    # entry["ch"] is the legacy L2 key on HRRR-routed hours; the app showed the applied layer (11-28 04:00: 64 vs 0).
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_ch": True})
+    e = {"ch": 64.0, "ch_l1": 64.0, "ch_l2": 64.0, "ch_chp": 0.0, "ch_applied": "chp", "ch_selector_source": "hrrr"}
+    assert u.apply_ch(e, 8) is True
+    assert e["ch_pre_hrrr"] == 0.0 and e["ch"] == 64.0
+
+
+def test_applied_error_reads_error_l1_for_unstamped_hrrr_sat_rows():
+    from analysis._prod import applied_error, prod_error
+    old = {"applied_layer": "hrrr_sat", "error": -6.0, "error_l1": 30.0, "error_l4": 2.0}
+    assert applied_error(old) == 30.0 and prod_error(old) == 30.0
+    new = dict(old, error_hrrr_sat=31.0)
+    assert applied_error(new) == 31.0
+    assert applied_error({"applied_layer": "l4", "error_l4": 2.0}) == 2.0
+    assert applied_error({"error": 1.0}) is None
+
+
 def test_ch_off_without_key_or_on_error(monkeypatch):
     monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True})
     assert u.apply_ch(_ch_entry(), 8) is False

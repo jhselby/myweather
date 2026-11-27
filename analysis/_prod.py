@@ -13,17 +13,27 @@ top-level `error` as a last resort.
 """
 
 
+def applied_error(row):
+    """`error_{applied_layer}`, or None. v0.7.170: ch rows served as raw HRRR (applied "hrrr_sat", v0.7.154)
+    logged before error_hrrr_sat was stamped read error_l1, the value served."""
+    applied = row.get("applied_layer")
+    if not applied:
+        return None
+    v = row.get(f"error_{applied}")
+    if v is None and applied == "hrrr_sat":
+        v = row.get("error_l1")
+    return v
+
+
 def prod_error(row):
     """Return the real production residual for a pair-log row, or None.
 
     Prefers `error_{applied_layer}`, falls back to `error_l4`, then to
     top-level `error`. Never returns the L2 residual when a deeper layer
     is available."""
-    applied = row.get("applied_layer")
-    if applied:
-        v = row.get(f"error_{applied}")
-        if v is not None:
-            return v
+    v = applied_error(row)
+    if v is not None:
+        return v
     v = row.get("error_l4")
     if v is not None:
         return v

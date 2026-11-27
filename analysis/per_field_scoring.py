@@ -44,6 +44,7 @@ from analysis._cache import cached_path
 from analysis._output import out as _out
 from analysis import terminal_blend_field_fit as _tbf
 from analysis._truth import FixedTruth
+from analysis._prod import applied_error
 
 # 11-27: every row is graded on its field's fixed truth (URMA for t/dp/ws/wg/cc, the Mesonet
 # for h at 6-47h), the same truth as the scorecard. Loaded once per run.
@@ -168,12 +169,8 @@ def _prod_error(row):
     """Whatever the collector actually shipped for user-visible Prod on this
     row — error_{applied_layer}, or top-level error as fallback (pre-v0.6.269
     rows)."""
-    applied = row.get("applied_layer")
-    if applied:
-        v = row.get(f"error_{applied}")
-        if v is not None:
-            return v
-    return row.get("error")
+    v = applied_error(row)
+    return v if v is not None else row.get("error")
 
 
 # v0.6.494 — NBM-side layer stamps to SKIP when computing current-config Prod.

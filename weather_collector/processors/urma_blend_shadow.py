@@ -209,6 +209,10 @@ def serving_ch():
 def apply_ch(entry, lead_h):
     """Serve ch_l1 (raw HRRR high cloud) in place of ch at 6-23h. Keeps the replaced value as ch_pre_hrrr. True when it fired."""
     hr, old = entry.get("ch_l1"), entry.get("ch")
+    # v0.7.170: on HRRR-routed hours entry["ch"] is the legacy L2 key (== ch_l1 for ch), not what the app showed;
+    # the shown value is the applied cascade layer. Was saving L2, so ch_goes_score compared raw HRRR with itself.
+    if entry.get("ch_selector_source") not in ("nbm", "l1_blend", "nws", "blend", "tblend", "urmab"):
+        old = entry.get(f"ch_{entry.get('ch_applied')}", old)
     if hr is None or old is None or _band(lead_h, BANDS) not in SERVE_CH_BANDS or not serving_ch():
         return False
     entry["ch_pre_hrrr"] = old
