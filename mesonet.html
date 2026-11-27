@@ -323,6 +323,10 @@
 (function () {
   const $ = id => document.getElementById(id);
   const fx = (v, d) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const ageMin = ts => ts ? Math.round((Date.now() - Date.parse(ts)) / 60000) : null;
+  const ageTxt = ts => { const a = ageMin(ts); return a == null ? "—" : a < 90 ? a + " min ago" : Math.round(a / 60) + " h ago"; };
+  const wuStale = ts => { const a = ageMin(ts); return a == null || a > 120; };
+  const wuRead = s => `${wuStale(s.ts) ? '<span style="opacity:.6">' : ""}Reads ${fx(s.t, 1)}°F as of ${s.ts ? new Date(s.ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"} (${ageTxt(s.ts)})${wuStale(s.ts) ? " &mdash; old reading, not current" : ""}${wuStale(s.ts) ? "</span>" : ""}`;
   const sg = (v, d) => v == null ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(d);
   const med = a => { a = a.filter(v => v != null && !Number.isNaN(v)).sort((x, y) => x - y);
     return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
@@ -410,9 +414,8 @@
   function wu(m) {
     if (!m) { $("wu").textContent = "Not available."; return; }
     if (window.__wuMarkers) window.__wuMarkers(m); else window.__wuPending = m;
-    const ago = ts => ts ? Math.round((Date.now() - Date.parse(ts)) / 60000) + " min" : "—";
     const row = (s, name) => `<tr><td>${name}</td><td>${s.lat == null ? "—" : octOf(s.lat, s.lon)}</td><td class="num">${fx(s.t, 1)}</td><td class="num">${fx(s.rh, 0)}</td>` +
-      `<td class="num">${fx(s.p, 2)}</td><td class="num">${ago(s.ts)}</td><td class="num">${sg(s.od, 1)} / ${sg(s.on, 1)}</td><td class="num">${fx(s.rmse, 2)}</td></tr>`;
+      `<td class="num">${fx(s.p, 2)}</td><td class="num"${wuStale(s.ts) ? ' style="opacity:.6"' : ""}>${ageTxt(s.ts)}</td><td class="num">${sg(s.od, 1)} / ${sg(s.on, 1)}</td><td class="num">${fx(s.rmse, 2)}</td></tr>`;
     const c = m.counts || {};
     $("wu").classList.remove("muted");
     $("wu").innerHTML = `<table class="dense"><thead><tr><th>Station</th><th>Dir</th><th>°F</th><th>RH %</th><th>inHg</th><th>Last reading</th><th>Day / night vs URMA</th><th>Error vs URMA</th></tr></thead><tbody>` +
@@ -491,8 +494,8 @@
     const sq = (p, html, col) => L.marker(p, { icon: L.divIcon({ className: "", iconSize: [12, 12], iconAnchor: [6, 6],
       html: `<div style="width:12px;height:12px;background:${col};border:1.5px solid #0f1115;"></div>` }) }).bindPopup(html).addTo(map);
     window.__wuMarkers = m => {
-      for (const s of (m.live || [])) if (s.lat != null) { sq([s.lat, s.lon], `<b>${s.id}</b> (Weather Underground)<br>Archived, not used in the Mesonet<br>Reads ${fx(s.t, 1)}°F`, "#c9a86a"); pts.push([s.lat, s.lon]); }
-      sq(COVE, `<b>Our station (KMAMARBL124)</b><br>Archived, kept out of the Mesonet: at 0.04 mi it would outweigh every other station<br>Reads ${fx((m.own || {}).t, 1)}°F`, "#7fd1c1");
+      for (const s of (m.live || [])) if (s.lat != null) { sq([s.lat, s.lon], `<b>${s.id}</b> (Weather Underground)<br>Archived, not used in the Mesonet<br>${wuRead(s)}`, "#c9a86a"); pts.push([s.lat, s.lon]); }
+      sq(COVE, `<b>Our station (KMAMARBL124)</b><br>Archived, kept out of the Mesonet: at 0.04 mi it would outweigh every other station<br>${wuRead(m.own || {})}`, "#7fd1c1");
     };
     if (window.__wuPending) window.__wuMarkers(window.__wuPending);
     L.circleMarker(COVE, { radius: 7, fillColor: "#fff", color: "#111", weight: 2, fillOpacity: 1 }).bindPopup("Wyman Cove").addTo(map);

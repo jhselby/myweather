@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.166 • November 26, 2026 (Mesonet map: Weather Underground readings show their age)</strong></summary>
+
+- A Weather Underground square on the Mesonet map showed "Reads 35.1°F" with no time, but the reading was 14 hours old (it is fetched only 4 times a day), next to live circles. The popup now says when the reading was taken and how long ago, and greys out any reading older than 2 hours as "old reading, not current". The table below the map shows the age in hours too
+
+</details>
+
+<details open>
 <summary><strong>v0.7.165 • November 26, 2026 (visit counters back on the landing page)</strong></summary>
 
 - Counter.dev and GoatCounter were only on the app page; since the landing page became the front door (v0.7.143), visits to it were not counted. Both are now on the landing page too
