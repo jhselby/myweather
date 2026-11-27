@@ -65,7 +65,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 from analysis._output import out as _out
-from analysis.per_field_scoring import _hrrr_prod_error, _nbm_prod_error
+from analysis.per_field_scoring import _hrrr_prod_error, _nbm_prod_error, _fixed_truth
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 SELECTOR_TABLE_PATH = (
@@ -224,6 +224,8 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
                 continue
             field = row.get("field")
             if field not in acc:
+                continue
+            if not _fixed_truth().rebase(row):   # 11-27: same fixed truth as per_field_scoring
                 continue
             obs_time = row.get("obs_time", "")
             if obs_time < window_start:
@@ -711,6 +713,7 @@ def main():
     payload = {
         "generated_at": datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat() + "Z",
         "source": "forecast_error_log.jsonl",
+        "truth": _fixed_truth().labels(),
         "windows": windows_output,
         "thresholds": {
             "confidence": {"high_lift_pct": CONF_HIGH_LIFT, "high_n": CONF_HIGH_N,

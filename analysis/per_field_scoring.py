@@ -43,6 +43,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 from analysis._output import out as _out
 from analysis import terminal_blend_field_fit as _tbf
+from analysis._truth import FixedTruth
+
+# 11-27: every row is graded on its field's fixed truth (URMA for t/dp/ws/wg/cc, the Mesonet
+# for h at 6-47h), the same truth as the scorecard. Loaded once per run.
+_FT = None
+
+
+def _fixed_truth():
+    global _FT
+    if _FT is None:
+        _FT = FixedTruth()
+    return _FT
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 SELECTOR_TABLE_PATH = (
@@ -244,6 +256,8 @@ def _walkforward_weights(pair_log_path, first_day):
             field = row.get("field")
             day = (row.get("obs_time") or "")[:10]
             if field not in NBM_SCOPE or field in CIRCULAR_FIELDS or day < lo:
+                continue
+            if not _fixed_truth().rebase(row):
                 continue
             e_hp, e_np = _hrrr_prod_error(row), _nbm_prod_error(row)
             if e_hp is None or e_np is None:
@@ -545,6 +559,8 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 continue
             obs_time = row.get("obs_time", "")
             if obs_time < prior_start:
+                continue
+            if not _fixed_truth().rebase(row):
                 continue
             in_current = obs_time >= window_start
             # Compute residuals + pool_ok up-front so prior-window uses the
@@ -1127,6 +1143,8 @@ def main():
     payload = {
         "generated_at": datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat() + "Z",
         "source": "forecast_error_log.jsonl",
+        "truth": _fixed_truth().labels(),
+        "truth_note": "11-27: fields listed in `truth` are graded on that truth (same as the scorecard); every other field on the logged observed. Rows without a truth value for their hour are dropped, so the newest hours (URMA lag) and h below 6 h are not in any window.",
         "selector_table_source": str(SELECTOR_TABLE_PATH.name),
         "windows": windows_out,
         "conventions": {

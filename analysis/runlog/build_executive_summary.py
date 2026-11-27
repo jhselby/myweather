@@ -1387,6 +1387,14 @@ def selector_status():
         rows.append((head, f, x))
     rows.sort(key=lambda r: -r[0])
     out.append(f"  7d (score: 100 = best blend rule fit on the prior 14d, 0 = best fixed routing, − = worse)")
+    tr = doc.get("truth") or {}
+    if tr:   # 11-27: graded on the scorecard's fixed truths, not the model-blended `observed`
+        groups = {}
+        for f, t in tr.items():
+            groups.setdefault(t, []).append(f)
+        out.append("  truth: " + " · ".join(f"{'/'.join(fs)} on {t}" for t, fs in groups.items()) + " · other fields on logged observed")
+    else:
+        out.append("  ⚠ truth: logged observed (model-blended); per_field_scoring.json predates the 11-27 fixed-truth change")
     out.append(f"  {'field':5} {'score':>7} {'24h':>7} {'room':>6} {'24h vs fx':>9}  {'served':>7} {'fixed':>7} {'blend':>7}  rule")
     for head, f, x in rows:
         # The score divides by headroom: at 24h a 5% headroom turns a 15% gap
@@ -1401,7 +1409,8 @@ def selector_status():
                    f"{w24_score} {head:5.1f}% {num(w24_f.get('selector_vs_fixed_pct'), '+8.1f')}%  "
                    f"{num(x.get('chosen_prod_mae'), '7.2f')} {num(x.get('best_fixed_mae'), '7.2f')} "
                    f"{num(x.get('best_rule_mae'), '7.2f')}  {x.get('best_rule_kind') or '—'}"
-                   + ("  ← scored on METAR-shrunk cc, not a read; see URMA line" if f == "cc" else ""))
+                   + ("  ← scored on METAR-shrunk cc, not a read; see URMA line" if f == "cc" and "cc" not in tr else "")
+                   + ("  ← airport truth, blind above 12k ft; the ch read is ch_goes_score (GOES)" if f == "ch" else ""))
     if flat:
         out.append(f"  no room (<2%): {', '.join(flat)}")
     # 11-15: cc's scored `observed` (HRRR shrunk toward KBOS/KBVY METAR, ceilometers blind

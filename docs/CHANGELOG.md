@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.167 • November 27, 2026 (selector scoring on the scorecard's truth)</strong></summary>
+
+- The selector table at the top of the morning digest and the Model page's scoreboard tiles still graded on the old logged "observed" (station readings pulled toward the model), five days after the scorecard moved off it. They now use the scorecard's truths: temperature, dew point, wind, gusts and cloud cover on URMA, humidity on the Mesonet at 6-47 h. Other fields are unchanged and labelled
+- What it shows on the 7 days to Nov 27: wind speed now has room to gain (served 1.65 mph vs 1.41 for raw NBM). In the Wind Advisory the served wind was half ECMWF, and ECMWF ran about 6 mph low. The old truth hid this because our sheltered anemometers also read low. Humidity and gusts no longer show room. Temperature keeps about 10%
+- Hours URMA has not covered yet are left out, so the 12 h and 24 h windows are thinner
+
+</details>
+
+<details open>
 <summary><strong>v0.7.166 • November 26, 2026 (Mesonet map: Weather Underground readings show their age)</strong></summary>
 
 - A Weather Underground square on the Mesonet map showed "Reads 35.1°F" with no time, but the reading was 14 hours old (it is fetched only 4 times a day), next to live circles. The popup now says when the reading was taken and how long ago, and greys out any reading older than 2 hours as "old reading, not current". The table below the map shows the age in hours too

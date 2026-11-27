@@ -1303,11 +1303,11 @@
 
 
 <section class="fp" id="sec-scoreboard">
-<h2 class="section" id="sec-scoreboard-h">Selector and scoreboard <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· graded on the old model-blended truth until the retrain</span></h2>
+<h2 class="section" id="sec-scoreboard-h">Selector and scoreboard <span style="font-weight:400;font-size:0.6em;opacity:0.7;">· graded on the scorecard's truths since Nov 27 (t, dp, wind, cloud cover on URMA; humidity on the Mesonet)</span></h2>
 <details id="sec-engine-scoreboard" style="margin:0 0 16px 0;padding:10px 14px;border:1px solid #253247;background:#0b1119;border-radius:10px;">
-  <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Selector, old-truth scoreboard and what is switched on <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: these tiles grade on the model-blended truth, so they run higher than the scorecard above.</span></summary>
+  <summary style="cursor:pointer;color:#e8eef6;font-weight:650;font-size:1em;">Selector, scoreboard and what is switched on <span style="color:#7f8ba0;font-weight:400;font-size:0.85em;">· every pipeline piece with its on/off status, plus the full scoreboard tiles (routing vs corrections, selector skill, trend, notable calls). Note: the tiles use 7-day and 24-hour windows; the scorecard above pools since Nov 2.</span></summary>
   <div style="margin-top:12px;">
-  <div class="fp-truthbanner"><b>Diagnostic only: older, model-influenced truth.</b> These tiles are not the public score. The tiles in this block grade on the model-blended truth (optimistic). The scorecard at the top uses independent truth.</div>
+  <div class="fp-truthbanner"><b>Truth (since Nov 27):</b> the tables and tiles read from per_field_scoring.json and scoreboard_v2.json grade temperature, dew point, wind, gusts and cloud cover on URMA and humidity on the Mesonet at 6-47 h, the same as the scorecard. The other fields (sunshine, pressure, rain chance, wind direction, cloud layers) are still on the logged "observed", which flatters corrections; high cloud there is the airport ceilometer, blind above 12,000 ft. Hours URMA has not covered yet are left out, so the 12 h and 24 h windows are thin.</div>
 <!-- ───────────────────── Architecture now (v0.7.99) ─────────────────────
      Rendered from architecture.json, written by build.py on every release:
      component status read from the code flags, plus every CHANGELOG entry
