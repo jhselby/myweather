@@ -1384,6 +1384,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # v0.7.140 — dew point blend served for dew point only (6-23h, kill switch off by default).
             urma_blend_shadow.apply_dp(entry, i)
             urma_blend_shadow.apply_ch(entry, i)
+            urma_blend_shadow.apply_ws(entry, i)   # v0.7.169: raw NBM wind speed at 6-23h (URMA truth)
         except Exception as _e:  # noqa: BLE001
             logging.warning(f"  ⚠  urma_blend_shadow stamp failed ({_e})")
         hours.append(entry)
@@ -1474,7 +1475,9 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             if _i >= len(_arr):
                 break
             _src = _h.get(f"{_f}_selector_source")
-            if _src not in _WRITEBACK_SOURCES:
+            # v0.7.169: served raw HRRR high cloud (v0.7.154, applied "hrrr_sat") keeps selector_source "hrrr",
+            # which is not a writeback source, so the app kept the cascade's ch (11-28 04:00: scored 64, shown 0).
+            if _src not in _WRITEBACK_SOURCES and _h.get(f"{_f}_applied") != "hrrr_sat":
                 continue
             # "nws" is stamped as the source even when {f}_nws was missing for
             # this hour and the apply block deliberately fell through to the

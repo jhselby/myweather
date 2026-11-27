@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.169 • November 27, 2026 (wind speed 6-23 h now comes straight from NBM; high cloud shown as scored)</strong></summary>
+
+- Wind speed 6 to 23 hours ahead is now the National Blend (NBM) as published. The old value was a blend of three models whose weights were fit against our backyard anemometers. Those sit in sheltered spots and read low, so the blend leaned on ECMWF, which ran about 6 mph low in the Nov 26 Wind Advisory. Against NOAA's hourly analysis (URMA), the plain NBM beat it on 24 held-out days: +4.2% at 6-11 h and +5.2% at 12-23 h. 24-47 h (+4.1%, not yet certain) and the first 5 hours (current station readings) are unchanged. It can be switched off without a redeploy
+- How sheltered is the Cove? Measured by wind direction (Nov 8-27): at Driftwood Rd and Neptune Rd, NE and E winds arrive at 15-40% of what the same station sees from the west and northwest. Logan reads the same against URMA from every direction, so URMA is a fair measure of the open-air wind. That shelter is why the Nov 26 storm felt calmer here than forecast. It does not change the forecast yet
+- Fix to v0.7.154: the raw HRRR high cloud that was being scored at 6-23 h never reached the app's cloud chart (tomorrow 4 AM: scored 64%, shown 0%). The app now shows the scored value
+
+</details>
+
+<details open>
 <summary><strong>v0.7.168 • November 27, 2026 (fog card no longer goes blank when the forecast feed is down)</strong></summary>
 
 - When Open-Meteo failed on a tick (11-27 7:47 AM ET, HTTP 503), the collector filled in the previous run's current and hourly data at the end of the tick, but the values derived from them earlier were simply missing: the fog card went blank, along with about 25 others (dew point spread, cloud base, tomorrow's high and low, precipitation type, pressure trend). Those values are now carried over from the previous run when that happens, and only where this run produced none

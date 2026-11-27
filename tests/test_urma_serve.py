@@ -178,3 +178,36 @@ def test_ch_off_without_key_or_on_error(monkeypatch):
         raise RuntimeError("gcs down")
     monkeypatch.setattr(runtime_tables, "get", boom)
     assert u.apply_ch(_ch_entry(), 8) is False
+
+
+def _ws_entry():
+    return {"ws": 9.0, "ws_raw_nbm": 14.0, "ws_applied": "tblend", "ws_selector_source": "tblend"}
+
+
+def test_ws_serves_raw_nbm_at_6_to_23h_only(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_ws": True})
+    for lead, ok in ((3, False), (5, False), (6, True), (23, True), (24, False), (40, False)):
+        e = _ws_entry()
+        assert u.apply_ws(e, lead) is ok, lead
+        assert (e["ws"] == 14.0) is ok
+    e = _ws_entry(); u.apply_ws(e, 8)
+    assert e["ws_pre_urmab"] == 9.0 and e["ws_applied"] == "raw_nbm" and e["ws_selector_source"] == "nbm"
+    assert e["ws_preempted_source_shadow"] == "tblend"
+
+
+def test_ws_off_without_key_on_error_or_missing_nbm(monkeypatch):
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True})
+    assert u.apply_ws(_ws_entry(), 8) is False
+    monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_ws": True})
+    e = _ws_entry(); del e["ws_raw_nbm"]
+    assert u.apply_ws(e, 8) is False and e["ws"] == 9.0
+    def boom(*a, **k):
+        raise RuntimeError("gcs down")
+    monkeypatch.setattr(runtime_tables, "get", boom)
+    assert u.apply_ws(_ws_entry(), 8) is False
+
+
+def test_bundled_serve_doc_valid_and_ws_on():
+    import json
+    doc = json.load(open(u.SERVE_PATH))
+    assert u._valid_serve(doc) is None and doc["serve_ws"] is True

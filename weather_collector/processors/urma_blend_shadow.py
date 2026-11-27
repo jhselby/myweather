@@ -119,6 +119,8 @@ def _valid_serve(doc):
         return "serve_dp must be a bool"
     if "serve_ch" in doc and not isinstance(doc["serve_ch"], bool):
         return "serve_ch must be a bool"
+    if "serve_ws" in doc and not isinstance(doc["serve_ws"], bool):
+        return "serve_ws must be a bool"
     return None
 
 
@@ -213,4 +215,41 @@ def apply_ch(entry, lead_h):
     entry["ch"] = hr
     entry["ch_applied"] = "hrrr_sat"
     entry["ch_selector_source"] = "hrrr"
+    return True
+
+
+# v0.7.169: wind speed served as raw NBM at 6-23h. The served ws was a terminal blend (HRRR/NBM/ECMWF) fit on the
+# model-blended `observed`, whose sheltered anemometers read low and pulled weight toward ECMWF (5.9 mph low in the
+# 11-26 Wind Advisory). On URMA 10 m wind (analysis/urma_blend_wf_ws.py, 24 holdout days) raw NBM beat served
+# +4.2% [+0.4, +9.2] at 6-11h and +5.2% [+1.0, +10.9] at 12-23h; 24-47h +4.1% [-0.6, +10.6] does not pass and
+# 0-5h keeps the station nowcast. URMA is a fair open-air truth by direction (analysis/wind_shelter_by_direction.py:
+# KBOS / URMA flat across sectors). Nothing is fitted. Applied tag raw_nbm, so the pair log's error_raw_nbm is
+# the served error; the replaced value is kept as ws_pre_urmab (pair log error_pre_urmab).
+# Kill switch: {"serve_ws": false} in urma_blend_serve.json (default false when the key is absent).
+SERVE_WS_BANDS = ("6-11", "12-23")
+
+
+def serving_ws():
+    """True when raw NBM ws replaces served ws at 6-23h. Fails closed (False)."""
+    if not ENABLED:
+        return False
+    try:
+        from .. import runtime_tables
+        doc = runtime_tables.get(SERVE_TABLE, SERVE_PATH, _valid_serve)
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"  ⚠  urma_blend_shadow: serve switch unreadable ({e}); not serving ws")
+        return False
+    return bool(doc and doc.get("serve_ws") is True)
+
+
+def apply_ws(entry, lead_h):
+    """Serve ws_raw_nbm in place of ws at 6-23h. Keeps the replaced value as ws_pre_urmab. True when it fired."""
+    nb, old = entry.get("ws_raw_nbm"), entry.get("ws")
+    if nb is None or old is None or _band(lead_h, BANDS) not in SERVE_WS_BANDS or not serving_ws():
+        return False
+    entry["ws_pre_urmab"] = old
+    entry["ws_preempted_source_shadow"] = entry.get("ws_selector_source")
+    entry["ws"] = nb
+    entry["ws_applied"] = "raw_nbm"
+    entry["ws_selector_source"] = "nbm"
     return True
