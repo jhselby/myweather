@@ -29,6 +29,11 @@ if str(ROOT) not in sys.path:
 from analysis import terminal_blend_field_fit as tb  # noqa: E402
 from analysis.ship_rule import HOLDOUT_START, day_block_gain, record, verdict  # noqa: E402
 from analysis.urma_blend_wf import LOG, URMA, WIN, MIN_N, best_w  # noqa: E402
+from analysis._truth import wind_open  # noqa: E402
+
+# 11-28: score only hours whose forecast wind blows from a direction the Cove is open to (the
+# scorecard's ws rule since v0.7.172). WS_ALL_DIRS=1 scores every hour as before.
+OPEN_ONLY = os.environ.get("WS_ALL_DIRS") != "1"
 
 ET = ZoneInfo("America/New_York")
 MS_TO_MPH = 2.23694
@@ -55,6 +60,8 @@ def load():
             if not rx.search(line):
                 continue
             r = json.loads(line)
+            if OPEN_ONLY and not wind_open(r):
+                continue
             vt = r.get("valid_time") or ""
             ap = r.get("applied_layer")
             sv = r.get("forecast_" + ap) if ap else None
@@ -81,7 +88,7 @@ def load():
 
 def run():
     data = load()
-    print(f"rows {len(data):,}")
+    print(f"rows {len(data):,}" + (" (open directions only; WS_ALL_DIRS=1 for all)" if OPEN_ONLY else " (all directions)"))
     byband = collections.defaultdict(list)
     for r in data:
         byband[r[1]].append(r)
@@ -123,7 +130,8 @@ def run():
             print(f"  {'':<26} HOLDOUT {verdict(gh)}")
             if os.environ.get("URMA_WF_RECORD") == "1":
                 record("urma_blend_wf_ws", f"ws {b}h {name} (URMA truth)", gh,
-                       note="walk-forward 14d, truth=URMA WIND idw, rows with hrrr+nbm+ecmwf")
+                       note="walk-forward 14d, truth=URMA WIND idw, rows with hrrr+nbm+ecmwf"
+                       + (", open directions only" if OPEN_ONLY else ""))
 
 
 if __name__ == "__main__":
