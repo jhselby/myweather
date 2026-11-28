@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.173 • November 28, 2026 (wind worry score treats SW wind as reaching the Cove)</strong></summary>
+
+- The wind worry score's exposure table had SW wind (200-245°) at 0.10, nearly fully sheltered. Measured over Nov 8-28, the waterfront anemometers read SW wind at 0.87 (Neptune Rd) and 0.42 (Driftwood Rd) of their open-water wind. The factor is now 0.60, so a 25 mph SW wind reads "Light winds" instead of "Calm". Forecasts and scoring are unchanged
+
+</details>
+
+<details open>
 <summary><strong>v0.7.172 • November 28, 2026 (wind scored only where the Cove is open to it)</strong></summary>
 
 - Wind speed and gusts are now scored against NOAA's URMA analysis only when the forecast wind comes from a direction the Cove is open to (not from NE through S). Measured over Nov 8-28, the Cove's waterfront anemometers read 0.14 to 0.42 of their open-water wind in NE and E flow, but 0.87 in SW. In sheltered flow URMA grades a wind the Cove does not get

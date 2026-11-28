@@ -30,7 +30,7 @@ WIND_EXPOSURE_TABLE = [
     [ 15,  45, 0.70],  # NNE-NE - shelter starts building CW
     [ 45, 100, 0.25],  # E-ESE - 39-68ft Westlot/Ridge terrain close
     [100, 200, 0.08],  # SE-S - Marblehead + local terrain, max shelter
-    [200, 245, 0.10],  # SSW-WSW - 39-78ft Crestwood/Pinecliff close
+    [200, 245, 0.60],  # SSW-WSW - was 0.10 (Crestwood/Pinecliff); measured 11-28 (wind_shelter_by_direction): Neptune 0.87, Driftwood 0.42 of W-N
     [245, 270, 0.55],  # W-edge - shelter releasing toward direct band
     [270, 360, 1.00],  # W through N - direct exposure
 ]
