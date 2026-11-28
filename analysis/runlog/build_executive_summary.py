@@ -955,6 +955,7 @@ def fixed_truth_sentry_series():
     try:
         sys.path.insert(0, str(HERE.parent.parent))
         from analysis.truth_compare import _urma, _urma_t, _utc_hour
+        from analysis._truth import wind_open
         urma = {"t": _urma_t(), "dp": _urma("DPT", "urma_truth_dpt.json"),
                 "ws": _urma("WIND", "urma_truth_wind.json"), "wg": _urma("GUST", "urma_truth_gust.json")}
     except Exception:
@@ -977,6 +978,8 @@ def fixed_truth_sentry_series():
                 if (r.get("lead_h") or 0) < 6:
                     continue
                 tr = r.get("observed_stations")
+            elif not wind_open(r):   # 11-28: ws/wg on URMA only in directions the Cove is open to
+                continue
             else:
                 tr = (urma.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
             ap = r.get("applied_layer")
@@ -1434,7 +1437,7 @@ def selector_status():
             if v:
                 nws.append(f"{f} {v['lift_vs_nws_pct']:+.1f}%")
         if nws:
-            out.append(f"  vs weather.gov (served vs NWS forecast, 2-47h; t/dp/ws on URMA): {' · '.join(nws)}")
+            out.append(f"  vs weather.gov (served vs NWS forecast, 2-47h; t/dp/ws on URMA, ws open directions only): {' · '.join(nws)}")
         wind = []
         for f in ("ws", "wg"):
             v = ((tcd.get("fields") or {}).get(f) or {}).get("lead_2h_plus") or {}
@@ -1451,7 +1454,7 @@ def selector_status():
             elif v.get("total_lift_urma_pct") is not None:
                 wind.append(f"{f} {v['total_lift_urma_pct']:+.1f}%")
         if wind:
-            out.append(f"  wind on URMA (served vs raw NBM, 2-47h; - = served worse): {' · '.join(wind)}")
+            out.append(f"  wind on URMA, open directions (served vs raw NBM, 2-47h; - = served worse): {' · '.join(wind)}")
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
         out.append(f"  ⚠ cc on URMA unreadable ({e})")
     try:

@@ -47,6 +47,7 @@ from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 from analysis._output import out as _out
+from analysis._truth import WIND_RULE, wind_open
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_JSON = _out("truth_compare.json")
@@ -112,7 +113,7 @@ DAILY_SPEC = {
 # forecast's L2 reads the same stations, so h is graded on leads 6-47h only. A rule change rebuilds that
 # field's stored history from the live log (h station truth starts 11-02, inside the live log).
 DAILY_MIN_LEAD = {"h": 6}
-DAILY_RULES = {"h": "stations, leads 6-47h"}
+DAILY_RULES = {"h": "stations, leads 6-47h", "ws": WIND_RULE, "wg": WIND_RULE}
 DAILY_FIRST_DAY = "2026-08-25"   # backstamped log + URMA DPT/WIND/TCDC/GUST start here
 DAILY_HISTORY = "truth_compare_daily_history.json"   # finished days, kept forever (the live log and
                                                     # the cloud URMA stores only reach back ~25 days)
@@ -138,7 +139,7 @@ def _daily_urma(daily, urma_by_field, r):
     f = r.get("field")
     tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
     srv, obs = _prod_error(r), r.get("observed")
-    if tu is None or srv is None or obs is None:
+    if tu is None or srv is None or obs is None or not wind_open(r):
         return
     if f == "wg":
         pub = r.get("error_raw_nbm")
@@ -289,7 +290,7 @@ def build(path=None):
             if f == "h":
                 _daily_add(daily, "h", r, abs(srv + shift), abs(pub + shift))
             nw = r.get("forecast_nws")
-            tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or ""))
+            tu = (urma_by_field.get(f) or {}).get(_utc_hour(r.get("valid_time") or "")) if wind_open(r) else None
             day = (r.get("valid_time") or "")[:10]
             first = day if first is None or day < first else first
             last = day if last is None or day > last else last

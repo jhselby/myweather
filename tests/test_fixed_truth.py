@@ -12,7 +12,8 @@ def _ft(urma):
 def test_urma_field_shifts_every_error_and_observed():
     ft = _ft({"ws": {"2026-11-26T20": 22.0}})
     row = {"field": "ws", "valid_time": "2026-11-26T15:00", "lead_h": 2, "observed": 19.6, "forecast": 17.9,
-           "error": -1.7, "error_l1": 2.1, "error_raw_nbm": 0.5, "error_ecmwf": -3.2, "error_flag": True}
+           "error": -1.7, "error_l1": 2.1, "error_raw_nbm": 0.5, "error_ecmwf": -3.2, "error_flag": True,
+           "state_fc": {"wind_dir": 300}}
     assert ft.rebase(row)
     assert row["observed"] == 22.0
     assert abs(row["error"] - (17.9 - 22.0)) < 1e-9          # forecast - new truth
@@ -47,3 +48,16 @@ def test_field_with_failed_urma_load_keeps_observed():
     row = {"field": "t", "valid_time": "2026-11-26T15:00", "observed": 40.0, "error": 1.0}
     assert ft.rebase(row) and row["error"] == 1.0
     assert ft.labels()["t"].startswith("logged observed")
+
+
+def test_wind_graded_on_urma_only_in_open_directions():
+    ft = _ft({"ws": {"2026-11-26T20": 22.0}, "wg": {"2026-11-26T20": 30.0}})
+    base = {"valid_time": "2026-11-26T15:00", "lead_h": 12, "observed": 19.6, "error": -1.7}
+    for wd, ok in ((300, True), (0, True), (15, True), (225, True), (30, False), (90, False), (180, False), (None, False)):
+        for f in ("ws", "wg"):
+            row = dict(base, field=f, state_fc={"wind_dir": wd} if wd is not None else {})
+            assert ft.rebase(row) is ok, (f, wd)
+    t = {"field": "t", "valid_time": "2026-11-26T15:00", "observed": 40.0, "error": 1.0, "state_fc": {"wind_dir": 90}}
+    ft.urma["t"] = {"2026-11-26T20": 41.0}
+    assert ft.rebase(t)   # the direction rule is for wind only
+    assert ft.labels()["ws"].startswith("URMA, open directions")

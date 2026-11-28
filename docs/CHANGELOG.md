@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.172 • November 28, 2026 (wind scored only where the Cove is open to it)</strong></summary>
+
+- Wind speed and gusts are now scored against NOAA's URMA analysis only when the forecast wind comes from a direction the Cove is open to (not from NE through S). Measured over Nov 8-28, the Cove's waterfront anemometers read 0.14 to 0.42 of their open-water wind in NE and E flow, but 0.87 in SW. In sheltered flow URMA grades a wind the Cove does not get
+- That one rule explains the digest's "wind speed -3.8% vs raw NBM": on open-direction hours served wind ties raw NBM (-0.0%) and beats weather.gov by +21.8% (was +16.3%). All of the loss came from NE-E hours, most of it the Nov 26 Wind Advisory
+- Applies to the selector scoring, the scorecard (truth_compare) and the digest's wind sentry. About 30% of wind hours drop out of the score. Nothing served changes
+
+</details>
+
+<details open>
 <summary><strong>v0.7.171 • November 27, 2026 (high cloud for the next 5 hours now comes from HRRR too)</strong></summary>
 
 - High cloud 0 to 5 hours ahead is now the raw HRRR, as it has been at 6-23 h since Nov 24. The old value leaned on the airport ceilometer, which cannot see cloud above 12,000 ft. Checked against the GOES satellite's cloud-top heights at the Cove over 25 held-out days: +66% better, on 20 of 25 days, both halves positive

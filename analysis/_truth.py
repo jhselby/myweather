@@ -39,6 +39,25 @@ URMA_FIXED = {"t": ("TMP", "urma_truth_t.json"), "dp": ("DPT", "urma_truth_dpt.j
               "cc": ("TCDC", "urma_truth_tcdc.json")}
 H_MIN_LEAD = 6   # h on the Mesonet only where the stations do not feed the forecast (L2 reads them below 6 h)
 
+# 11-28: ws/wg are graded on URMA only when the FORECAST wind (state_fc.wind_dir) blows from a
+# direction the Cove is open to. Measured (analysis/wind_shelter_by_direction.py, 11-08..11-28):
+# the waterfront reads 0.14-0.42 of its W-N exposure in NE/E flow (Neptune 0.14, Driftwood 0.37-0.42)
+# but 0.87 in SW; SE/S have no hours and config.WIND_EXPOSURE_TABLE calls them sheltered. URMA in those
+# directions grades a wind the Cove does not get (the 11-26 E/NE advisory read served -23% vs raw NBM).
+WIND_FIELDS = frozenset({"ws", "wg"})
+SHELTERED_FROM, SHELTERED_TO = 22.5, 202.5   # NE, E, SE, S sectors (45-degree, centred on the compass points)
+WIND_RULE = "URMA, open directions only (forecast wind not from NE-S)"
+
+
+def wind_open(row):
+    """True when a ws/wg row's forecast direction is one the Cove is open to; True for other fields."""
+    if row.get("field") not in WIND_FIELDS:
+        return True
+    wd = (row.get("state_fc") or {}).get("wind_dir")
+    if wd is None:
+        return False
+    return not SHELTERED_FROM <= wd % 360 < SHELTERED_TO
+
 
 class FixedTruth:
     """rebase(row) re-expresses every error_* of a pair-log row on the field's fixed truth
@@ -58,12 +77,16 @@ class FixedTruth:
 
     def labels(self):
         out = {f: ("URMA" if f in self.urma else "logged observed (URMA unavailable)") for f in URMA_FIXED}
+        for f in WIND_FIELDS & set(self.urma):
+            out[f] = WIND_RULE
         out["h"] = f"Mesonet (observed_stations), leads {H_MIN_LEAD}-47h"
         return out
 
     def rebase(self, row):
         f = row.get("field")
         if f in self.urma:
+            if not wind_open(row):
+                return False
             tv = self.urma[f].get(self._hour(row.get("valid_time") or ""))
         elif f == "h":
             lead = row.get("lead_h")
