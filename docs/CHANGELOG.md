@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.171 • November 27, 2026 (high cloud for the next 5 hours now comes from HRRR too)</strong></summary>
+
+- High cloud 0 to 5 hours ahead is now the raw HRRR, as it has been at 6-23 h since Nov 24. The old value leaned on the airport ceilometer, which cannot see cloud above 12,000 ft. Checked against the GOES satellite's cloud-top heights at the Cove over 25 held-out days: +66% better, on 20 of 25 days, both halves positive
+- First, the satellite reading itself was checked. It never missed cloud tops when its own cloud mask said cloudy. Hours it calls high-cloudy get 44% of clear-day sunshine, hours it calls clear get 91%. NBM barely forecasts high cloud at all (about 18 points low on average)
+- 24-47 h is unchanged: HRRR scored +41% there, but won only 11 of 25 days, so the gain comes from a few big days. Total cloud cover is unchanged. The same switch turns it off without a redeploy
+
+</details>
+
+<details open>
 <summary><strong>v0.7.170 • November 27, 2026 (high cloud scored on what the app showed)</strong></summary>
 
 - Since Nov 24 (v0.7.154) high cloud 6-23 h ahead has been the raw HRRR. The forecast log never recorded that served value under its own name, so the scorers fell back to other layers: some graded it as HRRR's corrected value (which flattered it), others as the uncorrected one. Every scorer now reads the value actually served, and new log rows carry it directly

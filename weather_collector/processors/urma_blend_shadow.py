@@ -190,7 +190,11 @@ def apply_dp(entry, lead_h):
 # over 22 holdout days, both halves positive (7 km cutoff +34.8, 8 km +28.3). Nothing is fitted: ch_l1 was already logged.
 # Served cc does not read ch (cc = NBM selector pick), so cc is unchanged. Kill switch: {"serve_ch": false} in urma_blend_serve.json
 # (default false when the key is absent). The replaced value is kept as ch_pre_hrrr.
-SERVE_CH_BANDS = ("6-11", "12-23")
+# v0.7.171: + 0-5h. GOES high-top truth, pair log 11-02..11-27, raw HRRR vs the value shown: +66.3% [+49.8, +78.0],
+# 20/25 holdout days, halves +54/+80 (the shown 0-5h value leaned on the airport, which cannot see high cloud). Sunlight
+# check: hours GOES calls high-cloudy get 0.44 of clear-day sun, GOES-clear hours 0.91. 24-47h +41.1% [+0.3, +65.7] but
+# 11/25 days: not served.
+SERVE_CH_BANDS = ("0-5", "6-11", "12-23")
 
 
 def serving_ch():
@@ -207,13 +211,13 @@ def serving_ch():
 
 
 def apply_ch(entry, lead_h):
-    """Serve ch_l1 (raw HRRR high cloud) in place of ch at 6-23h. Keeps the replaced value as ch_pre_hrrr. True when it fired."""
+    """Serve ch_l1 (raw HRRR high cloud) in place of ch at 0-23h. Keeps the replaced value as ch_pre_hrrr. True when it fired."""
     hr, old = entry.get("ch_l1"), entry.get("ch")
     # v0.7.170: on HRRR-routed hours entry["ch"] is the legacy L2 key (== ch_l1 for ch), not what the app showed;
     # the shown value is the applied cascade layer. Was saving L2, so ch_goes_score compared raw HRRR with itself.
     if entry.get("ch_selector_source") not in ("nbm", "l1_blend", "nws", "blend", "tblend", "urmab"):
         old = entry.get(f"ch_{entry.get('ch_applied')}", old)
-    if hr is None or old is None or _band(lead_h, BANDS) not in SERVE_CH_BANDS or not serving_ch():
+    if hr is None or old is None or _band(lead_h, WG_BANDS) not in SERVE_CH_BANDS or not serving_ch():
         return False
     entry["ch_pre_hrrr"] = old
     entry["ch"] = hr

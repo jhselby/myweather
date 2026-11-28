@@ -163,7 +163,7 @@ def _ch_entry():
 
 def test_ch_serves_hrrr_at_6_to_23h_only(monkeypatch):
     monkeypatch.setattr(runtime_tables, "get", lambda *a, **k: {"serve": True, "serve_ch": True})
-    for lead, ok in ((3, False), (6, True), (23, True), (24, False), (40, False)):
+    for lead, ok in ((0, True), (3, True), (6, True), (23, True), (24, False), (40, False)):
         e = _ch_entry()
         assert u.apply_ch(e, lead) is ok, lead
         assert (e["ch"] == 12.0) is ok

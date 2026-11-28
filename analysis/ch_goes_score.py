@@ -1,4 +1,4 @@
-"""Forward check of served high cloud (v0.7.154: raw HRRR ch_l1 served at 6-23h) against what would have been served (ch_pre_hrrr),
+"""Forward check of served high cloud (v0.7.154: raw HRRR ch_l1 served at 6-23h, v0.7.171 at 0-5h too) against what would have been served (ch_pre_hrrr),
 on the GOES-19 cloud-top-height truth (analysis/goes_cloud_layers.py, high = tops above 6 km, Cove 3x3).
 
 Fetches the last 3 days of satellite heights first. Per valid day; tripwire = trailing 3 days worse than ch_pre_hrrr -> flip
@@ -37,7 +37,7 @@ def main():
                 continue
             a = per[h["v"][:10]]
             a[0] += abs(h["ch_pre_hrrr"] - g); a[1] += abs(h["ch"] - g); a[2] += 1
-    print("ch served (raw HRRR, 6-23h) vs ch_pre_hrrr on GOES high-top truth")
+    print("ch served (raw HRRR, 0-23h) vs ch_pre_hrrr on GOES high-top truth")
     d = {k: tuple(v) for k, v in per.items()}
     if not d:
         print("  no scored days yet")
